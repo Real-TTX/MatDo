@@ -12,25 +12,24 @@
   var TEXTS = (function () { try { return JSON.parse(document.getElementById('md-texts').textContent); } catch (e) { return {}; } })();
   function t(key, a) { return (TEXTS[key] || key).replace('{0}', a === undefined ? '' : a); }
 
-  function token() {
-    var input = document.querySelector('[data-page-token] input[name="__RequestVerificationToken"]');
-    return input ? input.value : '';
-  }
-
   function toast(message, tone) { if (window.MatUi && window.MatUi.toast) { window.MatUi.toast(message, { tone: tone || 'success', timeout: 4000 }); } }
 
   // a message that has to survive the reload of the page (a row that changed its date may belong to another day)
   function toastAfterReload(message) { try { sessionStorage.setItem('md-toast', message); } catch (e) { /* private mode */ } location.reload(); }
   (function () { try { var m = sessionStorage.getItem('md-toast'); if (m) { sessionStorage.removeItem('md-toast'); setTimeout(function () { toast(m); }, 50); } } catch (e) { /* private mode */ } })();
 
-  function post(url, body) {
+  // every change goes through the queue of the offline mode (offline.js): sent now, or later when the network is back; the page shows it at once either way
+  function post(url, body, label) {
+    if (window.MatDoOffline) {
+      return window.MatDoOffline.send(url, body, label).then(function (r) { var d = r.data || {}; d.queued = r.queued; return d; });
+    }
     return fetch(url, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'RequestVerificationToken': token(), 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      method: 'POST', credentials: 'same-origin',
+      headers: { 'X-MatDo-Request': '1', 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : null
     }).then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); });
   }
+  function offlineNote(message, queued) { return queued ? message + ' ' + t('Js.Offline.Later') : message; }
 
   function titleOf(row) { var el = row.querySelector('.md-task__title'); return el ? el.textContent.trim() : ''; }
 
@@ -56,11 +55,11 @@
     var check = row.querySelector('.md-check');
     if (check) { check.classList.add('is-checked'); }
     if (navigator.vibrate) { navigator.vibrate(10); }
-    return post('/api/app/tasks/' + id + '/complete').then(function (data) {
-      if (data.completed) {
+    return post('/api/app/tasks/' + id + '/complete', null, title).then(function (data) {
+      if (data.completed || data.queued) {
         row.classList.add('is-done');
         leave(row);
-        toast(t('Js.Task.Completed', title));
+        toast(offlineNote(t('Js.Task.Completed', title), data.queued));
       } else {
         // a repeating task: its next date; the row stays (or belongs to another day: the page shows it there after a reload)
         if (check) { check.classList.remove('is-checked'); }
@@ -72,30 +71,35 @@
   function reopen(row) {
     var id = row.getAttribute('data-task');
     var title = titleOf(row);
-    return post('/api/app/tasks/' + id + '/reopen').then(function () { leave(row); toast(t('Js.Task.Reopened', title)); });
+    return post('/api/app/tasks/' + id + '/reopen', null, title).then(function (data) { leave(row); toast(offlineNote(t('Js.Task.Reopened', title), data.queued)); });
   }
 
   function setDue(row, which) {
     var id = row.getAttribute('data-task');
-    return post('/api/app/tasks/' + id + '/due', { date: dayFor(which) }).then(function (data) {
+    return post('/api/app/tasks/' + id + '/due', { date: dayFor(which) }, titleOf(row)).then(function (data) {
+      if (data.queued) {
+        // without a network the page cannot move the row to its new day: it says what will happen
+        toast(offlineNote(which === 'none' ? t('Js.NoDate') : t('Js.Task.Due', t('Js.Due.' + which)), true));
+        return;
+      }
       toastAfterReload(data.dueText ? t('Js.Task.Due', data.dueText) : t('Js.NoDate'));
     });
   }
 
   function setPriority(row, p) {
     var id = row.getAttribute('data-task');
-    return post('/api/app/tasks/' + id + '/priority', { priority: +p }).then(function () {
+    return post('/api/app/tasks/' + id + '/priority', { priority: +p }, titleOf(row)).then(function (data) {
       row.setAttribute('data-priority', p);
       var check = row.querySelector('.md-check');
       if (check) { check.className = check.className.replace(/\bmd-p[1-4]\b/, 'md-p' + p); }
-      toast(t('Js.Task.Priority', p));
+      toast(offlineNote(t('Js.Task.Priority', p), data.queued));
     });
   }
 
   function remove(row) {
     var id = row.getAttribute('data-task');
     var title = titleOf(row);
-    return post('/api/app/tasks/' + id + '/delete').then(function () { leave(row); toast(t('Js.Task.Deleted', title)); });
+    return post('/api/app/tasks/' + id + '/delete', null, title).then(function (data) { leave(row); toast(offlineNote(t('Js.Task.Deleted', title), data.queued)); });
   }
 
   function failed() { toast(t('Js.Task.Failed'), 'danger'); }

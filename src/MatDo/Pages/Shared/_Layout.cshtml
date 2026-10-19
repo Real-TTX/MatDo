@@ -20,7 +20,7 @@
     var current = areas.First(a => a.Id == area);
 }
 <!DOCTYPE html>
-<html @ClientTexts.RootAttributes() data-app="@Ui.AppId" data-scheme="@user.Scheme"@Html.Raw(themeAttr)>
+<html @ClientTexts.RootAttributes() data-app="@Ui.AppId" data-user="@user.Id" data-scheme="@user.Scheme"@Html.Raw(themeAttr)>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -112,6 +112,8 @@
                     </ol>
                 </nav>
                 <div class="mat-topbar__actions">
+                    @* offline: the state and the changes that wait for the network (offline.js); a click sends them *@
+                    <button type="button" class="md-offline" id="md-offline" hidden>@Ui.Icon("cloud")<span data-offline-text></span></button>
                     @await RenderSectionAsync("TopActions", required: false)
                     <button type="button" class="mat-btn mat-btn--primary mat-btn--icon" data-dialog-open="md-quick" aria-haspopup="dialog" aria-label="@L["QuickAdd.AddShortcut"]" data-tip="@L["QuickAdd.AddShortcut"]">@Ui.Icon("plus")</button>
                 </div>
@@ -190,6 +192,7 @@
 
     @ClientTexts.Script()
     <script src="~/matui/matui.js" asp-append-version="true"></script>
+    <script src="~/js/offline.js" asp-append-version="true"></script>
     <script src="~/js/quickadd.js" asp-append-version="true"></script>
     <script src="~/js/tasks.js" asp-append-version="true"></script>
     <script src="~/js/pwa.js" asp-append-version="true"></script>

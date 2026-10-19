@@ -9,7 +9,7 @@
 
   // the texts of the page in its language (ClientTexts: every key that starts with "Js.")
   var TEXTS = (function () { try { return JSON.parse(document.getElementById('md-texts').textContent); } catch (e) { return {}; } })();
-  function t(key) { return TEXTS[key] || key; }
+  function t(key, a) { return (TEXTS[key] || key).replace('{0}', a === undefined ? '' : a); }
 
   function $(sel, scope) { return (scope || document).querySelector(sel); }
   function $$(sel, scope) { return Array.prototype.slice.call((scope || document).querySelectorAll(sel)); }
@@ -278,10 +278,64 @@
       });
     });
 
+    // The task is sent as JSON through the queue of the offline mode (offline.js): with a network the page shows it at once (a reload with the editor open again),
+    // without one it waits on the device, stands in the list as "waits for the network" and goes out when the network is back. Without the script: the form.
     form.addEventListener('submit', function (e) {
       if (!input.value.trim()) { e.preventDefault(); input.focus(); return; }
       clearTimeout(timer);
+      if (!window.MatDoOffline || !window.fetch) { return; }
+      e.preventDefault();
+      var fields = new FormData(form);
+      var body = { clientId: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random() };
+      ['Text', 'Description', 'DefaultProjectId', 'DefaultSectionId', 'DefaultDueDate', 'ParentId', 'Off', 'DueDate', 'DueTime', 'Priority', 'Labels'].forEach(function (k) {
+        var v = fields.get(k);
+        body[k.charAt(0).toLowerCase() + k.slice(1)] = v === null || v === '' ? null : String(v);
+      });
+      ['defaultProjectId', 'defaultSectionId', 'parentId'].forEach(function (k) { body[k] = body[k] ? Number(body[k]) : null; });
+      body.noDate = fields.get('NoDate') === 'true';
+      body.projectTouched = fields.get('ProjectTouched') === 'true';
+      var title = (parsed && parsed.title) || input.value.trim();
+      var submit = form.querySelector('[data-qa-submit]');
+      submit.disabled = true;
+      window.MatDoOffline.send('/api/app/tasks', body, title).then(function (r) {
+        submit.disabled = false;
+        if (r.queued) {
+          pending(title);
+          reset();
+          if (window.MatUi && window.MatUi.toast) { window.MatUi.toast(t('Js.Offline.Saved', title), { tone: 'warning', timeout: 5000 }); }
+          input.focus();
+          return;
+        }
+        try { sessionStorage.setItem('md-toast', r.data && r.data.message ? r.data.message : title); } catch (x) { /* private mode */ }
+        var dialog = root.closest('dialog');
+        var url = new URL(location.href);
+        if (!dialog) { url.searchParams.set('qa', root.id); url.hash = root.id; }
+        location.replace(url.toString());
+        if (url.pathname === location.pathname && url.search === location.search) { location.reload(); }
+      }, function (err) {
+        submit.disabled = false;
+        var message = err && err.data && err.data.error ? err.data.error : t('Js.Task.Failed');
+        if (window.MatUi && window.MatUi.toast) { window.MatUi.toast(message, { tone: 'danger' }); }
+      });
     });
+
+    // a task that waits for the network: a row in the list above the editor, until the page shows the real one
+    function pending(title) {
+      var list = root.previousElementSibling;
+      if (!list || !list.classList || !list.classList.contains('md-tasks')) {
+        if (root.closest('dialog')) { return; }
+        list = document.createElement('ul');
+        list.className = 'mat-itemlist mat-itemlist--lines-inset md-tasks';
+        root.parentNode.insertBefore(list, root);
+      }
+      var li = document.createElement('li');
+      li.className = 'mat-item md-task is-pending';
+      li.innerHTML = '<div class="mat-item__row"><span class="md-task__check"><span class="md-check md-p4" aria-hidden="true"></span></span>' +
+        '<span class="mat-item__main md-task__main"><span class="mat-item__body"><span class="md-task__title"></span>' +
+        '<span class="md-task__meta"><span class="md-meta">' + icon('cloud') + esc(t('Js.Offline.Waiting')) + '</span></span></span></span></div>';
+      li.querySelector('.md-task__title').textContent = title;
+      list.appendChild(li);
+    }
 
     paint();
     if (root.open) { autosize(input); }

@@ -261,3 +261,27 @@
 
 /* a single button under the message of a centred card (errors, offline, closed registration) stands in the middle */
 .md-center { justify-content: center; }
+
+/* ---- Offline ------------------------------------------------------------------------------------------------------- */
+/* the state in the top bar: "Offline", or the changes that wait for the network (a click sends them) */
+.md-offline {
+  display: inline-flex; align-items: center; gap: var(--mat-space-1); height: 32px; padding: 0 var(--mat-space-3);
+  border: 1px solid var(--mat-border); border-radius: 999px; background: var(--mat-surface); color: var(--mat-text-muted); font: inherit; font-size: var(--mat-fs-xs); cursor: pointer; white-space: nowrap;
+}
+.md-offline[hidden] { display: none; }
+.md-offline.is-offline { border-color: var(--mat-warning); background: var(--mat-warning-bg); color: var(--mat-warning-text); }
+.md-offline .mat-icon { width: 14px; height: 14px; }
+/* a task made without a network, until the page shows the real one */
+.md-task.is-pending { opacity: .7; }
+.md-task.is-pending .md-meta { color: var(--mat-warning-text); }
+@media (max-width: 599px) { .md-offline [data-offline-text] { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); } .md-offline { padding: 0; width: 32px; justify-content: center; } }
+
+/* ---- No zoom on a phone (PWA) -------------------------------------------------------------------------------------- */
+/* iOS zooms into a field whose text is smaller than 16 px as soon as it gets the focus, and a double tap zooms the page:
+   on a touch screen every field has 16 px, a tap is a tap (the pinch zoom stays, for those who need it), and iOS does not enlarge text on its own. */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+@media (pointer: coarse) {
+  html, body { touch-action: manipulation; }
+  input, textarea, select, .mat-input, .mat-select, .mat-textarea, .md-qa__title, .md-qa__desc, .md-qa__mirror { font-size: max(16px, 1em); }
+  .md-qa__mirror, .md-qa__title { font-size: 16px; }
+}
