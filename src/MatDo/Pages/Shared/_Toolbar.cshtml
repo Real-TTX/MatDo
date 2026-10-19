@@ -9,7 +9,7 @@
     var id = Model.Id;
     var form = id + "-form";
     // With the search in a field the field shows what is searched: no chip for it.
-    var hasChips = (!Model.SearchField && Model.SearchActive) || Model.ActiveFilters > 0;
+    var hasChips = (!Model.SearchField && Model.SearchActive) || Model.ActiveFilters > 0 || (Model.InTopBar && Model.SortActive);
     var count = Model.Matching == Model.Total ? Model.Counted(Model.Total) : L["Lists.MatchingOf", Model.Matching, Model.Counted(Model.Total)].Value;
 
     void FilterAndSort()
@@ -43,6 +43,8 @@
     }
 }
 
+@if (!Model.InTopBar)
+{
 <div class="mat-toolbar" role="toolbar" aria-label="@L["Lists.Tools", Model.Label]">
     @if (Model.SearchField)
     {
@@ -72,6 +74,7 @@
         <span class="mat-toolbar__info" aria-live="polite">@count</span>
     }
 </div>
+}
 
 @if (hasChips)
 {
@@ -83,6 +86,10 @@
         @foreach (var f in Model.Filters.Where(f => !string.IsNullOrEmpty(f.Selected)))
         {
             <span class="mat-chip">@f.Label: @(f.Options.FirstOrDefault(o => o.Value == f.Selected)?.Label ?? f.Selected)<a class="mat-chip__x" href="@Model.UrlWithout(f.Name)" aria-label="@L["Lists.RemoveFilter", f.Label]">@Ui.Icon("x")</a></span>
+        }
+        @if (Model.InTopBar && Model.SortActive)
+        {
+            <span class="mat-chip">@L["Lists.Sort"]: @Model.SortLabel @(Model.Descending ? "↓" : "↑")<a class="mat-chip__x" href="@Model.UrlWithout("sort")" aria-label="@L["Lists.DefaultOrder"]">@Ui.Icon("x")</a></span>
         }
     </div>
 }

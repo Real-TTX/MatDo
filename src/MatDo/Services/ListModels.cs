@@ -32,6 +32,9 @@ public sealed class ToolbarModel
     /// <summary>The search is a field right in the toolbar (at its left) and Filter and Sort stand at its right end; without it the search is a button that opens a dialog.</summary>
     public bool SearchField { get; init; }
 
+    /// <summary>Search, filter and sort are icon buttons in the top bar (partial _ToolbarTop in the section TopActions; the app is a phone app first): no toolbar above the list, its chips and dialogs stay.</summary>
+    public bool InTopBar { get; init; }
+
     public IReadOnlyList<FilterField> Filters { get; init; } = [];
 
     public IReadOnlyList<SortOption> SortOptions { get; init; } = [];

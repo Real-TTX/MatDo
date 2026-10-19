@@ -8,6 +8,10 @@
     var prev = Model.From.AddDays(-7) <= Model.Today ? null : Dates.Iso(Model.From.AddDays(-7));
 }
 
+@section TopActions {
+    <partial name="_ToolbarTop" model="Model.Toolbar" />
+}
+
 <div class="mat-list md-view">
     <partial name="_Toolbar" model="Model.Toolbar" />
 

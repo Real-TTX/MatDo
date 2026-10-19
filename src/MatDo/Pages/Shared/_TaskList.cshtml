@@ -17,7 +17,15 @@ else
         @foreach (var t in Model.Rows)
         {
             var desc = t.Description?.Split('\n', 2)[0].Trim();
-            <li class="mat-item mat-item--top md-task @(t.IsCompleted ? "is-done" : "")" data-item-key="@t.Id" data-task="@t.Id">
+            <li class="mat-item mat-item--top md-task @(t.IsCompleted ? "is-done" : "mat-item--sliding")" data-item-key="@t.Id" data-task="@t.Id" data-priority="@t.Priority">
+                <div class="mat-item__row">
+                @if (!t.IsCompleted)
+                {
+                    @* swipe to the right: done; swipe to the left: tomorrow, delete (the toolkit slides the row, tasks.js does the action) *@
+                    <div class="mat-item__options mat-item__options--start">
+                        <button type="button" class="mat-item__option mat-item__option--accent" data-item-action="complete">@Ui.Icon("check")<span>@L["Tasks.Complete"]</span></button>
+                    </div>
+                }
                 <form class="md-task__check" method="post" action="@(t.IsCompleted ? "/Tasks/Add?handler=Reopen" : "/Tasks/Add?handler=Complete")" data-task-toggle>
                     @Html.AntiForgeryToken()
                     <input type="hidden" name="id" value="@t.Id" />
@@ -77,6 +85,14 @@ else
                         <button type="button" class="mat-item__handle" aria-label="@L["Tasks.Move", t.Content]">@Ui.Icon("grip")</button>
                     </div>
                 }
+                @if (!t.IsCompleted)
+                {
+                    <div class="mat-item__options mat-item__options--end">
+                        <button type="button" class="mat-item__option" data-item-action="tomorrow">@Ui.Icon("sun")<span>@L["Common.Date.Tomorrow"]</span></button>
+                        <button type="button" class="mat-item__option mat-item__option--danger" data-item-action="delete" data-confirm="@L["Tasks.DeleteConfirm", t.Content]" data-confirm-ok="@L["Common.Delete"]">@Ui.Icon("trash")<span>@L["Common.Delete"]</span></button>
+                    </div>
+                }
+                </div>
             </li>
         }
     </ul>

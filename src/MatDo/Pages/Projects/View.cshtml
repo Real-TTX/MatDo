@@ -13,16 +13,21 @@
         : L["Projects.View.Open", Model.Toolbar.Counted(Model.Toolbar.Total)].Value;
 }
 
+@section TopActions {
+    <partial name="_ToolbarTop" model="Model.Toolbar" />
+}
+
 <div class="mat-page__head">
     <div class="mat-page__title">
         <h1 class="md-title">@if (Model.Project.IsInbox) { @Ui.Icon("inbox") } else { @Ui.Icon("hash", null, Model.Project.Color) }@Model.Title</h1>
         <p class="mat-page__sub">@sub</p>
     </div>
     <div class="mat-page__actions">
-        <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@doneUrl">@Ui.Icon(Model.ShowDone ? "eye-off" : "circle-check")<span>@L[Model.ShowDone ? "Projects.View.HideDone" : "Projects.View.ShowDone"]</span></a>
+        @{ var doneLabel = L[Model.ShowDone ? "Projects.View.HideDone" : "Projects.View.ShowDone"].Value; var editLabel = L["Projects.View.Edit"].Value; }
+        <a class="mat-btn mat-btn--ghost mat-btn--sm md-btn-collapse" href="@doneUrl" aria-label="@doneLabel" data-tip="@doneLabel">@Ui.Icon(Model.ShowDone ? "eye-off" : "circle-check")<span>@doneLabel</span></a>
         @if (Model.CanManage && !Model.Project.IsInbox)
         {
-            <a class="mat-btn mat-btn--secondary mat-btn--sm" href="/Projects/Edit?id=@Model.Project.Id">@Ui.Icon("edit")<span>@L["Projects.View.Edit"]</span></a>
+            <a class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" href="/Projects/Edit?id=@Model.Project.Id" aria-label="@editLabel" data-tip="@editLabel">@Ui.Icon("edit")<span>@editLabel</span></a>
         }
     </div>
 </div>

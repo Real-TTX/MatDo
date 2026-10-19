@@ -41,7 +41,7 @@
 
         <div class="md-qa__tools">
             <div class="md-qa__tool">
-                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="date" aria-expanded="false" aria-controls="@id-pop-date">@Ui.Icon("calendar")<span data-qa-date-label>@L["QuickAdd.Date"]</span></button>
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" data-qa-open="date" aria-expanded="false" aria-controls="@id-pop-date" aria-label="@L["QuickAdd.ChooseDate"]" data-tip="@L["QuickAdd.ChooseDate"]">@Ui.Icon("calendar")<span data-qa-date-label>@L["QuickAdd.Date"]</span></button>
                 @* like Todoist: the quick choices, then the month that is always shown (a click on a day takes it), the time is optional *@
                 <div class="md-qa__pop md-qa__pop--date" id="@id-pop-date" role="dialog" aria-label="@L["QuickAdd.ChooseDate"]" popover="manual" data-qa-pop="date">
                     <div class="md-qa__quick">
@@ -61,7 +61,7 @@
                 </div>
             </div>
             <div class="md-qa__tool">
-                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="priority" aria-expanded="false" aria-controls="@id-pop-priority">@Ui.Icon("flag")<span data-qa-priority-label>@L["QuickAdd.Priority"]</span></button>
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" data-qa-open="priority" aria-expanded="false" aria-controls="@id-pop-priority" aria-label="@L["QuickAdd.ChoosePriority"]" data-tip="@L["QuickAdd.ChoosePriority"]">@Ui.Icon("flag")<span data-qa-priority-label>@L["QuickAdd.Priority"]</span></button>
                 <div class="md-qa__pop" id="@id-pop-priority" role="dialog" aria-label="@L["QuickAdd.ChoosePriority"]" popover="manual" data-qa-pop="priority">
                     @foreach (var (value, label) in Ui.Priorities)
                     {
@@ -70,7 +70,7 @@
                 </div>
             </div>
             <div class="md-qa__tool">
-                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="labels" aria-expanded="false" aria-controls="@id-pop-labels">@Ui.Icon("tag")<span data-qa-labels-label>@L["Labels.Title"]</span></button>
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" data-qa-open="labels" aria-expanded="false" aria-controls="@id-pop-labels" aria-label="@L["QuickAdd.ChooseLabels"]" data-tip="@L["QuickAdd.ChooseLabels"]">@Ui.Icon("tag")<span data-qa-labels-label>@L["Labels.Title"]</span></button>
                 <div class="md-qa__pop" id="@id-pop-labels" role="dialog" aria-label="@L["QuickAdd.ChooseLabels"]" popover="manual" data-qa-pop="labels">
                     @if (Model.Labels.Count == 0)
                     {

@@ -71,7 +71,8 @@
                 delete-confirm="@L["Tasks.DeleteConfirm", t.Content]">
         @if (!t.IsCompleted)
         {
-            <button type="submit" class="mat-btn mat-btn--secondary" formnovalidate formaction="?handler=Complete&id=@t.Id">@Ui.Icon("check")<span>@L[t.Recurrence is null ? "Tasks.Complete" : "Tasks.CompleteNext"]</span></button>
+            var completeLabel = L[t.Recurrence is null ? "Tasks.Complete" : "Tasks.CompleteNext"].Value;
+            <button type="submit" class="mat-btn mat-btn--secondary md-btn-collapse" formnovalidate formaction="?handler=Complete&id=@t.Id" aria-label="@completeLabel" data-tip="@completeLabel">@Ui.Icon("check")<span>@completeLabel</span></button>
         }
     </md-buttons>
 </form>

@@ -104,6 +104,7 @@
   "Completed.Empty": { "en": "Nothing completed yet", "de": "Noch nichts erledigt" },
   "Completed.Sort.CompletedAt": { "en": "Completed on", "de": "Erledigt am" },
 
+  "TaskMenu.Label": { "en": "Actions of the task", "de": "Aktionen der Aufgabe" },
   "Comments.Title": { "en": "Comments", "de": "Kommentare" },
   "Comments.New": { "en": "New comment", "de": "Neuer Kommentar" },
   "Comments.Add": { "en": "Comment", "de": "Kommentieren" },

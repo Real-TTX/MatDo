@@ -167,6 +167,40 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         return true;
     }
 
+    /// <summary>A new due date from the menu of a row (today, tomorrow ...); none removes the time and the repetition too. The time of day stays.</summary>
+    public async Task<bool> SetDueAsync(long userId, long id, DateOnly? due)
+    {
+        var task = await Visible(userId).FirstOrDefaultAsync(t => t.Id == id);
+        if (task is null)
+        {
+            return false;
+        }
+
+        task.DueDate = due;
+        if (due is null)
+        {
+            task.DueTime = null;
+            task.Recurrence = null;
+            task.RecurrenceText = null;
+        }
+
+        await db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> SetPriorityAsync(long userId, long id, int priority)
+    {
+        var task = await Visible(userId).FirstOrDefaultAsync(t => t.Id == id);
+        if (task is null || priority is < 1 or > 4)
+        {
+            return false;
+        }
+
+        task.Priority = priority;
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<bool> DeleteAsync(long userId, long id)
     {
         var task = await Visible(userId).FirstOrDefaultAsync(t => t.Id == id);

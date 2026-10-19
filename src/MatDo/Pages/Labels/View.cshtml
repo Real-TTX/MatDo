@@ -2,14 +2,25 @@
 @model MatDo.Pages.Labels.ViewModel
 @{
     ViewData["Title"] = "@" + Model.Label.Name;
-    ViewData["PageSub"] = L["Projects.View.Open", Model.Toolbar.Counted(Model.Toolbar.Total)].Value;
+    ViewData["OwnHead"] = true;
     ViewData["Crumbs"] = new List<(string, string?)> { (L["Labels.Title"].Value, "/Labels"), (Model.Label.Name, null) };
     ViewData["Width"] = "narrow";
+    var editLabel = L["Labels.Edit"].Value;
 }
 
 @section TopActions {
-    <a class="mat-btn mat-btn--ghost mat-btn--icon" href="/Labels/Edit?id=@Model.Label.Id" aria-label="@L["Labels.Edit"]" data-tip="@L["Labels.Edit"]">@Ui.Icon("edit")</a>
+    <partial name="_ToolbarTop" model="Model.Toolbar" />
 }
+
+<div class="mat-page__head">
+    <div class="mat-page__title">
+        <h1 class="md-title">@Ui.Icon("tag", null, Model.Label.Color)@Model.Label.Name</h1>
+        <p class="mat-page__sub">@L["Projects.View.Open", Model.Toolbar.Counted(Model.Toolbar.Total)]</p>
+    </div>
+    <div class="mat-page__actions">
+        <a class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" href="/Labels/Edit?id=@Model.Label.Id" aria-label="@editLabel" data-tip="@editLabel">@Ui.Icon("edit")<span>@editLabel</span></a>
+    </div>
+</div>
 
 <div class="mat-list md-view">
     <partial name="_Toolbar" model="Model.Toolbar" />

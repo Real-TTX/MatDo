@@ -21,5 +21,11 @@
   "Js.Task.Completed": { "en": "“{0}” completed.", "de": "„{0}“ erledigt." },
   "Js.Task.Reopened": { "en": "“{0}” is open again.", "de": "„{0}“ ist wieder offen." },
   "Js.Task.NextDue": { "en": "Next date: {0}.", "de": "Nächster Termin: {0}." },
+  "Js.Task.Deleted": { "en": "“{0}” deleted.", "de": "„{0}“ gelöscht." },
+  "Js.Task.Due": { "en": "Due: {0}", "de": "Fällig: {0}" },
+  "Js.Task.Priority": { "en": "Priority {0}", "de": "Priorität {0}" },
+  "Js.Task.Failed": { "en": "That did not work. Please try again.", "de": "Das hat nicht geklappt. Bitte noch einmal versuchen." },
+  "Js.Task.DeleteConfirm": { "en": "Delete this task?", "de": "Diese Aufgabe löschen?" },
+  "Js.Delete": { "en": "Delete", "de": "Löschen" },
   "Js.Task.OrderFailed": { "en": "The order could not be saved.", "de": "Die Reihenfolge konnte nicht gespeichert werden." }
 }

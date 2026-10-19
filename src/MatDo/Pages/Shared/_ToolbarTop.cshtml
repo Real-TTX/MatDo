@@ -1,0 +1,23 @@
+@model ToolbarModel
+@*
+    The tools of a list as icon buttons in the top bar (SHELL-17: at most four with the main action, which stays last): search, filter, sort.
+    They open the dialogs of _Toolbar (same ids), which stays in the page with its chips; a dot marks a tool in effect. "/" opens the search.
+*@
+@{
+    var id = Model.Id;
+}
+<button type="button" class="mat-btn mat-btn--ghost mat-btn--icon md-topbtn @(Model.SearchActive ? "is-active" : "")" data-dialog-open="@id-search" data-shortcut="/" aria-haspopup="dialog" aria-label="@L["Lists.Search"]" data-tip="@L["Lists.Search"]">
+    @Ui.Icon("search")@if (Model.SearchActive) { <span class="md-topbtn__dot" aria-hidden="true"></span> }
+</button>
+@if (Model.Filters.Count > 0)
+{
+    <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon md-topbtn @(Model.ActiveFilters > 0 ? "is-active" : "")" data-dialog-open="@id-filter" aria-haspopup="dialog" aria-label="@L["Lists.Filter"]" data-tip="@L["Lists.Filter"]">
+        @Ui.Icon("sliders")@if (Model.ActiveFilters > 0) { <span class="md-topbtn__dot" aria-hidden="true"></span> }
+    </button>
+}
+@if (Model.SortOptions.Count > 0)
+{
+    <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon md-topbtn @(Model.SortActive ? "is-active" : "")" data-dialog-open="@id-sort" aria-haspopup="dialog" aria-label="@L["Lists.Sort"]" data-tip="@L["Lists.Sort"]">
+        @Ui.Icon("sort")@if (Model.SortActive) { <span class="md-topbtn__dot" aria-hidden="true"></span> }
+    </button>
+}

@@ -19,6 +19,10 @@
     <link rel="icon" type="image/png" sizes="32x32" href="~/img/favicon-32.png" />
     <link rel="manifest" href="~/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="@Ui.AppName" />
     <script src="~/matui/matui.boot.js" asp-append-version="true"></script>
     <link rel="stylesheet" href="~/matui/matui.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
@@ -38,6 +42,7 @@
         <div data-toast="@flash" data-tone="success" hidden></div>
     }
     <script src="~/matui/matui.js" asp-append-version="true"></script>
+    <script src="~/js/pwa.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

@@ -14,6 +14,10 @@ public static class AppApi
 {
     public sealed record ReorderBody(long[] Ids);
 
+    public sealed record DueBody(string? Date);
+
+    public sealed record PriorityBody(int Priority);
+
     public static void MapAppApi(this WebApplication app)
     {
         var group = app.MapGroup("/api/app").RequireAuthorization();
@@ -67,6 +71,45 @@ public static class AppApi
             }
 
             return await tasks.ReopenAsync(me.RequiredId, id) ? Results.Json(new { reopened = true }) : Results.NotFound();
+        });
+
+        // the actions of a row (swipe, long press, right click): a new date, a priority, delete
+        group.MapPost("/tasks/{id:long}/due", async (long id, DueBody body, HttpContext http, CurrentUser me, TaskService tasks, IAntiforgery anti) =>
+        {
+            if (!await Valid(http, anti))
+            {
+                return Results.BadRequest();
+            }
+
+            DateOnly? due = string.IsNullOrEmpty(body.Date) ? null : Dates.ParseIso(body.Date);
+            if (!string.IsNullOrEmpty(body.Date) && due is null)
+            {
+                return Results.BadRequest();
+            }
+
+            return await tasks.SetDueAsync(me.RequiredId, id, due)
+                ? Results.Json(new { due = due is { } d ? Dates.Iso(d) : null, dueText = due is { } dt ? Dates.Relative(dt, me.Today) : null })
+                : Results.NotFound();
+        });
+
+        group.MapPost("/tasks/{id:long}/priority", async (long id, PriorityBody body, HttpContext http, CurrentUser me, TaskService tasks, IAntiforgery anti) =>
+        {
+            if (!await Valid(http, anti))
+            {
+                return Results.BadRequest();
+            }
+
+            return await tasks.SetPriorityAsync(me.RequiredId, id, body.Priority) ? Results.Json(new { priority = body.Priority }) : Results.NotFound();
+        });
+
+        group.MapPost("/tasks/{id:long}/delete", async (long id, HttpContext http, CurrentUser me, TaskService tasks, IAntiforgery anti) =>
+        {
+            if (!await Valid(http, anti))
+            {
+                return Results.BadRequest();
+            }
+
+            return await tasks.DeleteAsync(me.RequiredId, id) ? Results.Json(new { deleted = true }) : Results.NotFound();
         });
 
         group.MapPost("/tasks/reorder", async (ReorderBody body, HttpContext http, CurrentUser me, TaskService tasks, IAntiforgery anti) =>

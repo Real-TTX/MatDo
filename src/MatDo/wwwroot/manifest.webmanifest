@@ -1,17 +1,31 @@
 {
+  "id": "/",
   "name": "MatDo",
   "short_name": "MatDo",
-  "description": "Aufgaben, Projekte und Teams – Schnelleingabe wie bei Todoist.",
-  "lang": "de",
+  "description": "Tasks, projects and teams – a quick add like Todoist. Aufgaben, Projekte und Teams.",
   "start_url": "/Today",
   "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "display_override": ["standalone", "minimal-ui"],
+  "orientation": "any",
+  "background_color": "#f5f4f1",
   "theme_color": "#d03d33",
+  "categories": ["productivity"],
   "icons": [
     { "src": "/img/icon-192.png", "sizes": "192x192", "type": "image/png" },
     { "src": "/img/icon-512.png", "sizes": "512x512", "type": "image/png" },
     { "src": "/img/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
-  ]
+  ],
+  "shortcuts": [
+    { "name": "Add task / Aufgabe hinzufügen", "short_name": "Add", "url": "/Today?quick=1", "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Today / Heute", "short_name": "Today", "url": "/Today", "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Upcoming / Demnächst", "short_name": "Upcoming", "url": "/Upcoming", "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Inbox / Eingang", "short_name": "Inbox", "url": "/Inbox", "icons": [{ "src": "/img/icon-192.png", "sizes": "192x192" }] }
+  ],
+  "share_target": {
+    "action": "/Today",
+    "method": "GET",
+    "params": { "title": "share_title", "text": "share_text", "url": "share_url" }
+  }
 }

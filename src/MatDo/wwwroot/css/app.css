@@ -202,3 +202,59 @@
   .md-qa__pop--date .md-qa__time { grid-column: 1; grid-row: 2; align-self: start; border-bottom: 0; border-top: 1px solid var(--mat-border); padding-top: var(--mat-space-2); }
   .md-qa__pop--date .md-qa__calendar { grid-column: 2; grid-row: 1 / span 2; border-left: 1px solid var(--mat-border); padding-left: var(--mat-space-3); }
 }
+
+/* ---- Phones: buttons that show their icon only -------------------------------------------------------------------- */
+/* A button with md-btn-collapse keeps its label for screen readers (aria-label) and as the tooltip, and shows the icon only below 600 px,
+   so a row of buttons stays on one line. A button that shows a value picked by hand (is-set) keeps its text. */
+@media (max-width: 599px) {
+  .md-btn-collapse:not(.is-set) > span { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+  .md-btn-collapse:not(.is-set) { min-width: var(--mat-control-h); padding-inline: 0; justify-content: center; }
+  .md-btn-row { flex-wrap: nowrap; }
+  .md-qa__project { flex: 1 1 120px; max-width: none; }
+  .mat-page__head { flex-wrap: wrap; }
+}
+
+/* ---- Swipes and the menu of a row ---------------------------------------------------------------------------------- */
+.md-task > .mat-item__row { align-items: flex-start; }
+.md-task .mat-item__option { min-width: 84px; }
+/* a long press: the row answers before the menu opens; the system's own menu of a link (iOS) and the text selection stay away */
+.md-task { -webkit-touch-callout: none; }
+@media (pointer: coarse) { .md-task__main { user-select: none; -webkit-user-select: none; } }
+.md-task.is-pressed > .mat-item__row { background: var(--mat-accent-soft); transition: background var(--mat-dur-fast) var(--mat-ease); }
+
+.md-taskmenu { inset: auto; margin: 0; min-width: 260px; }
+.md-taskmenu:popover-open { display: block; }
+.md-taskmenu__title { padding: var(--mat-space-1) var(--mat-space-2) var(--mat-space-2); font-weight: 650; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 320px; }
+.md-taskmenu__label { padding: var(--mat-space-1) var(--mat-space-2) 2px; color: var(--mat-text-muted); font-size: var(--mat-fs-xs); }
+.md-taskmenu__row { display: flex; gap: var(--mat-space-1); padding: 2px var(--mat-space-1) var(--mat-space-1); }
+.md-taskmenu__chip {
+  display: inline-grid; place-items: center; flex: 1 1 0; min-width: 40px; height: var(--mat-control-h);
+  padding: 0; border: 1px solid var(--mat-border); border-radius: var(--mat-radius); background: transparent; color: var(--mat-text); cursor: pointer;
+}
+.md-taskmenu__chip:hover, .md-taskmenu__chip:focus-visible { background: var(--mat-surface-3); }
+.md-taskmenu__chip[aria-checked="true"] { border-color: var(--mat-accent); background: var(--mat-accent-soft); }
+@media (max-width: 599px) {
+  .md-taskmenu { left: var(--mat-space-2); right: var(--mat-space-2); bottom: var(--mat-space-2); top: auto; max-width: none; padding-bottom: calc(var(--mat-space-2) + env(safe-area-inset-bottom)); }
+  .md-taskmenu__title { max-width: none; }
+}
+/* the More button the toolkit adds to a sliding row: on a touch screen the swipe does it; with a mouse it shows on hover, like the handle */
+@media (pointer: coarse) { .md-task .mat-item__more { display: none; } }
+@media (pointer: fine) {
+  .md-task .mat-item__more { opacity: 0; transition: opacity var(--mat-dur-fast) var(--mat-ease); }
+  .md-task:hover .mat-item__more, .md-task:focus-within .mat-item__more { opacity: 1; }
+}
+
+/* ---- The tools of a task list in the top bar (search, filter, sort) ----------------------------------------------- */
+.md-topbtn { position: relative; }
+.md-topbtn.is-active { color: var(--mat-accent-text); }
+.md-topbtn__dot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--mat-accent); box-shadow: 0 0 0 2px var(--mat-surface); }
+/* the chips of the tools in effect stand above the list, without the frame of a toolbar */
+.md-view > .mat-chips { margin: 0; }
+
+/* Phones: a popover of the browser is fit-content by default; the menu of a row and the panels of the editor are sheets over the whole width.
+   The top bar holds the menu button and the tools: the breadcrumb is left out there (the title of the page stands right under it). */
+@media (max-width: 599px) {
+  .md-taskmenu, .md-qa__pop { width: auto; height: auto; }
+  .mat-topbar .mat-crumbs { display: none; }
+  .mat-topbar .mat-topbar__actions { margin-left: auto; }
+}

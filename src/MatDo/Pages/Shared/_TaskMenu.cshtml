@@ -1,0 +1,27 @@
+@*
+    The menu of a task row: a long press on a phone, a right click (or the menu key) on a computer opens it at the row (tasks.js).
+    A popover in the top layer (above a dialog); on a phone it is a sheet at the bottom. One menu per page, for every row.
+*@
+<div class="mat-menu md-taskmenu" id="md-task-menu" role="menu" popover="manual" aria-label="@L["TaskMenu.Label"]">
+    <div class="md-taskmenu__title" data-task-menu-title></div>
+    <button type="button" class="mat-menu__item" role="menuitem" data-task-act="complete">@Ui.Icon("check")<span>@L["Tasks.Complete"]</span></button>
+    <div class="mat-menu__sep" role="separator"></div>
+    <div class="md-taskmenu__label">@L["QuickAdd.Date"]</div>
+    <div class="md-taskmenu__row" role="group" aria-label="@L["QuickAdd.Date"]">
+        <button type="button" class="md-taskmenu__chip" role="menuitem" data-task-act="due" data-due="today" aria-label="@L["Common.Date.Today"]" data-tip="@L["Common.Date.Today"]">@Ui.Icon("calendar-today")</button>
+        <button type="button" class="md-taskmenu__chip" role="menuitem" data-task-act="due" data-due="tomorrow" aria-label="@L["Common.Date.Tomorrow"]" data-tip="@L["Common.Date.Tomorrow"]">@Ui.Icon("sun")</button>
+        <button type="button" class="md-taskmenu__chip" role="menuitem" data-task-act="due" data-due="weekend" aria-label="@L["QuickAdd.Weekend"]" data-tip="@L["QuickAdd.Weekend"]">@Ui.Icon("sofa")</button>
+        <button type="button" class="md-taskmenu__chip" role="menuitem" data-task-act="due" data-due="nextweek" aria-label="@L["QuickAdd.NextWeek"]" data-tip="@L["QuickAdd.NextWeek"]">@Ui.Icon("calendar-days")</button>
+        <button type="button" class="md-taskmenu__chip" role="menuitem" data-task-act="due" data-due="none" aria-label="@L["QuickAdd.NoDate"]" data-tip="@L["QuickAdd.NoDate"]">@Ui.Icon("x-circle")</button>
+    </div>
+    <div class="md-taskmenu__label">@L["QuickAdd.Priority"]</div>
+    <div class="md-taskmenu__row" role="group" aria-label="@L["QuickAdd.Priority"]">
+        @foreach (var (value, label) in Ui.Priorities)
+        {
+            <button type="button" class="md-taskmenu__chip" role="menuitemradio" aria-checked="false" data-task-act="priority" data-priority="@value" aria-label="@label" data-tip="@label">@Ui.Icon("flag", Ui.PriorityClass(value))</button>
+        }
+    </div>
+    <div class="mat-menu__sep" role="separator"></div>
+    <a class="mat-menu__item" role="menuitem" href="#" data-task-act="edit">@Ui.Icon("edit")<span>@L["Common.Edit"]</span></a>
+    <button type="button" class="mat-menu__item mat-menu__item--danger" role="menuitem" data-task-act="delete">@Ui.Icon("trash")<span>@L["Tasks.Delete"]</span></button>
+</div>

@@ -85,8 +85,12 @@
       if (p.deadlineText) { html += chip('deadline', 'target', t('Js.Deadline').replace('{0}', p.deadlineText)); }
       if (p.description) { html += chip('description', 'file-text', t('Js.Kind.description')); }
       chips.innerHTML = html;
-      $('[data-qa-date-label]', root).textContent = noDate.value === 'true' ? t('Js.NoDate') : due.value ? label(due.value, time.value) : t('Js.Kind.date');
-      $('[data-qa-priority-label]', root).textContent = prio.value ? 'P' + prio.value : t('Js.Kind.priority');
+      var dateLabel = $('[data-qa-date-label]', root), prioLabel = $('[data-qa-priority-label]', root);
+      dateLabel.textContent = noDate.value === 'true' ? t('Js.NoDate') : due.value ? label(due.value, time.value) : t('Js.Kind.date');
+      prioLabel.textContent = prio.value ? 'P' + prio.value : t('Js.Kind.priority');
+      // a button with a value picked by hand shows it, also on a phone (where the others show their icon only)
+      dateLabel.parentNode.classList.toggle('is-set', noDate.value === 'true' || !!due.value);
+      prioLabel.parentNode.classList.toggle('is-set', !!prio.value);
     }
 
     function parse() {
