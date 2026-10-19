@@ -2,7 +2,7 @@
    - The static files (toolkit, styles, scripts, icons) come from the cache first and are refreshed in the background (their addresses carry ?v=<hash>).
    - Pages always come from the network (they hold the tasks of a person: nothing of them is kept on the device); without a network the offline page is shown.
    - Requests that change something (POST) and the APIs are never cached. */
-const VERSION = 'matdo-v3';
+const VERSION = 'matdo-v4';
 const SHELL = ['/offline.html', '/matui/matui.css', '/css/app.css', '/favicon.svg', '/img/icon-192.png', '/img/icon-512.png', '/img/logo/matdo-logo.svg', '/img/logo/matdo-logo-dark.svg', '/manifest.webmanifest'];
 
 self.addEventListener('install', event => {

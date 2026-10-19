@@ -258,3 +258,6 @@
   .mat-topbar .mat-crumbs { display: none; }
   .mat-topbar .mat-topbar__actions { margin-left: auto; }
 }
+
+/* a single button under the message of a centred card (errors, offline, closed registration) stands in the middle */
+.md-center { justify-content: center; }
