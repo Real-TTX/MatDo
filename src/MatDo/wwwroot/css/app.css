@@ -126,21 +126,26 @@
 .md-qa__tool { position: relative; }
 .md-qa__tool .mat-btn.is-set { border-color: var(--mat-accent); color: var(--mat-accent-text); }
 .md-qa__project { width: auto; max-width: 220px; }
+/* the panels of the editor are popovers (top layer, above the dialog): quickadd.js puts them under their button */
 .md-qa__pop {
-  position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; min-width: 240px; max-height: 360px; overflow-y: auto;
-  display: flex; flex-direction: column; gap: var(--mat-space-1); padding: var(--mat-space-2);
-  background: var(--mat-surface); border: 1px solid var(--mat-border); border-radius: var(--mat-radius-lg); box-shadow: var(--mat-shadow-3);
+  position: fixed; inset: auto; margin: 0; z-index: 30; min-width: 240px; max-height: min(520px, calc(100vh - 16px)); overflow-y: auto;
+  flex-direction: column; gap: var(--mat-space-1); padding: var(--mat-space-2);
+  background: var(--mat-surface); color: var(--mat-text); border: 1px solid var(--mat-border); border-radius: var(--mat-radius-lg); box-shadow: var(--mat-shadow-3);
 }
-.md-qa__pop[hidden] { display: none; }
+.md-qa__pop:popover-open { display: flex; }
+.md-qa__pop:not([popover])[hidden] { display: none; }
+.md-qa__pop--date { width: 300px; }
 .md-qa__quick { display: flex; flex-direction: column; gap: 2px; padding-bottom: var(--mat-space-2); border-bottom: 1px solid var(--mat-border); }
 .md-qa__opt { display: flex; align-items: center; gap: var(--mat-space-2); min-height: 36px; padding: 0 var(--mat-space-2); border: 0; border-radius: var(--mat-radius); background: transparent; color: var(--mat-text); font: inherit; text-align: left; cursor: pointer; }
 .md-qa__opt:hover, .md-qa__opt:focus-visible { background: var(--mat-surface-3); }
-.md-qa__pick { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--mat-space-2); padding-top: var(--mat-space-1); }
-.md-qa__pick .mat-btn { grid-column: 1 / -1; }
+.md-qa__time { display: flex; align-items: center; justify-content: space-between; gap: var(--mat-space-2); padding: var(--mat-space-1) var(--mat-space-1) var(--mat-space-2); border-bottom: 1px solid var(--mat-border); }
+.md-qa__time .mat-label { display: inline-flex; align-items: center; gap: var(--mat-space-1); margin: 0; }
+.md-qa__time .mat-input { width: auto; }
+.md-qa__calendar { border: 0; box-shadow: none; padding: 0; }
 .md-qa__check .mat-check__text { display: inline-flex; align-items: center; gap: var(--mat-space-1); }
 .md-qa__foot { justify-content: flex-start; align-items: center; }
 .md-qa__keys { margin: 0; color: var(--mat-text-muted); font-size: var(--mat-fs-xs); }
-@media (max-width: 599px) { .md-qa__pop { position: fixed; left: var(--mat-space-3); right: var(--mat-space-3); top: auto; bottom: var(--mat-space-3); max-height: 70vh; } }
+@media (max-width: 599px) { .md-qa__pop, .md-qa__pop--date { left: var(--mat-space-3); right: var(--mat-space-3); top: auto; bottom: var(--mat-space-3); width: auto; max-height: 80vh; } }
 
 /* the dialog of the shortcut Q: a little wider than a small dialog, the editor without its own frame */
 .md-quick { width: min(640px, calc(100vw - 2 * var(--mat-space-4))); }
@@ -188,4 +193,12 @@
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]):not([data-theme="dark"]) .md-brandmark--light { display: none; }
   :root:not([data-theme="light"]):not([data-theme="dark"]) .md-brandmark--dark { display: block; }
+}
+
+/* the date panel on a wide screen, like Todoist: the quick choices and the time at the left, the month at the right (short enough to fit under its button) */
+@media (min-width: 600px) {
+  .md-qa__pop--date:popover-open { display: grid; grid-template-columns: 210px 280px; grid-template-rows: auto 1fr; column-gap: var(--mat-space-3); width: auto; }
+  .md-qa__pop--date .md-qa__quick { grid-column: 1; grid-row: 1; border-bottom: 0; padding-bottom: 0; }
+  .md-qa__pop--date .md-qa__time { grid-column: 1; grid-row: 2; align-self: start; border-bottom: 0; border-top: 1px solid var(--mat-border); padding-top: var(--mat-space-2); }
+  .md-qa__pop--date .md-qa__calendar { grid-column: 2; grid-row: 1 / span 2; border-left: 1px solid var(--mat-border); padding-left: var(--mat-space-3); }
 }

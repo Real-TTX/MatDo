@@ -1,0 +1,15 @@
+@model EmptyStateModel
+@* The empty state of a list (LIST-11): the first item to create, or the tools to reset. A direct child of .mat-list, so it stands where the rows would be. *@
+<div class="mat-empty @(Model.First ? "mat-empty--first" : "")">
+    <span class="mat-empty__icon">@Ui.Icon(Model.First ? Model.Icon : "search")</span>
+    <div class="mat-empty__title">@Model.Title</div>
+    <p>@Model.Text</p>
+    @if (Model.First && Model.ActionUrl is not null)
+    {
+        <a class="mat-btn mat-btn--primary" href="@Model.ActionUrl">@Ui.Icon("plus")<span>@Model.ActionLabel</span></a>
+    }
+    else if (!Model.First && Model.ResetUrl is not null)
+    {
+        <a class="mat-btn mat-btn--secondary" href="@Model.ResetUrl">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
+    }
+</div>

@@ -42,7 +42,8 @@
         <div class="md-qa__tools">
             <div class="md-qa__tool">
                 <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="date" aria-expanded="false" aria-controls="@id-pop-date">@Ui.Icon("calendar")<span data-qa-date-label>@L["QuickAdd.Date"]</span></button>
-                <div class="md-qa__pop" id="@id-pop-date" role="dialog" aria-label="@L["QuickAdd.ChooseDate"]" hidden data-qa-pop="date">
+                @* like Todoist: the quick choices, then the month that is always shown (a click on a day takes it), the time is optional *@
+                <div class="md-qa__pop md-qa__pop--date" id="@id-pop-date" role="dialog" aria-label="@L["QuickAdd.ChooseDate"]" popover="manual" data-qa-pop="date">
                     <div class="md-qa__quick">
                         <button type="button" class="md-qa__opt" data-qa-date="today">@Ui.Icon("calendar-today")<span>@L["Common.Date.Today"]</span></button>
                         <button type="button" class="md-qa__opt" data-qa-date="tomorrow">@Ui.Icon("sun")<span>@L["Common.Date.Tomorrow"]</span></button>
@@ -50,18 +51,18 @@
                         <button type="button" class="md-qa__opt" data-qa-date="nextweek">@Ui.Icon("calendar-days")<span>@L["QuickAdd.NextWeek"]</span></button>
                         <button type="button" class="md-qa__opt" data-qa-date="none">@Ui.Icon("x-circle")<span>@L["QuickAdd.NoDate"]</span></button>
                     </div>
-                    <div class="md-qa__pick">
-                        <label class="mat-label" for="@id-pick-date">@L["QuickAdd.Date"]</label>
-                        <input class="mat-input mat-input--sm" type="date" id="@id-pick-date" data-qa-pick-date />
-                        <label class="mat-label" for="@id-pick-time">@L["QuickAdd.Time"]</label>
+                    <div class="md-qa__time">
+                        <label class="mat-label" for="@id-pick-time">@Ui.Icon("clock")@L["QuickAdd.Time"]</label>
                         <input class="mat-input mat-input--sm" type="time" id="@id-pick-time" data-qa-pick-time />
-                        <button type="button" class="mat-btn mat-btn--primary mat-btn--sm" data-qa-pick-apply>@L["QuickAdd.Apply"]</button>
+                    </div>
+                    <div class="mat-calendar md-qa__calendar" data-calendar>
+                        <input class="mat-calendar__input" id="@id-pick-date" aria-label="@L["QuickAdd.ChooseDate"]" data-qa-pick-date />
                     </div>
                 </div>
             </div>
             <div class="md-qa__tool">
                 <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="priority" aria-expanded="false" aria-controls="@id-pop-priority">@Ui.Icon("flag")<span data-qa-priority-label>@L["QuickAdd.Priority"]</span></button>
-                <div class="md-qa__pop" id="@id-pop-priority" role="dialog" aria-label="@L["QuickAdd.ChoosePriority"]" hidden data-qa-pop="priority">
+                <div class="md-qa__pop" id="@id-pop-priority" role="dialog" aria-label="@L["QuickAdd.ChoosePriority"]" popover="manual" data-qa-pop="priority">
                     @foreach (var (value, label) in Ui.Priorities)
                     {
                         <button type="button" class="md-qa__opt" data-qa-set-priority="@value">@Ui.Icon("flag", Ui.PriorityClass(value))<span>@label</span></button>
@@ -70,7 +71,7 @@
             </div>
             <div class="md-qa__tool">
                 <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="labels" aria-expanded="false" aria-controls="@id-pop-labels">@Ui.Icon("tag")<span data-qa-labels-label>@L["Labels.Title"]</span></button>
-                <div class="md-qa__pop" id="@id-pop-labels" role="dialog" aria-label="@L["QuickAdd.ChooseLabels"]" hidden data-qa-pop="labels">
+                <div class="md-qa__pop" id="@id-pop-labels" role="dialog" aria-label="@L["QuickAdd.ChooseLabels"]" popover="manual" data-qa-pop="labels">
                     @if (Model.Labels.Count == 0)
                     {
                         <p class="mat-hint">@Html.Raw(L["QuickAdd.NoLabels"].Value)</p>

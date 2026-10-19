@@ -12,11 +12,7 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="mat-empty">
-            <span class="mat-empty__icon">@Ui.Icon("webhook")</span>
-            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Webhooks.Empty.Title" : "Webhooks.NoMatch"]</div>
-            <p>@L[Model.Toolbar.Total == 0 ? "Webhooks.Empty.Text" : "Lists.ChangeTools"]</p>
-        </div>
+        <partial name="_Empty" model="@(new EmptyStateModel("webhook", L[Model.Toolbar.Total == 0 ? "Webhooks.Empty.Title" : "Webhooks.NoMatch"].Value, L[Model.Toolbar.Total == 0 ? "Webhooks.Empty.Text" : "Lists.ChangeTools"].Value, Model.Toolbar.Total == 0, "/Account/Webhooks/Edit", L["Webhooks.New"].Value, Model.Toolbar.UrlReset()))" />
     }
     else
     {

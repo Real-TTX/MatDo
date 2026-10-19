@@ -10,15 +10,7 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="mat-empty">
-            <span class="mat-empty__icon">@Ui.Icon("hash")</span>
-            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Projects.Empty.Title" : "Projects.NoMatch"]</div>
-            <p>@L[Model.Toolbar.Total == 0 ? "Projects.Empty.Text" : "Lists.ChangeTools"]</p>
-            @if (Model.Toolbar.Total > 0)
-            {
-                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
-            }
-        </div>
+        <partial name="_Empty" model="@(new EmptyStateModel("hash", L[Model.Toolbar.Total == 0 ? "Projects.Empty.Title" : "Projects.NoMatch"].Value, L[Model.Toolbar.Total == 0 ? "Projects.Empty.Text" : "Lists.ChangeTools"].Value, Model.Toolbar.Total == 0, "/Projects/Edit", L["Projects.New"].Value, Model.Toolbar.UrlReset()))" />
     }
     else
     {

@@ -14,11 +14,7 @@
 
             @if (Model.Items.Count == 0)
             {
-                <div class="mat-empty">
-                    <span class="mat-empty__icon">@Ui.Icon("keyboard")</span>
-                    <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Keywords.Empty.Title" : "Keywords.NoMatch"]</div>
-                    <p>@L[Model.Toolbar.Total == 0 ? "Keywords.Empty.Text" : "Lists.ChangeTools"]</p>
-                </div>
+                <partial name="_Empty" model="@(new EmptyStateModel("keyboard", L[Model.Toolbar.Total == 0 ? "Keywords.Empty.Title" : "Keywords.NoMatch"].Value, L[Model.Toolbar.Total == 0 ? "Keywords.Empty.Text" : "Lists.ChangeTools"].Value, Model.Toolbar.Total == 0, "/Account/Keywords/Edit", L["Keywords.New"].Value, Model.Toolbar.UrlReset()))" />
             }
             else
             {

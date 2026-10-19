@@ -73,17 +73,13 @@
     function renderChips() {
       var p = parsed || {};
       var html = '';
-      if (noDate.value === 'true') {
-        html += chip('manualdate', 'calendar', t('Js.NoDate'), '', true);
-      } else if (due.value) {
-        html += chip('manualdate', 'calendar', label(due.value, time.value), '', true);
-      } else if (p.dueText) {
+      // the chips are what the text says; a date or a priority picked by hand shows on its button only (like Todoist)
+      if (noDate.value !== 'true' && !due.value && p.dueText) {
         html += chip('date', p.recurrence ? 'repeat' : 'calendar', p.dueText + (p.recurrence ? ' · ' + p.recurrence : ''));
       }
       if (p.project && touched.value !== 'true') { html += chip('project', 'hash', p.project.name, p.project.isNew ? '<span class="md-chip__new">' + esc(t('Js.New')) + '</span>' : ''); }
       if (p.section) { html += chip('section', 'list', p.section); }
-      if (prio.value) { html += chip('manualpriority', 'flag', 'P' + prio.value, '', true); }
-      else if (p.priority) { html += chip('priority', 'flag', 'P' + p.priority); }
+      if (!prio.value && p.priority) { html += chip('priority', 'flag', 'P' + p.priority); }
       (p.labels || []).forEach(function (l) { html += chip('label', 'tag', l); });
       if (labels.value) { labels.value.split(',').forEach(function (l) { if (l) { html += chip('manuallabel:' + l, 'tag', l, '', true); } }); }
       if (p.deadlineText) { html += chip('deadline', 'target', t('Js.Deadline').replace('{0}', p.deadlineText)); }
@@ -117,11 +113,34 @@
       off.value = Object.keys(disabled).join(',');
     }
 
+    // The panels (date, priority, labels) are popovers: they lie in the top layer, above the dialog of the quick add, so nothing clips them.
+    // On a wide screen they open under their button (above it when there is no room below); on a phone the CSS makes them a sheet at the bottom.
+    function isOpen(p) { try { return p.matches(':popover-open'); } catch (e) { return !p.hidden; } }
+    function showPop(p, btn) {
+      if (p.showPopover) { if (!isOpen(p)) { p.showPopover(); } } else { p.hidden = false; }
+      place(p, btn);
+    }
+    function hidePop(p) {
+      if (p.hidePopover) { if (isOpen(p)) { p.hidePopover(); } } else { p.hidden = true; }
+    }
+    function place(p, btn) {
+      if (window.innerWidth < 600) { p.style.left = ''; p.style.top = ''; return; }
+      var r = btn.getBoundingClientRect();
+      var w = p.offsetWidth, h = p.offsetHeight;
+      var top = r.bottom + 4;
+      if (top + h > window.innerHeight - 8 && r.top - h - 4 >= 8) { top = r.top - h - 4; }
+      top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
+      var left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
+      p.style.top = top + 'px';
+      p.style.left = left + 'px';
+    }
+
     function closePops(except) {
       $$('[data-qa-pop]', root).forEach(function (p) {
-        if (p !== except) { p.hidden = true; var b = $('[aria-controls="' + p.id + '"]', root); if (b) { b.setAttribute('aria-expanded', 'false'); } }
+        if (p !== except) { hidePop(p); var b = $('[aria-controls="' + p.id + '"]', root); if (b) { b.setAttribute('aria-expanded', 'false'); } }
       });
     }
+    window.addEventListener('resize', function () { closePops(); });
 
     function reset() {
       form.reset();
@@ -131,6 +150,7 @@
       disabled = {};
       tokens = []; parsed = null;
       $$('[data-qa-label]', root).forEach(function (c) { c.checked = false; });
+      if (calendar) { setCalendar(''); timeField.value = ''; }
       paint(); renderChips(); autosize(input); autosize(desc);
     }
 
@@ -182,15 +202,21 @@
     $$('[data-qa-open]', root).forEach(function (btn) {
       btn.addEventListener('click', function () {
         var pop = $('#' + btn.getAttribute('aria-controls'));
-        var open = pop.hidden;
+        var open = !isOpen(pop);
         closePops(pop);
-        pop.hidden = !open;
+        if (open) {
+          if (pop.getAttribute('data-qa-pop') === 'date') { syncCalendar(); }
+          showPop(pop, btn);
+          var first = $('button, input', pop);
+          if (first) { first.focus(); }
+        } else {
+          hidePop(pop);
+        }
         btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-        if (open) { var first = $('button, input', pop); if (first) { first.focus(); } }
       });
     });
     root.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && $$('[data-qa-pop]', root).some(function (p) { return !p.hidden; })) { e.stopPropagation(); e.preventDefault(); closePops(); input.focus(); }
+      if (e.key === 'Escape' && $$('[data-qa-pop]', root).some(isOpen)) { e.stopPropagation(); e.preventDefault(); closePops(); input.focus(); }
     });
     document.addEventListener('click', function (e) { if (!e.target.closest('.md-qa__tool')) { closePops(); } });
 
@@ -209,14 +235,34 @@
         if (which === 'tomorrow') { d.setDate(d.getDate() + 1); }
         if (which === 'weekend') { var w = d.getDay(); if (w !== 6 && w !== 0) { d.setDate(d.getDate() + (6 - w)); } }
         if (which === 'nextweek') { d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7)); }
-        pickDate(d);
+        pickDate(d, timeField.value);
       });
     });
-    $('[data-qa-pick-apply]', root).addEventListener('click', function () {
-      var v = $('[data-qa-pick-date]', root).value;
-      if (!v) { $('[data-qa-pick-date]', root).focus(); return; }
-      var p = v.split('-');
-      pickDate(new Date(+p[0], +p[1] - 1, +p[2]), $('[data-qa-pick-time]', root).value);
+    // the month that is always shown (MatUi data-calendar): a click on a day takes it at once, with the time of the field above it
+    var calendar = $('[data-qa-pick-date]', root);
+    var timeField = $('[data-qa-pick-time]', root);
+    var syncing = false;
+    function setCalendar(value) {
+      syncing = true;
+      calendar.value = value;
+      calendar.dispatchEvent(new Event('change', { bubbles: true }));
+      syncing = false;
+    }
+    function syncCalendar() {
+      setCalendar(due.value || '');
+      timeField.value = time.value || '';
+    }
+    calendar.addEventListener('change', function () {
+      if (syncing || !/^\d{4}-\d{2}-\d{2}$/.test(calendar.value)) { return; }
+      var p = calendar.value.split('-');
+      pickDate(new Date(+p[0], +p[1] - 1, +p[2]), timeField.value);
+    });
+    // a time without a day: today (like the text "um 15 Uhr"); with a day: that day at this time
+    timeField.addEventListener('change', function () {
+      if (!timeField.value) { time.value = ''; renderChips(); return; }
+      if (!due.value) { due.value = iso(new Date()); noDate.value = 'false'; setOff('date', true); setCalendar(due.value); }
+      time.value = timeField.value;
+      parse();
     });
     $$('[data-qa-set-priority]', root).forEach(function (b) {
       b.addEventListener('click', function () { prio.value = b.getAttribute('data-qa-set-priority'); setOff('priority', true); closePops(); parse(); input.focus(); });

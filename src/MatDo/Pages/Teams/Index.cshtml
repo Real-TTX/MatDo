@@ -10,11 +10,7 @@
 
     @if (Model.Items.Count == 0)
     {
-        <div class="mat-empty">
-            <span class="mat-empty__icon">@Ui.Icon("users")</span>
-            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Teams.Empty.Title" : "Teams.NoMatch"]</div>
-            <p>@L[Model.Toolbar.Total == 0 ? "Teams.Empty.Text" : "Lists.ChangeTools"]</p>
-        </div>
+        <partial name="_Empty" model="@(new EmptyStateModel("users", L[Model.Toolbar.Total == 0 ? "Teams.Empty.Title" : "Teams.NoMatch"].Value, L[Model.Toolbar.Total == 0 ? "Teams.Empty.Text" : "Lists.ChangeTools"].Value, Model.Toolbar.Total == 0, "/Teams/Edit", L["Teams.New"].Value, Model.Toolbar.UrlReset()))" />
     }
     else
     {

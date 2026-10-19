@@ -10,7 +10,7 @@ editor (live, marks in the text) and the **webhook** (`POST /api/v1/webhook/{tok
 UI languages: **English and German** (catalog, see below). Port **6006**. Accent **#d03d33** (Todoist-like red, AA with white).
 
 Stack: .NET 10, ASP.NET Core **Razor Pages**, EF Core + **PostgreSQL**, the **MatUi** toolkit of the sister project MatDesign (copied into `wwwroot/matui`, never edited by hand;
-copied from `../MatNote/src/MatNote/wwwroot/matui`, version in the first line of `matui.css`).
+copied from MatDesign itself: `http://localhost:8060/ui/matui.css`, `matui.js`, `matui.boot.js`, `matui-icons.svg` of the running MatDesign, the bundle of `../MatDesign/src/MatUi` – never from a sister app, their copies are older; version and build in the first line of `matui.css`). Follow the rules of MatDesign (`../MatDesign/src/MatDesign.Core/RuleBook.cs`), e.g. LIST-11: an empty list offers its first item in `mat-empty--first` (partial `_Empty`).
 
 ## Build / run / test
 
