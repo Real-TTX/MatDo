@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,7 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
 
     [BindProperty] public string SectionName { get; set; } = string.Empty;
 
-    public string Title => Project.IsInbox ? "Eingang" : Project.Name;
+    public string Title => Project.IsInbox ? Text.T("Project.Inbox") : Project.Name;
 
     public async Task<IActionResult> OnGetAsync(long id, bool done = false)
     {
@@ -77,7 +78,7 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
         if (done)
         {
             var finished = await tasks.RowsAsync(all.Where(t => t.IsCompleted), q with { Sort = "completed", Descending = true }, Today, 200);
-            Done = new TaskListModel { Id = "list-done", Rows = finished, Today = Today, ReturnUrl = Here, ShowProject = false, Empty = "Noch nichts erledigt." };
+            Done = new TaskListModel { Id = "list-done", Rows = finished, Today = Today, ReturnUrl = Here, ShowProject = false, Empty = Text.T("Projects.View.NothingDone") };
         }
 
         ViewData["ActiveProject"] = id;
@@ -95,14 +96,14 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
         var name = SectionName.Trim();
         if (name.Length == 0)
         {
-            FlashError("Bitte einen Namen für den Abschnitt eingeben.");
+            FlashError(Text.T("Common.NameRequired"));
         }
         else
         {
             var order = (await db.Sections.Where(s => s.ProjectId == id).MaxAsync(s => (int?)s.SortOrder) ?? 0) + 1;
             db.Sections.Add(new Section { ProjectId = id, Name = name.Length > 120 ? name[..120] : name, SortOrder = order });
             await db.SaveChangesAsync();
-            Flash($"Abschnitt „{name}“ angelegt.");
+            Flash(Text.T("Common.CreatedNamed", name));
         }
 
         return LocalRedirect($"/Projects/View?id={id}");

@@ -70,6 +70,9 @@ public sealed class User : SoftEntity
     /// <summary>The IANA time zone "today" and every due date are computed in.</summary>
     public string TimeZone { get; set; } = "Europe/Berlin";
 
+    /// <summary>The language of the interface: en or de; empty = the language of the browser.</summary>
+    public string Language { get; set; } = string.Empty;
+
     /// <summary>A project named by the quick add or the webhook that does not exist is created instead of being ignored.</summary>
     public bool AutoCreateProjects { get; set; }
 

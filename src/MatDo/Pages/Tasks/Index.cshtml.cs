@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using System.Globalization;
 using MatDo.Services;
 
@@ -39,8 +40,8 @@ public sealed class IndexModel(ProjectService projects, TaskService tasks) : App
         var all = await projects.ListAsync(UserId);
         Toolbar = TaskTools.Toolbar("filter", "/Tasks", q, await tasks.LabelChipsAsync(UserId), total, rows.Count, defaultSort: "due", extra:
         [
-            new FilterField("project", "Projekt", all.Select(x => new FilterOption(x.Id.ToString(CultureInfo.InvariantCulture), x.IsInbox ? "Eingang" : x.Name)).ToList(), project?.ToString(CultureInfo.InvariantCulture)),
-            new FilterField("who", "Zugewiesen", [new("me", "An mich"), new("others", "An andere")], who),
+            new FilterField("project", Text.T("Tasks.Project"), all.Select(x => new FilterOption(x.Id.ToString(CultureInfo.InvariantCulture), x.IsInbox ? Text.T("Project.Inbox") : x.Name)).ToList(), project?.ToString(CultureInfo.InvariantCulture)),
+            new FilterField("who", Text.T("Filter.Assigned"), [new("me", Text.T("Filter.ToMe")), new("others", Text.T("Filter.ToOthers"))], who),
         ]);
 
         var page = ListQuery.Page(Request);

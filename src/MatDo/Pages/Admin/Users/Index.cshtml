@@ -1,9 +1,9 @@
 @page "/Admin/Users"
 @model MatDo.Pages.Admin.Users.IndexModel
 @{
-    ViewData["Title"] = "Benutzer";
-    ViewData["PageSub"] = "Wer sich anmelden kann. Aufgaben bleiben privat: du siehst nur, wie viele jemand hat.";
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", null), ("Benutzer", null) };
+    ViewData["Title"] = L["Users.Title"].Value;
+    ViewData["PageSub"] = L["Users.Sub"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Admin.Title"].Value, null), (L["Users.Title"].Value, null) };
 }
 
 <div class="mat-list">
@@ -13,26 +13,26 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("search")</span>
-            <div class="mat-empty__title">Kein Benutzer passt</div>
-            <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>Zurücksetzen</span></a>
+            <div class="mat-empty__title">@L["Users.NoMatch"]</div>
+            <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
         </div>
     }
     else
     {
-        <md-table caption="Benutzer">
+        <md-table caption="@L["Users.Title"]">
             <thead>
-                <tr><th scope="col">Benutzer</th><th scope="col">Rolle</th><th scope="col">Status</th><th scope="col" class="mat-hide-md">Letzte Anmeldung</th><th scope="col" class="mat-num mat-hide-sm">Aufgaben</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+                <tr><th scope="col">@L["Users.Col.User"]</th><th scope="col">@L["Users.Col.Role"]</th><th scope="col">@L["Common.Status"]</th><th scope="col" class="mat-hide-md">@L["Users.Col.LastLogin"]</th><th scope="col" class="mat-num mat-hide-sm">@L["Tasks.Noun"]</th><th scope="col"><span class="mat-sr-only">@L["Common.Actions"]</span></th></tr>
             </thead>
             <tbody>
                 @foreach (var u in Model.Items)
                 {
                     <tr>
-                        <td data-label="Benutzer"><div class="mat-table__name"><span class="mat-avatar mat-avatar--sm" aria-hidden="true">@Ui.Initials(u.DisplayName)</span><span><a href="/Admin/Users/Edit?id=@u.Id">@u.DisplayName</a><small class="mat-mono">@u.Email</small></span></div></td>
-                        <td data-label="Rolle"><span class="mat-pill @(u.Role == UserRole.Admin ? "mat-pill--accent" : "mat-pill--plain")">@(u.Role == UserRole.Admin ? "Administrator" : "Benutzer")</span></td>
-                        <td data-label="Status">@if (!u.IsActive) { <span class="mat-pill mat-pill--error">Gesperrt</span> } else if (u.Locked) { <span class="mat-pill mat-pill--warn">Fehlversuche</span> } else { <span class="mat-pill mat-pill--ok">Aktiv</span> }</td>
-                        <td data-label="Letzte Anmeldung" class="mat-mono mat-hide-md">@(u.LastLogin is null ? "Nie" : Dates.Stamp(u.LastLogin, Model.Zone))</td>
-                        <td data-label="Aufgaben" class="mat-num mat-mono mat-hide-sm">@u.Tasks</td>
-                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Admin/Users/Edit?id=@u.Id" aria-label="@u.DisplayName bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                        <td data-label="@L["Users.Col.User"]"><div class="mat-table__name"><span class="mat-avatar mat-avatar--sm" aria-hidden="true">@Ui.Initials(u.DisplayName)</span><span><a href="/Admin/Users/Edit?id=@u.Id">@u.DisplayName</a><small class="mat-mono">@u.Email</small></span></div></td>
+                        <td data-label="@L["Users.Col.Role"]"><span class="mat-pill @(u.Role == UserRole.Admin ? "mat-pill--accent" : "mat-pill--plain")">@L[u.Role == UserRole.Admin ? "Common.Role.Admin" : "Common.Role.User"]</span></td>
+                        <td data-label="@L["Common.Status"]">@if (!u.IsActive) { <span class="mat-pill mat-pill--error">@L["Users.Disabled"]</span> } else if (u.Locked) { <span class="mat-pill mat-pill--warn">@L["Users.Locked"]</span> } else { <span class="mat-pill mat-pill--ok">@L["Common.Active"]</span> }</td>
+                        <td data-label="@L["Users.Col.LastLogin"]" class="mat-mono mat-hide-md">@(u.LastLogin is null ? L["Common.Never"].Value : Dates.Stamp(u.LastLogin, Model.Zone))</td>
+                        <td data-label="@L["Tasks.Noun"]" class="mat-num mat-mono mat-hide-sm">@u.Tasks</td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Admin/Users/Edit?id=@u.Id" aria-label="@L["Common.EditNamed", u.DisplayName]" data-tip="@L["Common.Edit"]">@Ui.Icon("edit")</a></div></td>
                     </tr>
                 }
             </tbody>
@@ -42,6 +42,6 @@
     <partial name="_Pager" model="Model.Pager" />
 
     <div class="mat-actions">
-        <a class="mat-btn mat-btn--primary" href="/Admin/Users/Edit">@Ui.Icon("plus")<span>Neuer Benutzer</span></a>
+        <a class="mat-btn mat-btn--primary" href="/Admin/Users/Edit">@Ui.Icon("plus")<span>@L["Users.New"]</span></a>
     </div>
 </div>

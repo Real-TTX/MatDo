@@ -1,32 +1,29 @@
 @page "/Account"
 @model MatDo.Pages.Account.IndexModel
 @{
-    ViewData["Title"] = "Einstellungen";
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Einstellungen", null) };
+    ViewData["Title"] = L["Settings.Profile"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, null), (L["Settings.Profile"].Value, null) };
     ViewData["Width"] = "narrow";
 }
-
-<partial name="_AccountTabs" model="@("profile")" />
 
 <form class="mat-form" method="post" novalidate>
     <partial name="_FormSummary" model="ViewData.ModelState" />
     <div class="mat-card">
-        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("user")Profil</h2></div>
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("user")@L["Settings.Profile"]</h2></div>
         <div class="mat-card__body mat-form">
-            <md-field name="DisplayName" label="Name" required value="@Model.DisplayName" maxlength="120" autocomplete="name" msg-required="Bitte einen Namen eingeben." />
-            <md-field name="EmailShown" kind="email" label="E-Mail-Adresse" value="@Model.Email" disabled hint="Die Adresse zum Anmelden; ein Administrator kann sie ändern." />
-            <md-field name="TimeZone" kind="picker" label="Zeitzone" value="@Model.TimeZone" options="Model.Zones" picker="search"
-                      hint="„Heute“, „morgen“ und jede Uhrzeit gelten in dieser Zone." />
-            <md-field name="Scheme" kind="select" label="Farbschema" value="@Model.Scheme" options="Model.Schemes" hint="Hell, dunkel oder automatisch stellst du unten links im Menü um." />
+            <md-field name="DisplayName" label="@L["Account.Name"]" required value="@Model.DisplayName" maxlength="120" autocomplete="name" msg-required="@L["Account.Name.Required"]" />
+            <md-field name="EmailShown" kind="email" label="@L["Account.Email"]" value="@Model.Email" disabled hint="@L["Settings.Email.Hint"]" />
+            <md-field name="Language" kind="select" label="@L["Common.Language"]" value="@Model.Language" options="Model.LanguageChoices" />
+            <md-field name="TimeZone" kind="picker" label="@L["Settings.TimeZone"]" value="@Model.TimeZone" options="Model.Zones" picker="search" hint="@L["Settings.TimeZone.Hint"]" />
+            <md-field name="Scheme" kind="select" label="@L["Settings.Scheme"]" value="@Model.Scheme" options="Model.Schemes" hint="@L["Settings.Scheme.Hint"]" />
         </div>
     </div>
     <div class="mat-card">
-        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("keyboard")Schnelleingabe und Webhook</h2></div>
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("keyboard")@L["Settings.QuickAdd"]</h2></div>
         <div class="mat-card__body mat-form">
-            <md-field name="AutoCreateProjects" kind="switch" label="Unbekannte Projekte anlegen" value="@Model.AutoCreateProjects.ToString()"
-                      hint="„#Neubau“ oder „Projekt Neubau“ legt das Projekt an, wenn es noch keins gibt. Aus: die Wörter bleiben im Titel, die Aufgabe landet im Eingang." />
-            <md-field name="AutoCreateLabels" kind="switch" label="Unbekannte Labels anlegen" value="@Model.AutoCreateLabels.ToString()" hint="„@@einkauf“ legt das Label an, wenn es noch keins gibt." />
+            <md-field name="AutoCreateProjects" kind="switch" label="@L["Settings.AutoProjects"]" value="@Model.AutoCreateProjects.ToString()" hint="@L["Settings.AutoProjects.Hint"]" />
+            <md-field name="AutoCreateLabels" kind="switch" label="@L["Settings.AutoLabels"]" value="@Model.AutoCreateLabels.ToString()" hint="@L["Settings.AutoLabels.Hint"]" />
         </div>
     </div>
-    <md-buttons save="Speichern" back="/Today" />
+    <md-buttons save="@L["Common.Save"]" back="/Today" />
 </form>

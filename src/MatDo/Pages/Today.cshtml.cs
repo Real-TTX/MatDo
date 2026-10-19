@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -38,7 +39,7 @@ public sealed class TodayModel(AppDbContext db, TaskService tasks, QuickAddEdito
         }
 
         await db.SaveChangesAsync();
-        Flash(overdue.Count == 1 ? "1 Aufgabe auf heute verschoben." : $"{overdue.Count} Aufgaben auf heute verschoben.");
+        Flash(Text.T(overdue.Count == 1 ? "Today.MovedOne" : "Today.Moved", overdue.Count));
         return LocalRedirect("/Today");
     }
 

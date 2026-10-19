@@ -1,8 +1,8 @@
 @page "/Account/Webhooks/Edit"
 @model MatDo.Pages.Account.Webhooks.EditModel
 @{
-    ViewData["Title"] = Model.IsNew ? "Neuer Webhook" : Model.Name;
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Einstellungen", "/Account"), ("Webhooks", "/Account/Webhooks"), (Model.IsNew ? "Neu" : Model.Name, null) };
+    ViewData["Title"] = Model.IsNew ? L["Webhooks.New"].Value : Model.Name;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, "/Account"), (L["Webhooks.Title"].Value, "/Account/Webhooks"), (Model.IsNew ? L["Common.New"].Value : Model.Name, null) };
 }
 
 <div class="mat-cols">
@@ -11,14 +11,13 @@
             <partial name="_FormSummary" model="ViewData.ModelState" />
             <div class="mat-card">
                 <div class="mat-card__body mat-form">
-                    <md-field name="Name" label="Name" required value="@Model.Name" maxlength="120" hint="Wofür du ihn benutzt, z. B. „iPhone Kurzbefehl“." msg-required="Bitte einen Namen eingeben." />
-                    <md-field name="ProjectId" kind="picker" label="Ziel ohne Projekt im Text" value="@Model.ProjectId" options="Model.Projects" picker="search"
-                              hint="Nennt der Text ein Projekt („#EIMER“, „Projekt EIMER“), kommt die Aufgabe dorthin, sonst hierher." />
-                    <md-field name="IsActive" kind="switch" label="Aktiv" value="@Model.IsActive.ToString()" />
+                    <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="120" hint="@L["Webhooks.Name.Hint"]" msg-required="@L["Common.NameRequired"]" />
+                    <md-field name="ProjectId" kind="picker" label="@L["Webhooks.Target"]" value="@Model.ProjectId" options="Model.Projects" picker="search" hint="@L["Webhooks.Target.Hint"]" />
+                    <md-field name="IsActive" kind="switch" label="@L["Common.Active"]" value="@Model.IsActive.ToString()" />
                 </div>
             </div>
-            <md-buttons save="@(Model.IsNew ? "Webhook anlegen" : "Speichern")" back="/Account/Webhooks" delete-handler="@(Model.IsNew ? null : "Delete")"
-                        delete-label="Webhook löschen" delete-confirm="Webhook löschen? Kurzbefehle mit dieser Adresse funktionieren dann nicht mehr." />
+            <md-buttons save="@L[Model.IsNew ? "Webhooks.Create" : "Common.Save"]" back="/Account/Webhooks" delete-handler="@(Model.IsNew ? null : "Delete")"
+                        delete-label="@L["Webhooks.Delete"]" delete-confirm="@L["Webhooks.DeleteConfirm"]" />
         </form>
     </div>
 
@@ -26,31 +25,31 @@
     {
         <div class="mat-col-12 mat-col-lg-7">
             <div class="mat-card">
-                <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("link")Adresse</h2></div>
+                <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("link")@L["Webhooks.Address"]</h2></div>
                 <div class="mat-card__body mat-form">
                     <div class="mat-field">
-                        <label class="mat-label" for="hook-url">POST an diese Adresse</label>
+                        <label class="mat-label" for="hook-url">@L["Webhooks.PostTo"]</label>
                         <div class="mat-input-group">
                             <input class="mat-input mat-mono" id="hook-url" value="@Model.HookUrl" readonly />
-                            <button type="button" class="mat-btn mat-btn--secondary" data-copy="#hook-url">@Ui.Icon("copy")<span>Kopieren</span></button>
+                            <button type="button" class="mat-btn mat-btn--secondary" data-copy="#hook-url">@Ui.Icon("copy")<span>@L["Common.Copy"]</span></button>
                         </div>
-                        <span class="mat-hint">Die Adresse ist das Geheimnis: wer sie kennt, kann dir Aufgaben anlegen. Gib sie nicht weiter.</span>
+                        <span class="mat-hint">@L["Webhooks.Secret"]</span>
                     </div>
                     <form method="post" asp-page-handler="Renew" asp-route-id="@Model.Id">
-                        <button type="submit" class="mat-btn mat-btn--ghost mat-btn--sm" data-confirm="Eine neue Adresse erzeugen? Die alte funktioniert dann sofort nicht mehr." data-confirm-ok="Neue Adresse">@Ui.Icon("refresh")<span>Neue Adresse erzeugen</span></button>
+                        <button type="submit" class="mat-btn mat-btn--ghost mat-btn--sm" data-confirm="@L["Webhooks.RenewConfirm"]" data-confirm-ok="@L["Webhooks.RenewOk"]">@Ui.Icon("refresh")<span>@L["Webhooks.Renew"]</span></button>
                     </form>
                 </div>
             </div>
 
             <div class="mat-card">
-                <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("smartphone")Apple Kurzbefehl</h2></div>
+                <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("smartphone")@L["Webhooks.Shortcut.Title"]</h2></div>
                 <div class="mat-card__body">
                     <ol class="md-steps">
-                        <li>In der App <strong>Kurzbefehle</strong> einen neuen Kurzbefehl anlegen, z. B. „Aufgabe“.</li>
-                        <li>Aktion <strong>Text diktieren</strong> hinzufügen (Sprache: Deutsch).</li>
-                        <li>Aktion <strong>Inhalte von URL abrufen</strong> hinzufügen: URL = die Adresse oben, Methode <strong>POST</strong>, Hauptteil <strong>JSON</strong>, Feld <code>text</code> = <em>Diktierter Text</em>.</li>
-                        <li>Optional: <strong>Wörterbuchwert abrufen</strong> für <code>message</code> und <strong>Mitteilung zeigen</strong> – dann bestätigt MatDo, was angelegt wurde.</li>
-                        <li>„Hey Siri, Aufgabe“ – und sprechen: <em>„Projekt EIMER Angebot schreiben übermorgen um 9 Uhr Priorität 1“</em>.</li>
+                        <li>@Html.Raw(L["Webhooks.Shortcut.Step1"].Value)</li>
+                        <li>@Html.Raw(L["Webhooks.Shortcut.Step2"].Value)</li>
+                        <li>@Html.Raw(L["Webhooks.Shortcut.Step3"].Value)</li>
+                        <li>@Html.Raw(L["Webhooks.Shortcut.Step4"].Value)</li>
+                        <li>@Html.Raw(L["Webhooks.Shortcut.Step5"].Value)</li>
                     </ol>
                 </div>
             </div>
@@ -60,12 +59,11 @@
                 <div class="mat-card__body">
                     <pre class="md-code" id="hook-curl">curl -X POST "@Model.HookUrl" \
   -H "Content-Type: application/json" \
-  -d '{"text": "Milch kaufen morgen 17 Uhr #Einkauf p2", "description": "laktosefrei"}'</pre>
+  -d '{"text": "@L["Webhooks.Curl.Text"]", "description": "@L["Webhooks.Curl.Description"]"}'</pre>
                     <div class="mat-btn-row mat-btn-row--plain">
-                        <button type="button" class="mat-btn mat-btn--ghost mat-btn--sm" data-copy="#hook-curl">@Ui.Icon("copy")<span>Kopieren</span></button>
+                        <button type="button" class="mat-btn mat-btn--ghost mat-btn--sm" data-copy="#hook-curl">@Ui.Icon("copy")<span>@L["Common.Copy"]</span></button>
                     </div>
-                    <p class="mat-hint">Antwort <code>201</code> mit JSON (<code>id</code>, <code>content</code>, <code>project</code>, <code>due</code>, <code>time</code>, <code>priority</code>, <code>labels</code>, <code>message</code>).
-                        Auch möglich: reiner Text als Body, ein Formular mit <code>text=</code>, oder <code>POST @(Model.BaseUrl)/api/v1/webhook</code> mit <code>Authorization: Bearer &lt;Token&gt;</code>.</p>
+                    <p class="mat-hint">@Html.Raw(L["Webhooks.Curl.Hint", Model.BaseUrl].Value)</p>
                 </div>
             </div>
         </div>

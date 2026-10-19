@@ -1,8 +1,8 @@
 @page "/Tasks"
 @model MatDo.Pages.Tasks.IndexModel
 @{
-    ViewData["Title"] = "Filter & Suche";
-    ViewData["PageSub"] = "Alle offenen Aufgaben aus deinen Projekten und Teams.";
+    ViewData["Title"] = L["Filter.Title"].Value;
+    ViewData["PageSub"] = L["Filter.Sub"].Value;
     ViewData["ActiveNav"] = "filter";
     ViewData["Width"] = "narrow";
 }
@@ -14,9 +14,9 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("search")</span>
-            <div class="mat-empty__title">Keine Aufgabe passt</div>
-            <p>Ändere die Suche oder die Filter.</p>
-            <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>Zurücksetzen</span></a>
+            <div class="mat-empty__title">@L["Tasks.NoMatch"]</div>
+            <p>@L["Lists.ChangeTools"]</p>
+            <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
         </div>
     }
     else

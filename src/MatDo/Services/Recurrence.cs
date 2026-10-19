@@ -1,4 +1,5 @@
 using System.Globalization;
+using MatDo.Localization;
 
 namespace MatDo.Services;
 
@@ -122,7 +123,7 @@ public static class Recurrence
         return from.AddMonths(months);
     }
 
-    /// <summary>The rule in words, for a person.</summary>
+    /// <summary>The rule in words, in the language of the interface.</summary>
     public static string Describe(string? rule)
     {
         if (string.IsNullOrWhiteSpace(rule))
@@ -133,19 +134,19 @@ public static class Recurrence
         var parts = rule.Split(':');
         if (parts[0] == "wd")
         {
-            return "Jeden Werktag";
+            return Text.T("Recurrence.Weekdays");
         }
 
         var n = parts.Length > 1 && int.TryParse(parts[1], CultureInfo.InvariantCulture, out var v) ? v : 1;
         int? extra = parts.Length > 2 && int.TryParse(parts[2], CultureInfo.InvariantCulture, out var x) ? x : null;
         return parts[0] switch
         {
-            "d" => n == 1 ? "Jeden Tag" : $"Alle {n} Tage",
-            "w" when extra is >= 1 and <= 7 => n == 1 ? $"Jeden {Dates.WeekdayName(extra.Value)}" : $"Alle {n} Wochen am {Dates.WeekdayName(extra.Value)}",
-            "w" => n == 1 ? "Jede Woche" : $"Alle {n} Wochen",
-            "m" when extra is not null => n == 1 ? $"Jeden Monat am {extra}." : $"Alle {n} Monate am {extra}.",
-            "m" => n == 1 ? "Jeden Monat" : $"Alle {n} Monate",
-            "y" => n == 1 ? "Jedes Jahr" : $"Alle {n} Jahre",
+            "d" => n == 1 ? Text.T("Recurrence.Daily") : Text.T("Recurrence.EveryNDays", n),
+            "w" when extra is >= 1 and <= 7 => n == 1 ? Text.T("Recurrence.WeeklyOn", Dates.WeekdayName(extra.Value)) : Text.T("Recurrence.EveryNWeeksOn", n, Dates.WeekdayName(extra.Value)),
+            "w" => n == 1 ? Text.T("Recurrence.Weekly") : Text.T("Recurrence.EveryNWeeks", n),
+            "m" when extra is not null => n == 1 ? Text.T("Recurrence.MonthlyOn", extra) : Text.T("Recurrence.EveryNMonthsOn", n, extra),
+            "m" => n == 1 ? Text.T("Recurrence.Monthly") : Text.T("Recurrence.EveryNMonths", n),
+            "y" => n == 1 ? Text.T("Recurrence.Yearly") : Text.T("Recurrence.EveryNYears", n),
             _ => rule,
         };
     }
@@ -156,12 +157,12 @@ public static class Recurrence
         var dow = due.DayOfWeek == DayOfWeek.Sunday ? 7 : (int)due.DayOfWeek;
         return
         [
-            ("d:1", "Jeden Tag"),
-            ("wd", "Jeden Werktag (Mo–Fr)"),
-            ($"w:1:{dow}", $"Jede Woche am {Dates.WeekdayName(dow)}"),
-            ($"w:2:{dow}", $"Alle 2 Wochen am {Dates.WeekdayName(dow)}"),
-            ($"m:1:{due.Day}", $"Jeden Monat am {due.Day}."),
-            ("y:1", "Jedes Jahr"),
+            ("d:1", Describe("d:1")),
+            ("wd", Text.T("Recurrence.WeekdaysMonFri")),
+            ($"w:1:{dow}", Describe($"w:1:{dow}")),
+            ($"w:2:{dow}", Describe($"w:2:{dow}")),
+            ($"m:1:{due.Day}", Describe($"m:1:{due.Day}")),
+            ("y:1", Describe("y:1")),
         ];
     }
 }

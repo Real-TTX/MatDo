@@ -23,11 +23,11 @@ public sealed class ToolbarModel
     public required string Action { get; init; }
 
     /// <summary>Names the list for screen readers ("Rules tools").</summary>
-    public string Label { get; init; } = "Liste";
+    public string Label { get; init; } = Localization.Text.T("Lists.List");
 
     public string? Search { get; init; }
 
-    public string SearchPlaceholder { get; init; } = "Suchen";
+    public string SearchPlaceholder { get; init; } = Localization.Text.T("Lists.Search");
 
     /// <summary>The search is a field right in the toolbar (at its left) and Filter and Sort stand at its right end; without it the search is a button that opens a dialog.</summary>
     public bool SearchField { get; init; }
@@ -49,7 +49,7 @@ public sealed class ToolbarModel
 
     public int Matching { get; init; }
 
-    public string Noun { get; init; } = "Einträge";
+    public string Noun { get; init; } = Localization.Text.T("Lists.Items");
 
     /// <summary>The views a list can be shown in (list and gallery); empty for a list that has only one.</summary>
     public IReadOnlyList<ViewOption> Views { get; init; } = [];
@@ -63,7 +63,7 @@ public sealed class ToolbarModel
     public string Counted(int n) => n == 1 ? $"1 {NounOne}" : $"{n} {Noun}";
 
     /// <summary>The noun for one ("Aufgabe"; the plural is <see cref="Noun"/>).</summary>
-    public string NounOne { get; init; } = "Eintrag";
+    public string NounOne { get; init; } = Localization.Text.T("Lists.Item");
 
     public bool SearchActive => !string.IsNullOrWhiteSpace(Search);
 

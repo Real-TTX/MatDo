@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -34,7 +35,7 @@ public sealed class LoginModel(AccountService accounts, SessionService sessions)
         CanRegister = (await accounts.SettingsAsync()).RegistrationOpen;
         if (string.IsNullOrWhiteSpace(Email) || string.IsNullOrEmpty(Password))
         {
-            ModelState.AddModelError(nameof(Email), "Bitte E-Mail-Adresse und Passwort eingeben.");
+            ModelState.AddModelError(nameof(Email), Text.T("Account.Login.BothRequired"));
             return Page();
         }
 

@@ -1,12 +1,12 @@
 @inject Assets Toolkit
 @{
-    // A page without a menu: sign-in, registration, errors, the start page. A centred card on the plain page background (SHELL-11).
+    // A page without a menu: sign-in, registration, errors, the start page. A centred card on the plain page background (SHELL-11), with the language switch.
     var title = ViewData["Title"] as string ?? Ui.AppName;
-    var description = ViewData["Description"] as string ?? "MatDo – Aufgaben, Projekte und Teams. Schnelleingabe wie bei Todoist, Webhooks für Sprachbefehle.";
+    var description = L["Landing.Description"].Value;
     var index = ViewData["Index"] is true;
 }
 <!DOCTYPE html>
-<html lang="de" data-app="@Ui.AppId">
+<html @ClientTexts.RootAttributes() data-app="@Ui.AppId">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -24,11 +24,12 @@
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
 </head>
 <body>
-    <a class="mat-skip" href="#main">Zum Inhalt springen</a>
+    <a class="mat-skip" href="#main">@L["Shell.SkipToContent"]</a>
     @Html.Raw(Toolkit.Sprite)
     <main class="mat-auth @(ViewData["AuthClass"])" id="main">
         @RenderBody()
-        <footer class="mat-footer mat-footer--plain">
+        <footer class="mat-footer mat-footer--plain md-auth-foot">
+            <partial name="_LanguageSwitch" />
             <p class="mat-footer__text">@Ui.AppName · @AppInfo.Version</p>
         </footer>
     </main>

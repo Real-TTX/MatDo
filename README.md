@@ -46,7 +46,10 @@ Die **Schlüsselwörter** legt jede Person unter *Einstellungen → Schlüsselw�
 - Beliebig viele Webhooks pro Person (*Einstellungen → Webhooks*), jeweils mit eigenem Ziel-Projekt, an/aus, neue Adresse erzeugen
 - `POST /api/v1/webhook/{token}` – derselbe Parser wie die Schnelleingabe, inkl. der eigenen Schlüsselwörter (Details unten)
 
-**Administration** im Design von [MatDesign](https://github.com/Real-TTX/MatDesign): Benutzer (Rollen, sperren, Passwort setzen, löschen), System (Registrierung offen/zu, öffentliche Adresse). Das erste Konto ist der Administrator.
+**Oberfläche**
+- **Englisch und Deutsch** (EN / DE): Sprache aus dem Konto, sonst aus dem Umschalter der Anmeldeseite, sonst aus dem Browser. Datumsangaben, Wiederholungen, Meldungen und die Antworten des Webhooks folgen der Sprache; die Schnelleingabe versteht immer beide
+- **Menü-Umschalter unten** im Menü: *Aufgaben*, *Einstellungen* (Profil, Schlüsselwörter, Webhooks, Passwort) und – für Administratoren – *Administration* (Benutzer, System)
+- Design von [MatDesign](https://github.com/Real-TTX/MatDesign) (MatUi), hell/dunkel, Smartphone. Das erste Konto ist der Administrator.
 
 ## Screenshots
 
@@ -109,6 +112,7 @@ curl -X POST "https://todo.example.com/api/v1/webhook/<token>" \
 - `dotnet build MatDo.slnx`, `dotnet test` (Parser, Wiederholungen)
 - `./scripts/redeploy.ps1` baut den Container neu und startet den lokalen Stack (`-Clean` = leere Datenbank)
 - Migrationen: `dotnet ef migrations add <Name> -p src/MatDo -o Data/Migrations` (werden beim Start angewendet)
+- Texte: `src/MatDo/Resources/Texts/*.json` (`{"en": …, "de": …}` je Schlüssel); ein Test prüft, dass jeder benutzte Schlüssel in beiden Sprachen existiert
 - `robots.txt` (nur die Startseite ist öffentlich) und [`llms.txt`](src/MatDo/wwwroot/llms.txt)
 
 ### Versionierung und Branches

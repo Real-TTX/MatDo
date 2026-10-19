@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using System.Globalization;
 using MatDo.Data;
 using MatDo.Services;
@@ -57,19 +58,19 @@ public sealed class IndexModel(AppDbContext db, QuickAddService quick) : AppPage
         {
             Id = "keywords",
             Action = "/Account/Keywords",
-            Label = "Schlüsselwörter",
+            Label = Text.T("Keywords.Title"),
             Search = search,
             SearchField = true,
-            SearchPlaceholder = "Schlüsselwörter durchsuchen",
-            Filters = [new FilterField("kind", "Art", KeywordKinds.All.Select(x => new FilterOption(x.Kind.ToString(), x.Name)).ToList(), kind)],
-            SortOptions = [new("kind", "Art"), new("word", "Wort")],
+            SearchPlaceholder = Text.T("Keywords.Search"),
+            Filters = [new FilterField("kind", Text.T("Keywords.Col.Kind"), KeywordKinds.All.Select(x => new FilterOption(x.ToString(), KeywordKinds.Name(x))).ToList(), kind)],
+            SortOptions = [new("kind", Text.T("Keywords.Col.Kind")), new("word", Text.T("Keywords.Col.Word"))],
             Sort = sort,
             Descending = desc,
             DefaultSort = "kind",
             Total = all.Count,
             Matching = filtered.Count,
-            Noun = "Schlüsselwörter",
-            NounOne = "Schlüsselwort",
+            Noun = Text.T("Keywords.Many"),
+            NounOne = Text.T("Keywords.One"),
         };
         var page = ListQuery.Page(Request);
         Items = ListQuery.Slice(filtered, page, PageSize).ToList();
@@ -97,22 +98,9 @@ public sealed class IndexModel(AppDbContext db, QuickAddService quick) : AppPage
         }
 
         await db.SaveChangesAsync();
-        Flash(added == 0 ? "Alle Standard-Schlüsselwörter sind schon da." : $"{added} Standard-Schlüsselwörter ergänzt.");
+        Flash(added == 0 ? Text.T("Keywords.Defaults.None") : Text.T("Keywords.Defaults.Added", added));
         return LocalRedirect("/Account/Keywords");
     }
-
-    public static string TokenName(TokenKind kind) => kind switch
-    {
-        TokenKind.Date => "Datum",
-        TokenKind.Time => "Uhrzeit",
-        TokenKind.Recurrence => "Wiederholung",
-        TokenKind.Project => "Projekt",
-        TokenKind.Section => "Abschnitt",
-        TokenKind.Label => "Label",
-        TokenKind.Priority => "Priorität",
-        TokenKind.Deadline => "Frist",
-        _ => "Beschreibung",
-    };
 
     public string Format(DateOnly? d, TimeOnly? t) => d is null ? "–" : Dates.Long(d.Value, d.Value.Year != Today.Year) + (t is null ? string.Empty : " " + Dates.Time(t.Value));
 

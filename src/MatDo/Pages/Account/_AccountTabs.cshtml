@@ -1,8 +1,0 @@
-@model string
-@* The tabs of the settings of a person: the pages of one thing (the account). *@
-<md-tabs label="Einstellungen">
-    <md-tab href="/Account" active="@(Model == "profile")">Profil</md-tab>
-    <md-tab href="/Account/Keywords" active="@(Model == "keywords")">Schlüsselwörter</md-tab>
-    <md-tab href="/Account/Webhooks" active="@(Model == "webhooks")">Webhooks</md-tab>
-    <md-tab href="/Account/Password" active="@(Model == "password")">Passwort</md-tab>
-</md-tabs>

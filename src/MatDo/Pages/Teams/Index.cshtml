@@ -1,8 +1,8 @@
 @page "/Teams"
 @model MatDo.Pages.Teams.IndexModel
 @{
-    ViewData["Title"] = "Teams";
-    ViewData["PageSub"] = "Teams teilen Projekte: jedes Mitglied sieht und ändert die Projekte des Teams.";
+    ViewData["Title"] = L["Teams.Title"].Value;
+    ViewData["PageSub"] = L["Teams.Sub"].Value;
 }
 
 <div class="mat-list">
@@ -12,29 +12,29 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("users")</span>
-            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch in keinem Team" : "Kein Team passt")</div>
-            <p>@(Model.Toolbar.Total == 0 ? "Lege ein Team an und füge Personen über ihre E-Mail-Adresse hinzu." : "Ändere die Suche oder die Filter.")</p>
+            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Teams.Empty.Title" : "Teams.NoMatch"]</div>
+            <p>@L[Model.Toolbar.Total == 0 ? "Teams.Empty.Text" : "Lists.ChangeTools"]</p>
         </div>
     }
     else
     {
-        <md-table caption="Teams">
+        <md-table caption="@L["Teams.Title"]">
             <thead>
-                <tr><th scope="col">Team</th><th scope="col">Meine Rolle</th><th scope="col" class="mat-num">Mitglieder</th><th scope="col" class="mat-num mat-hide-sm">Projekte</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+                <tr><th scope="col">@L["Teams.Col.Team"]</th><th scope="col">@L["Teams.Col.MyRole"]</th><th scope="col" class="mat-num">@L["Teams.Col.Members"]</th><th scope="col" class="mat-num mat-hide-sm">@L["Projects.Title"]</th><th scope="col"><span class="mat-sr-only">@L["Common.Actions"]</span></th></tr>
             </thead>
             <tbody>
                 @foreach (var t in Model.Items)
                 {
                     <tr>
-                        <td data-label="Team"><a class="md-name" href="/Teams/Members?id=@t.Id">@Ui.Icon("users", null, t.Color)<span>@t.Name</span></a>@if (!string.IsNullOrEmpty(t.Description)) { <small class="mat-muted md-block-line">@t.Description</small> }</td>
-                        <td data-label="Rolle"><span class="mat-pill @(t.Role == TeamRole.Owner ? "mat-pill--accent" : "mat-pill--plain")">@(t.Role == TeamRole.Owner ? "Eigentümer" : "Mitglied")</span></td>
-                        <td data-label="Mitglieder" class="mat-num mat-mono">@t.Members</td>
-                        <td data-label="Projekte" class="mat-num mat-mono mat-hide-sm">@t.Projects</td>
+                        <td data-label="@L["Teams.Col.Team"]"><a class="md-name" href="/Teams/Members?id=@t.Id">@Ui.Icon("users", null, t.Color)<span>@t.Name</span></a>@if (!string.IsNullOrEmpty(t.Description)) { <small class="mat-muted md-block-line">@t.Description</small> }</td>
+                        <td data-label="@L["Teams.Col.MyRole"]"><span class="mat-pill @(t.Role == TeamRole.Owner ? "mat-pill--accent" : "mat-pill--plain")">@L[t.Role == TeamRole.Owner ? "Teams.Role.Owner" : "Teams.Role.Member"]</span></td>
+                        <td data-label="@L["Teams.Col.Members"]" class="mat-num mat-mono">@t.Members</td>
+                        <td data-label="@L["Projects.Title"]" class="mat-num mat-mono mat-hide-sm">@t.Projects</td>
                         <td class="mat-table__cell-actions"><div class="mat-table__actions">
-                            <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Teams/Members?id=@t.Id" aria-label="Mitglieder von @t.Name" data-tip="Mitglieder">@Ui.Icon("users")</a>
+                            <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Teams/Members?id=@t.Id" aria-label="@L["Teams.MembersOf", t.Name]" data-tip="@L["Teams.Col.Members"]">@Ui.Icon("users")</a>
                             @if (t.Role == TeamRole.Owner)
                             {
-                                <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Teams/Edit?id=@t.Id" aria-label="@t.Name bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a>
+                                <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Teams/Edit?id=@t.Id" aria-label="@L["Common.EditNamed", t.Name]" data-tip="@L["Common.Edit"]">@Ui.Icon("edit")</a>
                             }
                         </div></td>
                     </tr>
@@ -46,6 +46,6 @@
     <partial name="_Pager" model="Model.Pager" />
 
     <div class="mat-actions">
-        <a class="mat-btn mat-btn--primary" href="/Teams/Edit">@Ui.Icon("plus")<span>Neues Team</span></a>
+        <a class="mat-btn mat-btn--primary" href="/Teams/Edit">@Ui.Icon("plus")<span>@L["Teams.New"]</span></a>
     </div>
 </div>

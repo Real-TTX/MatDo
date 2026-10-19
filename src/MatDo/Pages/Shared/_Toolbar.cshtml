@@ -10,21 +10,21 @@
     var form = id + "-form";
     // With the search in a field the field shows what is searched: no chip for it.
     var hasChips = (!Model.SearchField && Model.SearchActive) || Model.ActiveFilters > 0;
-    var count = Model.Matching == Model.Total ? Model.Counted(Model.Total) : $"{Model.Matching} von {Model.Counted(Model.Total)}";
+    var count = Model.Matching == Model.Total ? Model.Counted(Model.Total) : L["Lists.MatchingOf", Model.Matching, Model.Counted(Model.Total)].Value;
 
     void FilterAndSort()
     {
         if (Model.Filters.Count > 0)
         {
             <button type="button" class="mat-btn mat-btn--ghost mat-toolbar__btn @(Model.ActiveFilters > 0 ? "is-active" : "")" data-dialog-open="@id-filter" aria-haspopup="dialog">
-                @Ui.Icon("sliders")<span>Filter</span>@if (Model.ActiveFilters > 0) { <span class="mat-badge">@Model.ActiveFilters</span> }
+                @Ui.Icon("sliders")<span>@L["Lists.Filter"]</span>@if (Model.ActiveFilters > 0) { <span class="mat-badge">@Model.ActiveFilters</span> }
             </button>
         }
 
         if (Model.SortOptions.Count > 0)
         {
             <button type="button" class="mat-btn mat-btn--ghost mat-toolbar__btn @(Model.SortActive ? "is-active" : "")" data-dialog-open="@id-sort" aria-haspopup="dialog">
-                @Ui.Icon("sort")<span>Sortieren</span>@if (Model.SortActive) { <small>@Model.SortLabel @(Model.Descending ? "↓" : "↑")</small> }
+                @Ui.Icon("sort")<span>@L["Lists.Sort"]</span>@if (Model.SortActive) { <small>@Model.SortLabel @(Model.Descending ? "↓" : "↑")</small> }
             </button>
         }
     }
@@ -33,7 +33,7 @@
     {
         if (Model.Views.Count > 0)
         {
-            <div class="mat-seg" role="group" aria-label="Ansicht">
+            <div class="mat-seg" role="group" aria-label="@L["Lists.View"]">
                 @foreach (var v in Model.Views)
                 {
                     <button type="button" class="mat-seg__btn" data-view-switch="@v.Value" data-view-key="@id" aria-pressed="@((Model.View ?? Model.Views[0].Value) == v.Value ? "true" : "false")" aria-label="@v.Label" data-tip="@v.Label">@Ui.Icon(v.Icon)</button>
@@ -43,12 +43,12 @@
     }
 }
 
-<div class="mat-toolbar" role="toolbar" aria-label="@Model.Label: Werkzeuge">
+<div class="mat-toolbar" role="toolbar" aria-label="@L["Lists.Tools", Model.Label]">
     @if (Model.SearchField)
     {
         <div class="mat-input-icon mat-toolbar__search">
             @Ui.Icon("search")
-            <input class="mat-input" type="search" id="@id-q" name="q" form="@form" value="@Model.Search" placeholder="@Model.SearchPlaceholder" aria-label="@Model.Label: suchen" autocomplete="off" enterkeyhint="search" data-shortcut="/" />
+            <input class="mat-input" type="search" id="@id-q" name="q" form="@form" value="@Model.Search" placeholder="@Model.SearchPlaceholder" aria-label="@L["Lists.SearchIn", Model.Label]" autocomplete="off" enterkeyhint="search" data-shortcut="/" />
         </div>
 
         <span class="mat-toolbar__spacer"></span>
@@ -61,7 +61,7 @@
     else
     {
         <button type="button" class="mat-btn mat-btn--ghost mat-toolbar__btn @(Model.SearchActive ? "is-active" : "")" data-dialog-open="@id-search" data-shortcut="/" aria-haspopup="dialog">
-            @Ui.Icon("search")<span>Suchen</span>@if (Model.SearchActive) { <small>“@Model.Search”</small> }
+            @Ui.Icon("search")<span>@L["Lists.Search"]</span>@if (Model.SearchActive) { <small>“@Model.Search”</small> }
         </button>
         FilterAndSort();
 
@@ -75,14 +75,14 @@
 
 @if (hasChips)
 {
-    <div class="mat-chips" role="group" aria-label="Aktive Werkzeuge">
+    <div class="mat-chips" role="group" aria-label="@L["Lists.ActiveTools"]">
         @if (!Model.SearchField && Model.SearchActive)
         {
-            <span class="mat-chip">Suche: @Model.Search<a class="mat-chip__x" href="@Model.UrlWithout("q")" aria-label="Suche entfernen">@Ui.Icon("x")</a></span>
+            <span class="mat-chip">@L["Lists.SearchChip"]: @Model.Search<a class="mat-chip__x" href="@Model.UrlWithout("q")" aria-label="@L["Lists.RemoveSearch"]">@Ui.Icon("x")</a></span>
         }
         @foreach (var f in Model.Filters.Where(f => !string.IsNullOrEmpty(f.Selected)))
         {
-            <span class="mat-chip">@f.Label: @(f.Options.FirstOrDefault(o => o.Value == f.Selected)?.Label ?? f.Selected)<a class="mat-chip__x" href="@Model.UrlWithout(f.Name)" aria-label="Filter @f.Label entfernen">@Ui.Icon("x")</a></span>
+            <span class="mat-chip">@f.Label: @(f.Options.FirstOrDefault(o => o.Value == f.Selected)?.Label ?? f.Selected)<a class="mat-chip__x" href="@Model.UrlWithout(f.Name)" aria-label="@L["Lists.RemoveFilter", f.Label]">@Ui.Icon("x")</a></span>
         }
     </div>
 }
@@ -104,22 +104,22 @@
         <div class="mat-dialog__form">
             <div class="mat-dialog__head">
                 @Ui.Icon("search")
-                <h2 class="mat-dialog__title" id="@id-search-title">Suchen</h2>
-                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="Schließen">@Ui.Icon("x")</button>
+                <h2 class="mat-dialog__title" id="@id-search-title">@L["Lists.Search"]</h2>
+                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="@L["Common.Dialog.Close"]">@Ui.Icon("x")</button>
             </div>
             <div class="mat-dialog__body">
                 <div class="mat-field">
-                    <label class="mat-label" for="@id-q">Suchen nach</label>
+                    <label class="mat-label" for="@id-q">@L["Lists.SearchFor"]</label>
                     <input class="mat-input" type="search" id="@id-q" name="q" form="@form" value="@Model.Search" placeholder="@Model.SearchPlaceholder" autocomplete="off" />
-                    <span class="mat-hint">Mit <kbd>/</kbd> öffnet sich dieser Dialog.</span>
+                    <span class="mat-hint">@Html.Raw(L["Lists.SearchShortcut"].Value)</span>
                 </div>
             </div>
             <div class="mat-dialog__foot">
                 <div class="mat-btn-row mat-btn-row--plain">
-                    <button type="submit" form="@form" class="mat-btn mat-btn--primary">@Ui.Icon("search")<span>Anwenden</span></button>
-                    <button type="button" class="mat-btn mat-btn--secondary" data-dialog-close>Abbrechen</button>
+                    <button type="submit" form="@form" class="mat-btn mat-btn--primary">@Ui.Icon("search")<span>@L["Lists.Apply"]</span></button>
+                    <button type="button" class="mat-btn mat-btn--secondary" data-dialog-close>@L["Common.Cancel"]</button>
                     <span class="mat-btn-row__spacer"></span>
-                    <a class="mat-btn mat-btn--ghost mat-btn--end" href="@Model.UrlWithout("q")">Suche leeren</a>
+                    <a class="mat-btn mat-btn--ghost mat-btn--end" href="@Model.UrlWithout("q")">@L["Lists.ClearSearch"]</a>
                 </div>
             </div>
         </div>
@@ -132,8 +132,8 @@
         <div class="mat-dialog__form">
             <div class="mat-dialog__head">
                 @Ui.Icon("sliders")
-                <h2 class="mat-dialog__title" id="@id-filter-title">Filter</h2>
-                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="Schließen">@Ui.Icon("x")</button>
+                <h2 class="mat-dialog__title" id="@id-filter-title">@L["Lists.Filter"]</h2>
+                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="@L["Common.Dialog.Close"]">@Ui.Icon("x")</button>
             </div>
             <div class="mat-dialog__body mat-form">
                 @foreach (var f in Model.Filters)
@@ -141,7 +141,7 @@
                     <div class="mat-field">
                         <label class="mat-label" for="@id-f-@f.Name">@f.Label</label>
                         <select class="mat-select" id="@id-f-@f.Name" name="@f.Name" form="@form">
-                            <option value="">Alle</option>
+                            <option value="">@L["Lists.All"]</option>
                             @foreach (var o in f.Options)
                             {
                                 <option value="@o.Value" selected="@(f.Selected == o.Value)">@o.Label</option>
@@ -151,15 +151,15 @@
                 }
                 @if (Model.SearchActive || Model.SortActive)
                 {
-                    <p class="mat-hint">Suche und Sortierung bleiben erhalten.</p>
+                    <p class="mat-hint">@L["Lists.KeptHint"]</p>
                 }
             </div>
             <div class="mat-dialog__foot">
                 <div class="mat-btn-row mat-btn-row--plain">
-                    <button type="submit" form="@form" class="mat-btn mat-btn--primary">@Ui.Icon("sliders")<span>Anwenden</span></button>
-                    <button type="button" class="mat-btn mat-btn--secondary" data-dialog-close>Abbrechen</button>
+                    <button type="submit" form="@form" class="mat-btn mat-btn--primary">@Ui.Icon("sliders")<span>@L["Lists.Apply"]</span></button>
+                    <button type="button" class="mat-btn mat-btn--secondary" data-dialog-close>@L["Common.Cancel"]</button>
                     <span class="mat-btn-row__spacer"></span>
-                    <a class="mat-btn mat-btn--ghost mat-btn--end" href="@Model.Action">Alles zurücksetzen</a>
+                    <a class="mat-btn mat-btn--ghost mat-btn--end" href="@Model.Action">@L["Lists.ResetAll"]</a>
                 </div>
             </div>
         </div>
@@ -172,12 +172,12 @@
         <div class="mat-dialog__form">
             <div class="mat-dialog__head">
                 @Ui.Icon("sort")
-                <h2 class="mat-dialog__title" id="@id-sort-title">Sortieren</h2>
-                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="Schließen">@Ui.Icon("x")</button>
+                <h2 class="mat-dialog__title" id="@id-sort-title">@L["Lists.Sort"]</h2>
+                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="@L["Common.Dialog.Close"]">@Ui.Icon("x")</button>
             </div>
             <div class="mat-dialog__body mat-form">
                 <fieldset class="mat-field mat-fieldset">
-                    <legend class="mat-label">Sortieren nach</legend>
+                    <legend class="mat-label">@L["Lists.SortBy"]</legend>
                     <div class="mat-options">
                         @foreach (var o in Model.SortOptions)
                         {
@@ -186,19 +186,19 @@
                     </div>
                 </fieldset>
                 <fieldset class="mat-field mat-fieldset">
-                    <legend class="mat-label">Reihenfolge</legend>
+                    <legend class="mat-label">@L["Lists.Order"]</legend>
                     <div class="mat-options">
-                        <label class="mat-option"><input type="radio" id="@id-dir-asc" name="dir" value="asc" form="@form" checked="@(!Model.Descending)" /><span>Aufsteigend</span></label>
-                        <label class="mat-option"><input type="radio" id="@id-dir-desc" name="dir" value="desc" form="@form" checked="@Model.Descending" /><span>Absteigend</span></label>
+                        <label class="mat-option"><input type="radio" id="@id-dir-asc" name="dir" value="asc" form="@form" checked="@(!Model.Descending)" /><span>@L["Lists.Ascending"]</span></label>
+                        <label class="mat-option"><input type="radio" id="@id-dir-desc" name="dir" value="desc" form="@form" checked="@Model.Descending" /><span>@L["Lists.Descending"]</span></label>
                     </div>
                 </fieldset>
             </div>
             <div class="mat-dialog__foot">
                 <div class="mat-btn-row mat-btn-row--plain">
-                    <button type="submit" form="@form" class="mat-btn mat-btn--primary">@Ui.Icon("sort")<span>Anwenden</span></button>
-                    <button type="button" class="mat-btn mat-btn--secondary" data-dialog-close>Abbrechen</button>
+                    <button type="submit" form="@form" class="mat-btn mat-btn--primary">@Ui.Icon("sort")<span>@L["Lists.Apply"]</span></button>
+                    <button type="button" class="mat-btn mat-btn--secondary" data-dialog-close>@L["Common.Cancel"]</button>
                     <span class="mat-btn-row__spacer"></span>
-                    <a class="mat-btn mat-btn--ghost mat-btn--end" href="@Model.UrlWithout("sort")">Standardreihenfolge</a>
+                    <a class="mat-btn mat-btn--ghost mat-btn--end" href="@Model.UrlWithout("sort")">@L["Lists.DefaultOrder"]</a>
                 </div>
             </div>
         </div>

@@ -10,31 +10,31 @@
 <section class="md-hero">
     @Ui.Logo("lg")
     <h1>MatDo</h1>
-    <p class="md-hero__lead">Aufgaben, Projekte und Teams. Schreib einfach, was zu tun ist: <em>„Angebot schreiben morgen 9 Uhr #Kunde p1“</em>, und MatDo versteht Datum, Uhrzeit, Projekt und Priorität.</p>
+    <p class="md-hero__lead">@Html.Raw(L["Landing.Lead"].Value)</p>
     <div class="mat-btn-row mat-btn-row--plain md-hero__actions">
         @if (Model.RegistrationOpen)
         {
-            <a class="mat-btn mat-btn--primary mat-btn--lg" href="/Account/Register">@Ui.Icon("rocket")<span>Kostenlos registrieren</span></a>
+            <a class="mat-btn mat-btn--primary mat-btn--lg" href="/Account/Register">@Ui.Icon("rocket")<span>@L["Landing.Register"]</span></a>
         }
-        <a class="mat-btn mat-btn--secondary mat-btn--lg" href="/Account/Login">@Ui.Icon("login")<span>Anmelden</span></a>
+        <a class="mat-btn mat-btn--secondary mat-btn--lg" href="/Account/Login">@Ui.Icon("login")<span>@L["Account.Login.Title"]</span></a>
     </div>
 </section>
 
-<section class="md-features" aria-label="Funktionen">
+<section class="md-features" aria-label="@L["Landing.Features"]">
     <div class="mat-card"><div class="mat-card__body">
-        <h2>@Ui.Icon("keyboard")Schnelleingabe</h2>
-        <p>Heute, morgen, übermorgen, „am Freitag“, „24.12. um 15 Uhr“, „jeden Montag“: Termine, Wiederholungen, #Projekte, @@Labels und p1–p4 direkt im Text, auf Deutsch und Englisch.</p>
+        <h2>@Ui.Icon("keyboard")@L["Landing.QuickAdd.Title"]</h2>
+        <p>@L["Landing.QuickAdd.Text"]</p>
     </div></div>
     <div class="mat-card"><div class="mat-card__body">
-        <h2>@Ui.Icon("mic")Per Sprache und Webhook</h2>
-        <p>Ein Kurzbefehl diktiert, MatDo legt die Aufgabe in deinen Eingang. Eigene Schlüsselwörter wie „Projekt EIMER“ legst du in den Einstellungen fest.</p>
+        <h2>@Ui.Icon("mic")@L["Landing.Voice.Title"]</h2>
+        <p>@L["Landing.Voice.Text"]</p>
     </div></div>
     <div class="mat-card"><div class="mat-card__body">
-        <h2>@Ui.Icon("users")Teams</h2>
-        <p>Teams teilen Projekte, Abschnitte und Aufgaben. Aufgaben lassen sich Mitgliedern zuweisen.</p>
+        <h2>@Ui.Icon("users")@L["Teams.Title"]</h2>
+        <p>@L["Landing.Teams.Text"]</p>
     </div></div>
     <div class="mat-card"><div class="mat-card__body">
-        <h2>@Ui.Icon("calendar-days")Heute und Demnächst</h2>
-        <p>Überfälliges, Heute und die nächsten zwei Wochen auf einen Blick, mit Unteraufgaben, Fristen, Kommentaren und Labels.</p>
+        <h2>@Ui.Icon("calendar-days")@L["Landing.Views.Title"]</h2>
+        <p>@L["Landing.Views.Text"]</p>
     </div></div>
 </section>

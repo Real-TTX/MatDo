@@ -45,6 +45,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
             e.Property(x => x.Email).HasMaxLength(254);
             e.Property(x => x.DisplayName).HasMaxLength(120);
             e.Property(x => x.TimeZone).HasMaxLength(64);
+            e.Property(x => x.Language).HasMaxLength(5);
             e.Property(x => x.Theme).HasMaxLength(10);
             e.Property(x => x.Scheme).HasMaxLength(10);
             e.HasQueryFilter(x => x.UpdateState != SoftEntity.Deleted);

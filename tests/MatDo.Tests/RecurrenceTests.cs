@@ -30,5 +30,9 @@ public sealed class RecurrenceTests
     public void Valid(string rule, bool valid) => Assert.Equal(valid, Recurrence.IsValid(rule));
 
     [Fact]
-    public void Describe() => Assert.Equal("Jeden Montag", Recurrence.Describe("w:1:1"));
+    public void Describe()
+    {
+        Assert.Equal("Jeden Montag", MatDo.Localization.Languages.In("de", () => Recurrence.Describe("w:1:1")));
+        Assert.Equal("Every Monday", MatDo.Localization.Languages.In("en", () => Recurrence.Describe("w:1:1")));
+    }
 }

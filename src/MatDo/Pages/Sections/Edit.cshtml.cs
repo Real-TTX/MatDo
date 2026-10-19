@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -37,14 +38,14 @@ public sealed class EditModel(AppDbContext db, ProjectService projects) : AppPag
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            ModelState.AddModelError(nameof(Name), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(Name), Text.T("Common.NameRequired"));
             return Page();
         }
 
         section.Name = Name.Trim().Length > 120 ? Name.Trim()[..120] : Name.Trim();
         section.SortOrder = Math.Clamp(SortOrder, 0, 10000);
         await db.SaveChangesAsync();
-        Flash("Abschnitt gespeichert.");
+        Flash(Text.T("Common.Saved"));
         return LocalRedirect($"/Projects/View?id={section.ProjectId}");
     }
 
@@ -58,7 +59,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects) : AppPag
         await db.Tasks.Where(t => t.SectionId == section.Id).ExecuteUpdateAsync(s => s.SetProperty(t => t.SectionId, (long?)null));
         db.Sections.Remove(section);
         await db.SaveChangesAsync();
-        Flash($"Abschnitt „{section.Name}“ gelöscht; seine Aufgaben sind jetzt ohne Abschnitt.");
+        Flash(Text.T("Sections.Deleted", section.Name));
         return LocalRedirect($"/Projects/View?id={section.ProjectId}");
     }
 

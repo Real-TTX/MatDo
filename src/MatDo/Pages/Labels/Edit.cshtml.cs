@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -52,14 +53,14 @@ public sealed class EditModel(AppDbContext db) : AppPageModel
         var name = string.Join('-', Name.Trim().TrimStart('@').Split(' ', StringSplitOptions.RemoveEmptyEntries));
         if (name.Length == 0)
         {
-            ModelState.AddModelError(nameof(Name), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(Name), Text.T("Common.NameRequired"));
             return Page();
         }
 
         var lower = name.ToLower();
         if (await db.Labels.AnyAsync(l => l.OwnerId == UserId && l.Name.ToLower() == lower && l.Id != (Id ?? 0)))
         {
-            ModelState.AddModelError(nameof(Name), "Ein Label mit diesem Namen gibt es schon.");
+            ModelState.AddModelError(nameof(Name), Text.T("Labels.Taken"));
             return Page();
         }
 
@@ -73,7 +74,7 @@ public sealed class EditModel(AppDbContext db) : AppPageModel
         label.Color = Ui.IsColour(Color) ? Color.ToLowerInvariant() : "#808080";
         label.IsFavorite = IsFavorite;
         await db.SaveChangesAsync();
-        Flash(IsNew ? $"Label „{label.Name}“ angelegt." : "Gespeichert.");
+        Flash(IsNew ? Text.T("Common.CreatedNamed", label.Name) : Text.T("Common.Saved"));
         return LocalRedirect("/Labels");
     }
 
@@ -88,7 +89,7 @@ public sealed class EditModel(AppDbContext db) : AppPageModel
         await db.TaskLabels.Where(x => x.LabelId == label.Id).ExecuteDeleteAsync();
         db.Labels.Remove(label);
         await db.SaveChangesAsync();
-        Flash($"Label „{label.Name}“ gelöscht.");
+        Flash(Text.T("Common.DeletedNamed", label.Name));
         return LocalRedirect("/Labels");
     }
 }

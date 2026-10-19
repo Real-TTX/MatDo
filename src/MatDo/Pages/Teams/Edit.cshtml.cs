@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +40,7 @@ public sealed class EditModel(AppDbContext db, TeamService teams) : AppPageModel
         var name = Name.Trim();
         if (name.Length == 0)
         {
-            ModelState.AddModelError(nameof(Name), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(Name), Text.T("Common.NameRequired"));
             return Page();
         }
 
@@ -55,12 +56,12 @@ public sealed class EditModel(AppDbContext db, TeamService teams) : AppPageModel
             found.Team.Description = string.IsNullOrWhiteSpace(Description) ? null : Description.Trim();
             found.Team.Color = color;
             await db.SaveChangesAsync();
-            Flash("Gespeichert.");
+            Flash(Text.T("Common.Saved"));
             return LocalRedirect($"/Teams/Members?id={id}");
         }
 
         var team = await teams.CreateAsync(UserId, name.Length > 120 ? name[..120] : name, Description, color);
-        Flash($"Team „{team.Name}“ angelegt. Füge jetzt Mitglieder hinzu.");
+        Flash(Text.T("Teams.Created", team.Name));
         return LocalRedirect($"/Teams/Members?id={team.Id}");
     }
 
@@ -72,7 +73,7 @@ public sealed class EditModel(AppDbContext db, TeamService teams) : AppPageModel
         }
 
         await teams.DeleteAsync(UserId, found.Team);
-        Flash($"Team „{found.Team.Name}“ gelöscht. Seine Projekte sind jetzt deine persönlichen Projekte.");
+        Flash(Text.T("Teams.Deleted", found.Team.Name));
         return LocalRedirect("/Teams");
     }
 }

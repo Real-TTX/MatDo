@@ -5,6 +5,9 @@
 (function () {
   'use strict';
 
+  var TEXTS = (function () { try { return JSON.parse(document.getElementById('md-texts').textContent); } catch (e) { return {}; } })();
+  function t(key, a) { return (TEXTS[key] || key).replace('{0}', a === undefined ? '' : a); }
+
   function token() {
     var input = document.querySelector('[data-page-token] input[name="__RequestVerificationToken"]');
     return input ? input.value : '';
@@ -28,7 +31,7 @@
     var row = form.closest('[data-task]');
     var id = row.getAttribute('data-task');
     var check = form.querySelector('.md-check');
-    var title = (row.querySelector('.md-task__title') || {}).textContent || 'Aufgabe';
+    var title = (row.querySelector('.md-task__title') || {}).textContent || '';
     var reopen = row.classList.contains('is-done');
     check.disabled = true;
     check.classList.toggle('is-checked', !reopen);
@@ -37,18 +40,18 @@
         if (reopen) {
           row.classList.add('is-leaving');
           setTimeout(function () { row.remove(); }, 250);
-          toast('„' + title + '“ ist wieder offen.');
+          toast(t('Js.Task.Reopened', title));
         } else if (data.completed) {
           row.classList.add('is-done', 'is-leaving');
           setTimeout(function () { row.remove(); }, 300);
-          toast('„' + title + '“ erledigt.');
+          toast(t('Js.Task.Completed', title));
         } else {
           // a repeating task: the next date, the row stays (or leaves the view of today)
           check.classList.remove('is-checked');
           check.disabled = false;
           var due = row.querySelector('[data-due-text]');
           if (due && data.nextDueText) { due.lastChild.textContent = data.nextDueText; due.className = 'md-due'; }
-          toast('Nächster Termin: ' + (data.nextDueText || data.nextDue) + '.');
+          toast(t('Js.Task.NextDue', data.nextDueText || data.nextDue));
         }
       })
       .catch(function () {
@@ -61,6 +64,6 @@
   document.addEventListener('mat:reorder', function (e) {
     var order = (e.detail && e.detail.order || []).map(function (k) { return parseInt(k, 10); }).filter(function (n) { return n > 0; });
     if (order.length === 0) { return; }
-    post('/api/app/tasks/reorder', { ids: order }).catch(function () { toast('Die Reihenfolge konnte nicht gespeichert werden.', 'danger'); });
+    post('/api/app/tasks/reorder', { ids: order }).catch(function () { toast(t('Js.Task.OrderFailed'), 'danger'); });
   });
 })();

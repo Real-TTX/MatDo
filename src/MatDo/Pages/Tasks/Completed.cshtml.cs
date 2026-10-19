@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using System.Globalization;
 using MatDo.Services;
 
@@ -33,8 +34,8 @@ public sealed class CompletedModel(ProjectService projects, TaskService tasks) :
         var all = await projects.ListAsync(UserId, includeArchived: true);
         Toolbar = TaskTools.Toolbar("done", "/Tasks/Completed", q, await tasks.LabelChipsAsync(UserId), tasks.Visible(UserId).Count(t => t.IsCompleted), rows.Count,
             defaultSort: "completed", dueFilter: false, defaultDescending: true,
-            extra: [new FilterField("project", "Projekt", all.Select(x => new FilterOption(x.Id.ToString(CultureInfo.InvariantCulture), x.IsInbox ? "Eingang" : x.Name)).ToList(), project?.ToString(CultureInfo.InvariantCulture))],
-            sorts: [new("completed", "Erledigt am"), new("name", "Name"), new("priority", "Priorität")]);
+            extra: [new FilterField("project", Text.T("Tasks.Project"), all.Select(x => new FilterOption(x.Id.ToString(CultureInfo.InvariantCulture), x.IsInbox ? Text.T("Project.Inbox") : x.Name)).ToList(), project?.ToString(CultureInfo.InvariantCulture))],
+            sorts: [new("completed", Text.T("Completed.Sort.CompletedAt")), new("name", Text.T("Tasks.Sort.Name")), new("priority", Text.T("Tasks.Sort.Priority"))]);
 
         var page = ListQuery.Page(Request);
         List = new TaskListModel { Id = "done-list", Rows = ListQuery.Slice(rows, page, PageSize).ToList(), Today = Today, ReturnUrl = Here };

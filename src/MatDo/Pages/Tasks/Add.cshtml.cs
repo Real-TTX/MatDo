@@ -66,12 +66,12 @@ public sealed class AddModel(AppDbContext db, QuickAddService quick, TaskService
 
         if (task is null)
         {
-            FlashError(error ?? "Die Aufgabe konnte nicht angelegt werden.");
+            FlashError(error ?? Localization.Text.T("Tasks.AddFailed"));
         }
         else
         {
-            var where = task.Project is { IsInbox: true } ? "Eingang" : task.Project?.Name;
-            Flash(task.DueDate is { } d ? $"„{task.Content}“ hinzugefügt: {where}, {Dates.Relative(d, task.DueTime, Today)}." : $"„{task.Content}“ hinzugefügt: {where}.");
+            var where = task.Project is { IsInbox: true } ? Localization.Text.T("Project.Inbox") : task.Project?.Name ?? string.Empty;
+            Flash(task.DueDate is { } d ? Localization.Text.T("Tasks.AddedDue", task.Content, where, Dates.Relative(d, task.DueTime, Today)) : Localization.Text.T("Tasks.Added", task.Content, where));
         }
 
         return Back(WithEditor(ReturnUrl, Editor), "/Today");
@@ -82,11 +82,11 @@ public sealed class AddModel(AppDbContext db, QuickAddService quick, TaskService
         var (completed, next) = await tasks.CompleteAsync(UserId, id, Today);
         if (completed)
         {
-            Flash("Aufgabe erledigt.");
+            Flash(Localization.Text.T("Tasks.Completed"));
         }
         else if (next is { } n)
         {
-            Flash($"Nächster Termin: {Dates.Relative(n, Today)}.");
+            Flash(Localization.Text.T("Tasks.NextDue", Dates.Relative(n, Today)));
         }
 
         return Back(ReturnUrl, "/Today");
@@ -96,7 +96,7 @@ public sealed class AddModel(AppDbContext db, QuickAddService quick, TaskService
     {
         if (await tasks.ReopenAsync(UserId, id))
         {
-            Flash("Aufgabe wieder geöffnet.");
+            Flash(Localization.Text.T("Tasks.Reopened"));
         }
 
         return Back(ReturnUrl, "/Today");

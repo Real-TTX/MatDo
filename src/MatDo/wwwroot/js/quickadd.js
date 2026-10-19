@@ -7,7 +7,9 @@
 (function () {
   'use strict';
 
-  var KINDS = { date: 'Datum', time: 'Uhrzeit', recurrence: 'Wiederholung', project: 'Projekt', section: 'Abschnitt', label: 'Label', priority: 'Priorität', deadline: 'Frist', description: 'Beschreibung' };
+  // the texts of the page in its language (ClientTexts: every key that starts with "Js.")
+  var TEXTS = (function () { try { return JSON.parse(document.getElementById('md-texts').textContent); } catch (e) { return {}; } })();
+  function t(key) { return TEXTS[key] || key; }
 
   function $(sel, scope) { return (scope || document).querySelector(sel); }
   function $$(sel, scope) { return Array.prototype.slice.call((scope || document).querySelectorAll(sel)); }
@@ -15,14 +17,14 @@
   function icon(name) { return '<svg class="mat-icon" aria-hidden="true" focusable="false"><use href="#mat-i-' + name + '"></use></svg>'; }
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-  var WEEKDAYS = ['So.', 'Mo.', 'Di.', 'Mi.', 'Do.', 'Fr.', 'Sa.'];
-  var MONTHS = ['Jan.', 'Feb.', 'März', 'Apr.', 'Mai', 'Juni', 'Juli', 'Aug.', 'Sep.', 'Okt.', 'Nov.', 'Dez.'];
+  // a date picked by hand, as the chips of the server write it: today, tomorrow, the day after, else "Mon 26 Oct" / "Mo., 26. Okt." in the language of the page
+  var DAY_FORMAT = new Intl.DateTimeFormat(document.documentElement.lang || 'en', { weekday: 'short', day: 'numeric', month: 'short' });
   function label(isoDate, time) {
     var p = isoDate.split('-');
     var d = new Date(+p[0], +p[1] - 1, +p[2]);
     var today = new Date(); today.setHours(0, 0, 0, 0);
     var diff = Math.round((d - today) / 86400000);
-    var text = diff === 0 ? 'Heute' : diff === 1 ? 'Morgen' : diff === 2 ? 'Übermorgen' : (WEEKDAYS[d.getDay()] + ' ' + d.getDate() + '. ' + MONTHS[d.getMonth()]);
+    var text = diff === 0 ? t('Js.Today') : diff === 1 ? t('Js.Tomorrow') : diff === 2 ? t('Js.DayAfterTomorrow') : DAY_FORMAT.format(d);
     return time ? text + ' ' + time : text;
   }
 
@@ -65,30 +67,30 @@
 
     function chip(kind, iconName, text, extra, manual) {
       return '<span class="md-chip' + (manual ? ' md-chip--manual' : '') + '" data-chip="' + kind + '">' + icon(iconName) + '<span>' + esc(text) + '</span>' + (extra || '') +
-        '<button type="button" class="md-chip__x" data-chip-x="' + kind + '" aria-label="' + esc((KINDS[kind] || kind) + ' nicht übernehmen') + '">' + icon('x') + '</button></span>';
+        '<button type="button" class="md-chip__x" data-chip-x="' + kind + '" aria-label="' + esc(t('Js.Chip.Remove').replace('{0}', t('Js.Kind.' + kind.split(':')[0]))) + '">' + icon('x') + '</button></span>';
     }
 
     function renderChips() {
       var p = parsed || {};
       var html = '';
       if (noDate.value === 'true') {
-        html += chip('manualdate', 'calendar', 'Kein Datum', '', true);
+        html += chip('manualdate', 'calendar', t('Js.NoDate'), '', true);
       } else if (due.value) {
         html += chip('manualdate', 'calendar', label(due.value, time.value), '', true);
       } else if (p.dueText) {
         html += chip('date', p.recurrence ? 'repeat' : 'calendar', p.dueText + (p.recurrence ? ' · ' + p.recurrence : ''));
       }
-      if (p.project && touched.value !== 'true') { html += chip('project', 'hash', p.project.name, p.project.isNew ? '<span class="md-chip__new">neu</span>' : ''); }
+      if (p.project && touched.value !== 'true') { html += chip('project', 'hash', p.project.name, p.project.isNew ? '<span class="md-chip__new">' + esc(t('Js.New')) + '</span>' : ''); }
       if (p.section) { html += chip('section', 'list', p.section); }
       if (prio.value) { html += chip('manualpriority', 'flag', 'P' + prio.value, '', true); }
       else if (p.priority) { html += chip('priority', 'flag', 'P' + p.priority); }
       (p.labels || []).forEach(function (l) { html += chip('label', 'tag', l); });
       if (labels.value) { labels.value.split(',').forEach(function (l) { if (l) { html += chip('manuallabel:' + l, 'tag', l, '', true); } }); }
-      if (p.deadlineText) { html += chip('deadline', 'target', 'Frist ' + p.deadlineText); }
-      if (p.description) { html += chip('description', 'file-text', 'Beschreibung'); }
+      if (p.deadlineText) { html += chip('deadline', 'target', t('Js.Deadline').replace('{0}', p.deadlineText)); }
+      if (p.description) { html += chip('description', 'file-text', t('Js.Kind.description')); }
       chips.innerHTML = html;
-      $('[data-qa-date-label]', root).textContent = noDate.value === 'true' ? 'Kein Datum' : due.value ? label(due.value, time.value) : 'Datum';
-      $('[data-qa-priority-label]', root).textContent = prio.value ? 'P' + prio.value : 'Priorität';
+      $('[data-qa-date-label]', root).textContent = noDate.value === 'true' ? t('Js.NoDate') : due.value ? label(due.value, time.value) : t('Js.Kind.date');
+      $('[data-qa-priority-label]', root).textContent = prio.value ? 'P' + prio.value : t('Js.Kind.priority');
     }
 
     function parse() {

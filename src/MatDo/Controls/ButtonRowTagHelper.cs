@@ -20,11 +20,11 @@ public sealed class ButtonRowTagHelper : TagHelper
 
     [HtmlAttributeName("back")] public string? Back { get; set; }
 
-    [HtmlAttributeName("back-label")] public string BackLabel { get; set; } = "Zurück";
+    [HtmlAttributeName("back-label")] public string BackLabel { get; set; } = Localization.Text.T("Common.Back");
 
     [HtmlAttributeName("delete-handler")] public string? DeleteHandler { get; set; }
 
-    [HtmlAttributeName("delete-label")] public string DeleteLabel { get; set; } = "Löschen";
+    [HtmlAttributeName("delete-label")] public string DeleteLabel { get; set; } = Localization.Text.T("Common.Delete");
 
     [HtmlAttributeName("delete-confirm")] public string? DeleteConfirm { get; set; }
 
@@ -51,7 +51,7 @@ public sealed class ButtonRowTagHelper : TagHelper
         if (!string.IsNullOrEmpty(DeleteHandler))
         {
             sb.Append("<span class=\"mat-btn-row__spacer\"></span>");
-            sb.Append($"<button type=\"submit\" class=\"mat-btn mat-btn--danger\" formnovalidate formaction=\"?handler={E(DeleteHandler)}\" data-confirm=\"{E(DeleteConfirm ?? "Wirklich löschen? Das kann nicht rückgängig gemacht werden.")}\" data-confirm-ok=\"{E(DeleteOk ?? "Löschen")}\">{Ui.Icon("trash")}<span>{E(DeleteLabel)}</span></button>");
+            sb.Append($"<button type=\"submit\" class=\"mat-btn mat-btn--danger\" formnovalidate formaction=\"?handler={E(DeleteHandler)}\" data-confirm=\"{E(DeleteConfirm ?? Localization.Text.T("Common.DeleteConfirm"))}\" data-confirm-ok=\"{E(DeleteOk ?? Localization.Text.T("Common.Delete"))}\">{Ui.Icon("trash")}<span>{E(DeleteLabel)}</span></button>");
         }
 
         sb.Append("</div>");

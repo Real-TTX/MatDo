@@ -174,3 +174,8 @@
 
 /* the title of the editor has no frame of its own: the editor is the frame */
 .md-qa .md-qa__title:focus, .md-qa .md-qa__title:focus-visible, .md-qa .md-qa__desc:focus, .md-qa .md-qa__desc:focus-visible { outline: none; box-shadow: none; border: 0; }
+
+/* the language switch (EN / DE) under the card of the pages without a menu */
+.md-auth-foot { display: flex; flex-direction: column; align-items: center; gap: var(--mat-space-2); }
+.md-lang { margin: 0; }
+.md-lang .mat-seg__btn { min-width: 44px; }

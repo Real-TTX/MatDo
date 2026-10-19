@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using System.Globalization;
 using MatDo.Services;
 
@@ -64,23 +65,23 @@ public sealed class IndexModel(ProjectService projects, TeamService teams) : App
         {
             Id = "projects",
             Action = "/Projects",
-            Label = "Projekte",
+            Label = Text.T("Projects.Title"),
             Search = search,
             SearchField = true,
-            SearchPlaceholder = "Projekte durchsuchen",
+            SearchPlaceholder = Text.T("Projects.Search"),
             Filters =
             [
-                new FilterField("team", "Team", new[] { new FilterOption("personal", "Persönlich") }.Concat(myTeams.Select(t => new FilterOption(t.Id.ToString(CultureInfo.InvariantCulture), t.Name))).ToList(), team),
-                new FilterField("state", "Status", [new("favorite", "Favoriten"), new("archived", "Archiviert"), new("all", "Alle inkl. archivierte")], state),
+                new FilterField("team", Text.T("Projects.Col.Team"), new[] { new FilterOption("personal", Text.T("Projects.Personal")) }.Concat(myTeams.Select(t => new FilterOption(t.Id.ToString(CultureInfo.InvariantCulture), t.Name))).ToList(), team),
+                new FilterField("state", Text.T("Common.Status"), [new("favorite", Text.T("Menu.Favorites")), new("archived", Text.T("Projects.Archived")), new("all", Text.T("Projects.AllWithArchived"))], state),
             ],
-            SortOptions = [new("name", "Name"), new("team", "Team"), new("open", "Offene Aufgaben")],
+            SortOptions = [new("name", Text.T("Common.Name")), new("team", Text.T("Projects.Col.Team")), new("open", Text.T("Labels.Col.Open"))],
             Sort = sort,
             Descending = desc,
             DefaultSort = "name",
             Total = all.Count(p => !p.IsArchived),
             Matching = filtered.Count,
-            Noun = "Projekte",
-            NounOne = "Projekt",
+            Noun = Text.T("Projects.Many"),
+            NounOne = Text.T("Projects.One"),
         };
 
         var page = ListQuery.Page(Request);

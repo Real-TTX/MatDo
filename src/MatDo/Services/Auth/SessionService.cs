@@ -26,7 +26,7 @@ public sealed class SessionService(AppDbContext db, IMemoryCache cache)
     /// <summary>Forget what was cached about sessions and users (after a user or a session changed).</summary>
     public static void Invalidate() => Interlocked.Increment(ref _generation);
 
-    public static UserSnapshot Snapshot(User u) => new(u.Id, u.Email, u.DisplayName, u.Role, u.Theme, u.Scheme, u.TimeZone);
+    public static UserSnapshot Snapshot(User u) => new(u.Id, u.Email, u.DisplayName, u.Role, u.Theme, u.Scheme, u.TimeZone, u.Language);
 
     public async Task SignInAsync(HttpContext http, User user, bool remember)
     {

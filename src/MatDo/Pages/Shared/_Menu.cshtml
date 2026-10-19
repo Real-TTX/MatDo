@@ -1,11 +1,14 @@
-@model MenuModel
+@model (MenuModel Menu, string Area)
 @inject CurrentUser Me
 @*
-    The menu (SHELL-01 .. SHELL-19): the main action first, the views (inbox, today, upcoming, filters, labels, done), the favourites, the personal projects
-    and the projects of each team (with an icon to manage them), and for an administrator the administration.
-    A page names what it belongs to: ViewData["ActiveNav"] ("today", "upcoming" ...) or ViewData["ActiveProject"] (the id of a project).
+    The menus (SHELL-01 .. SHELL-19): one panel per menu of the switcher at the foot (SHELL-15), the one of the page shown.
+    - tasks:    the main action first, the views, the favourites, the personal projects and the projects of each team, the teams
+    - settings: profile, keywords, webhooks, password
+    - admin:    users, system (administrators only)
+    A page names what it belongs to: ViewData["ActiveNav"] or ViewData["ActiveProject"] (the id of a project).
 *@
 @{
+    var m = Model.Menu;
     var path = Context.Request.Path.Value ?? "/";
     var nav = ViewData["ActiveNav"] as string ?? string.Empty;
     var project = ViewData["ActiveProject"] as long?;
@@ -15,64 +18,64 @@
     string Cur(bool active) => active ? "page" : null!;
     string Badge(int n) => n > 99 ? "99+" : n.ToString(System.Globalization.CultureInfo.InvariantCulture);
 }
-<nav class="mat-nav__scroll" aria-label="Hauptmenü">
+<nav class="mat-nav__scroll" aria-label="@L["Shell.Area.Tasks"]" data-nav-panel="tasks" hidden="@(Model.Area != "tasks")">
     <ul class="mat-nav__list">
         <li>
-            <a class="mat-nav__item mat-nav__item--primary" href="/Today?qa=qa-today#qa-today" data-quick-open aria-haspopup="dialog">@Ui.Icon("plus")<span>Aufgabe hinzufügen</span></a>
+            <a class="mat-nav__item mat-nav__item--primary" href="/Today?qa=qa-today#qa-today" data-quick-open aria-haspopup="dialog">@Ui.Icon("plus")<span>@L["QuickAdd.Add"]</span></a>
         </li>
 
         <li>
-            @{ var inbox = project == Model.InboxId || nav == "inbox"; }
-            <a class="@Cls(inbox)" href="/Inbox" aria-current="@Cur(inbox)">@Ui.Icon("inbox")<span>Eingang</span>@if (Model.Inbox > 0) { <span class="mat-nav__badge mat-nav__badge--plain">@Badge(Model.Inbox)<span class="mat-sr-only"> offen</span></span> }</a>
+            @{ var inbox = project == m.InboxId || nav == "inbox"; }
+            <a class="@Cls(inbox)" href="/Inbox" aria-current="@Cur(inbox)">@Ui.Icon("inbox")<span>@L["Project.Inbox"]</span>@if (m.Inbox > 0) { <span class="mat-nav__badge mat-nav__badge--plain">@Badge(m.Inbox)</span> }</a>
         </li>
         <li>
             @{ var today = nav == "today"; }
-            <a class="@Cls(today)" href="/Today" aria-current="@Cur(today)">@Ui.Icon("calendar-today")<span>Heute</span>@if (Model.Today > 0) { <span class="mat-nav__badge @(Model.Overdue > 0 ? "" : "mat-nav__badge--plain")">@Badge(Model.Today)<span class="mat-sr-only"> fällig@(Model.Overdue > 0 ? $", {Model.Overdue} überfällig" : "")</span></span> }</a>
+            <a class="@Cls(today)" href="/Today" aria-current="@Cur(today)">@Ui.Icon("calendar-today")<span>@L["Today.Title"]</span>@if (m.Today > 0) { <span class="mat-nav__badge @(m.Overdue > 0 ? "" : "mat-nav__badge--plain")">@Badge(m.Today)@if (m.Overdue > 0) { <span class="mat-sr-only"> @L["Menu.OverdueCount", m.Overdue]</span> }</span> }</a>
         </li>
         <li>
             @{ var upcoming = nav == "upcoming"; }
-            <a class="@Cls(upcoming)" href="/Upcoming" aria-current="@Cur(upcoming)">@Ui.Icon("calendar-days")<span>Demnächst</span>@if (Model.Upcoming > 0) { <span class="mat-nav__badge mat-nav__badge--plain">@Badge(Model.Upcoming)</span> }</a>
+            <a class="@Cls(upcoming)" href="/Upcoming" aria-current="@Cur(upcoming)">@Ui.Icon("calendar-days")<span>@L["Upcoming.Title"]</span>@if (m.Upcoming > 0) { <span class="mat-nav__badge mat-nav__badge--plain">@Badge(m.Upcoming)</span> }</a>
         </li>
         <li>
             @{ var filter = nav == "filter"; }
-            <a class="@Cls(filter)" href="/Tasks" aria-current="@Cur(filter)">@Ui.Icon("sliders")<span>Filter &amp; Suche</span></a>
+            <a class="@Cls(filter)" href="/Tasks" aria-current="@Cur(filter)">@Ui.Icon("sliders")<span>@L["Filter.Title"]</span></a>
         </li>
         <li>
             @{ var labels = Under("/Labels"); }
-            <a class="@Cls(labels)" href="/Labels" aria-current="@Cur(labels)">@Ui.Icon("tag")<span>Labels</span></a>
+            <a class="@Cls(labels)" href="/Labels" aria-current="@Cur(labels)">@Ui.Icon("tag")<span>@L["Labels.Title"]</span></a>
         </li>
         <li>
             @{ var done = nav == "done"; }
-            <a class="@Cls(done)" href="/Tasks/Completed" aria-current="@Cur(done)">@Ui.Icon("circle-check")<span>Erledigt</span></a>
+            <a class="@Cls(done)" href="/Tasks/Completed" aria-current="@Cur(done)">@Ui.Icon("circle-check")<span>@L["Completed.Title"]</span></a>
         </li>
 
-        @if (Model.Favorites.Count > 0)
+        @if (m.Favorites.Count > 0)
         {
-            <li class="mat-nav__group" role="presentation">Favoriten</li>
-            @foreach (var p in Model.Favorites)
+            <li class="mat-nav__group" role="presentation">@L["Menu.Favorites"]</li>
+            @foreach (var p in m.Favorites)
             {
                 <li><a class="@Cls(project == p.Id)" href="/Projects/View?id=@p.Id" aria-current="@Cur(project == p.Id)">@Ui.Icon("hash", null, p.Color)<span>@p.Name</span>@if (p.Open > 0) { <span class="mat-nav__badge mat-nav__badge--plain">@Badge(p.Open)</span> }</a></li>
             }
         }
 
         <li class="mat-nav__group mat-nav__group--action" role="presentation">
-            <span class="mat-nav__group-title">Meine Projekte</span>
-            <a class="mat-nav__group-action @(Under("/Projects") && project is null ? "is-active" : "")" href="/Projects" aria-label="Projekte verwalten" title="Projekte verwalten">@Ui.Icon("settings")</a>
+            <span class="mat-nav__group-title">@L["Menu.MyProjects"]</span>
+            <a class="mat-nav__group-action @(Under("/Projects") && project is null ? "is-active" : "")" href="/Projects" aria-label="@L["Menu.ManageProjects"]" title="@L["Menu.ManageProjects"]">@Ui.Icon("settings")</a>
         </li>
-        @foreach (var p in Model.Personal)
+        @foreach (var p in m.Personal)
         {
             <li><a class="@Cls(project == p.Id)" href="/Projects/View?id=@p.Id" aria-current="@Cur(project == p.Id)">@Ui.Icon("hash", null, p.Color)<span>@p.Name</span>@if (p.Open > 0) { <span class="mat-nav__badge mat-nav__badge--plain">@Badge(p.Open)</span> }</a></li>
         }
-        @if (Model.Personal.Count == 0)
+        @if (m.Personal.Count == 0)
         {
-            <li><a class="mat-nav__item md-muted" href="/Projects/Edit">@Ui.Icon("folder-plus")<span>Projekt anlegen</span></a></li>
+            <li><a class="mat-nav__item md-muted" href="/Projects/Edit">@Ui.Icon("folder-plus")<span>@L["Projects.Create"]</span></a></li>
         }
 
-        @foreach (var team in Model.Teams)
+        @foreach (var team in m.Teams)
         {
             <li class="mat-nav__group mat-nav__group--action" role="presentation">
                 <span class="mat-nav__group-title">@team.TeamName</span>
-                <a class="mat-nav__group-action" href="/Teams/Members?id=@team.TeamId" aria-label="Team @team.TeamName verwalten" title="Team verwalten">@Ui.Icon("users")</a>
+                <a class="mat-nav__group-action" href="/Teams/Members?id=@team.TeamId" aria-label="@L["Menu.ManageTeam", team.TeamName]" title="@L["Menu.ManageTeam", team.TeamName]">@Ui.Icon("users")</a>
             </li>
             @foreach (var p in team.Projects)
             {
@@ -80,18 +83,30 @@
             }
             @if (team.Projects.Count == 0)
             {
-                <li><a class="mat-nav__item md-muted" href="/Projects/Edit?team=@team.TeamId">@Ui.Icon("folder-plus")<span>Teamprojekt anlegen</span></a></li>
+                <li><a class="mat-nav__item md-muted" href="/Projects/Edit?team=@team.TeamId">@Ui.Icon("folder-plus")<span>@L["Projects.CreateTeam"]</span></a></li>
             }
         }
 
-        <li class="mat-nav__group" role="presentation">Zusammenarbeit</li>
-        <li><a class="@Cls(Under("/Teams"))" href="/Teams" aria-current="@Cur(Under("/Teams"))">@Ui.Icon("users")<span>Teams</span></a></li>
-
-        @if (Me.IsAdmin)
-        {
-            <li class="mat-nav__group" role="presentation">Administration</li>
-            <li><a class="@Cls(Under("/Admin/Users"))" href="/Admin/Users" aria-current="@Cur(Under("/Admin/Users"))">@Ui.Icon("user-circle")<span>Benutzer</span></a></li>
-            <li><a class="@Cls(Under("/Admin/System"))" href="/Admin/System" aria-current="@Cur(Under("/Admin/System"))">@Ui.Icon("server")<span>System</span></a></li>
-        }
+        <li class="mat-nav__group" role="presentation">@L["Menu.Collaboration"]</li>
+        <li><a class="@Cls(Under("/Teams"))" href="/Teams" aria-current="@Cur(Under("/Teams"))">@Ui.Icon("users")<span>@L["Teams.Title"]</span></a></li>
     </ul>
 </nav>
+
+<nav class="mat-nav__scroll" aria-label="@L["Settings.Title"]" data-nav-panel="settings" hidden="@(Model.Area != "settings")">
+    <ul class="mat-nav__list">
+        <li><a class="@Cls(path.Equals("/Account", StringComparison.OrdinalIgnoreCase))" href="/Account" aria-current="@Cur(path.Equals("/Account", StringComparison.OrdinalIgnoreCase))">@Ui.Icon("user")<span>@L["Settings.Profile"]</span></a></li>
+        <li><a class="@Cls(Under("/Account/Keywords"))" href="/Account/Keywords" aria-current="@Cur(Under("/Account/Keywords"))">@Ui.Icon("keyboard")<span>@L["Keywords.Title"]</span></a></li>
+        <li><a class="@Cls(Under("/Account/Webhooks"))" href="/Account/Webhooks" aria-current="@Cur(Under("/Account/Webhooks"))">@Ui.Icon("webhook")<span>@L["Webhooks.Title"]</span></a></li>
+        <li><a class="@Cls(Under("/Account/Password"))" href="/Account/Password" aria-current="@Cur(Under("/Account/Password"))">@Ui.Icon("lock")<span>@L["Password.Title"]</span></a></li>
+    </ul>
+</nav>
+
+@if (Me.IsAdmin)
+{
+    <nav class="mat-nav__scroll" aria-label="@L["Admin.Title"]" data-nav-panel="admin" hidden="@(Model.Area != "admin")">
+        <ul class="mat-nav__list">
+            <li><a class="@Cls(Under("/Admin/Users"))" href="/Admin/Users" aria-current="@Cur(Under("/Admin/Users"))">@Ui.Icon("user-circle")<span>@L["Users.Title"]</span></a></li>
+            <li><a class="@Cls(Under("/Admin/System"))" href="/Admin/System" aria-current="@Cur(Under("/Admin/System"))">@Ui.Icon("server")<span>@L["System.Title"]</span></a></li>
+        </ul>
+    </nav>
+}

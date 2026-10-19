@@ -1,0 +1,25 @@
+{
+  "Landing.Description": { "en": "MatDo – tasks, projects and teams. A quick add like Todoist, webhooks for voice commands.", "de": "MatDo – Aufgaben, Projekte und Teams. Schnelleingabe wie bei Todoist, Webhooks für Sprachbefehle." },
+  "Landing.Lead": { "en": "Tasks, projects and teams. Just write what needs doing: <em>“Write offer tomorrow 9am #Customer p1”</em> – MatDo understands date, time, project and priority.", "de": "Aufgaben, Projekte und Teams. Schreib einfach, was zu tun ist: <em>„Angebot schreiben morgen 9 Uhr #Kunde p1“</em>, und MatDo versteht Datum, Uhrzeit, Projekt und Priorität." },
+  "Landing.Register": { "en": "Register for free", "de": "Kostenlos registrieren" },
+  "Landing.Features": { "en": "Features", "de": "Funktionen" },
+  "Landing.QuickAdd.Title": { "en": "Quick add", "de": "Schnelleingabe" },
+  "Landing.QuickAdd.Text": { "en": "Today, tomorrow, “on friday”, “24 Dec at 3pm”, “every monday”: dates, repeats, #projects, @labels and p1–p4 right in the text, in English and German.", "de": "Heute, morgen, übermorgen, „am Freitag“, „24.12. um 15 Uhr“, „jeden Montag“: Termine, Wiederholungen, #Projekte, @Labels und p1–p4 direkt im Text, auf Deutsch und Englisch." },
+  "Landing.Voice.Title": { "en": "By voice and webhook", "de": "Per Sprache und Webhook" },
+  "Landing.Voice.Text": { "en": "A shortcut dictates, MatDo puts the task into your inbox. Define your own keywords like “project EIMER” in the settings.", "de": "Ein Kurzbefehl diktiert, MatDo legt die Aufgabe in deinen Eingang. Eigene Schlüsselwörter wie „Projekt EIMER“ legst du in den Einstellungen fest." },
+  "Landing.Teams.Text": { "en": "Teams share projects, sections and tasks. Tasks can be assigned to members.", "de": "Teams teilen Projekte, Abschnitte und Aufgaben. Aufgaben lassen sich Mitgliedern zuweisen." },
+  "Landing.Views.Title": { "en": "Today and upcoming", "de": "Heute und Demnächst" },
+  "Landing.Views.Text": { "en": "Overdue, today and the next two weeks at a glance, with sub-tasks, deadlines, comments and labels.", "de": "Überfälliges, Heute und die nächsten zwei Wochen auf einen Blick, mit Unteraufgaben, Fristen, Kommentaren und Labels." },
+
+  "Errors.Home": { "en": "To the start page", "de": "Zur Startseite" },
+  "Errors.General.Title": { "en": "Something went wrong", "de": "Etwas ist schiefgegangen" },
+  "Errors.General.Text": { "en": "Please try again in a moment.", "de": "Bitte versuche es gleich noch einmal." },
+  "Errors.NotFound.Title": { "en": "Not found", "de": "Nicht gefunden" },
+  "Errors.NotFound.Text": { "en": "This page does not exist, or it belongs to somebody else.", "de": "Diese Seite gibt es nicht, oder sie gehört jemand anderem." },
+  "Errors.Forbidden.Title": { "en": "No access", "de": "Kein Zugriff" },
+  "Errors.Forbidden.Text": { "en": "You lack the permission for this.", "de": "Dafür fehlt die Berechtigung." },
+  "Errors.BadRequest.Title": { "en": "Invalid request", "de": "Ungültige Anfrage" },
+  "Errors.BadRequest.Text": { "en": "Please reload the page and try again.", "de": "Bitte lade die Seite neu und versuche es noch einmal." },
+  "Errors.TooMany.Title": { "en": "Too many requests", "de": "Zu viele Anfragen" },
+  "Errors.TooMany.Text": { "en": "Please wait a moment.", "de": "Bitte einen Moment warten." }
+}

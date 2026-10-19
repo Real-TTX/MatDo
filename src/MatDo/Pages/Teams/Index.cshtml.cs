@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 
@@ -49,19 +50,19 @@ public sealed class IndexModel(TeamService teams) : AppPageModel
         {
             Id = "teams",
             Action = "/Teams",
-            Label = "Teams",
+            Label = Text.T("Teams.Title"),
             Search = search,
             SearchField = true,
-            SearchPlaceholder = "Teams durchsuchen",
-            Filters = [new FilterField("role", "Meine Rolle", [new("owner", "Eigentümer"), new("member", "Mitglied")], role)],
-            SortOptions = [new("name", "Name"), new("members", "Mitglieder"), new("projects", "Projekte")],
+            SearchPlaceholder = Text.T("Teams.Search"),
+            Filters = [new FilterField("role", Text.T("Teams.Col.MyRole"), [new("owner", Text.T("Teams.Role.Owner")), new("member", Text.T("Teams.Role.Member"))], role)],
+            SortOptions = [new("name", Text.T("Common.Name")), new("members", Text.T("Teams.Col.Members")), new("projects", Text.T("Projects.Title"))],
             Sort = sort,
             Descending = desc,
             DefaultSort = "name",
             Total = all.Count,
             Matching = filtered.Count,
-            Noun = "Teams",
-            NounOne = "Team",
+            Noun = Text.T("Teams.Many"),
+            NounOne = Text.T("Teams.Col.Team"),
         };
         var page = ListQuery.Page(Request);
         Items = ListQuery.Slice(filtered, page, PageSize).ToList();

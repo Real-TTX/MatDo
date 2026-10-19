@@ -23,9 +23,9 @@ public sealed class QuickAddModel
     /// <summary>The editor of the dialog: always open, no "add task" line.</summary>
     public bool InDialog { get; init; }
 
-    public string AddLabel { get; init; } = "Aufgabe hinzufügen";
+    public string AddLabel { get; init; } = Localization.Text.T("QuickAdd.Add");
 
-    public string Placeholder { get; init; } = "z. B. Angebot schreiben morgen 9 Uhr #Projekt @label p1";
+    public string Placeholder { get; init; } = Localization.Text.T("QuickAdd.Placeholder");
 
     public IReadOnlyList<ProjectInfo> Projects { get; init; } = [];
 
@@ -54,8 +54,8 @@ public sealed class QuickAddEditor(AppDbContext db, CurrentUser me, ProjectServi
             ParentId = parentId,
             Open = open,
             InDialog = inDialog,
-            AddLabel = addLabel ?? "Aufgabe hinzufügen",
-            Placeholder = parentId is null ? "z. B. Angebot schreiben morgen 9 Uhr #Projekt @label p1" : "Unteraufgabe, z. B. Unterlagen sammeln morgen",
+            AddLabel = addLabel ?? Localization.Text.T("QuickAdd.Add"),
+            Placeholder = Localization.Text.T(parentId is null ? "QuickAdd.Placeholder" : "QuickAdd.SubPlaceholder"),
             Projects = _projects,
             Labels = _labels,
         };

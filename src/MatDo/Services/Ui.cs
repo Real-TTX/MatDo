@@ -45,15 +45,15 @@ public static partial class Ui
 
     public static string PriorityName(int p) => p switch
     {
-        1 => "Priorität 1",
-        2 => "Priorität 2",
-        3 => "Priorität 3",
-        _ => "Priorität 4",
+        1 => Localization.Text.T("Priority.1"),
+        2 => Localization.Text.T("Priority.2"),
+        3 => Localization.Text.T("Priority.3"),
+        _ => Localization.Text.T("Priority.4"),
     };
 
     public static string PriorityClass(int p) => p is >= 1 and <= 3 ? $"md-p{p}" : "md-p4";
 
-    public static IReadOnlyList<(int Value, string Label)> Priorities { get; } = [(1, "Priorität 1"), (2, "Priorität 2"), (3, "Priorität 3"), (4, "Priorität 4")];
+    public static IReadOnlyList<(int Value, string Label)> Priorities => [(1, PriorityName(1)), (2, PriorityName(2)), (3, PriorityName(3)), (4, PriorityName(4))];
 
     /// <summary>The label of a due date in a row, and whether it is overdue / today / soon (the class of its colour).</summary>
     public static (string Text, string Class) Due(DateOnly date, TimeOnly? time, DateOnly today)

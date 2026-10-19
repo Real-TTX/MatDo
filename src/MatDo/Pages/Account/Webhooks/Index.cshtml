@@ -1,16 +1,11 @@
 @page "/Account/Webhooks"
 @model MatDo.Pages.Account.Webhooks.IndexModel
 @{
-    ViewData["Title"] = "Einstellungen";
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Einstellungen", "/Account"), ("Webhooks", null) };
+    ViewData["Title"] = L["Webhooks.Title"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, "/Account"), (L["Webhooks.Title"].Value, null) };
 }
 
-<partial name="_AccountTabs" model="@("webhooks")" />
-
-<p class="mat-muted md-intro">
-    Ein Webhook ist eine geheime Adresse, die aus einem Text eine Aufgabe macht, genau wie die Schnelleingabe. So legst du Aufgaben per Sprache an
-    (Apple Kurzbefehle: „Text diktieren“ → „Inhalte von URL abrufen“), aus Zapier, n8n, Home Assistant oder mit curl.
-</p>
+<p class="mat-muted md-intro">@L["Webhooks.Intro"]</p>
 
 <div class="mat-list">
     <partial name="_Toolbar" model="Model.Toolbar" />
@@ -19,26 +14,26 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("webhook")</span>
-            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch keine Webhooks" : "Kein Webhook passt")</div>
-            <p>@(Model.Toolbar.Total == 0 ? "Lege einen an, z. B. „iPhone Kurzbefehl“." : "Ändere die Suche oder die Filter.")</p>
+            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Webhooks.Empty.Title" : "Webhooks.NoMatch"]</div>
+            <p>@L[Model.Toolbar.Total == 0 ? "Webhooks.Empty.Text" : "Lists.ChangeTools"]</p>
         </div>
     }
     else
     {
-        <md-table caption="Webhooks">
+        <md-table caption="@L["Webhooks.Title"]">
             <thead>
-                <tr><th scope="col">Name</th><th scope="col">Ziel</th><th scope="col">Status</th><th scope="col" class="mat-hide-md">Zuletzt benutzt</th><th scope="col" class="mat-num mat-hide-sm">Aufrufe</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+                <tr><th scope="col">@L["Common.Name"]</th><th scope="col">@L["Webhooks.Col.Target"]</th><th scope="col">@L["Common.Status"]</th><th scope="col" class="mat-hide-md">@L["Webhooks.Col.LastUsed"]</th><th scope="col" class="mat-num mat-hide-sm">@L["Webhooks.Col.Uses"]</th><th scope="col"><span class="mat-sr-only">@L["Common.Actions"]</span></th></tr>
             </thead>
             <tbody>
                 @foreach (var w in Model.Items)
                 {
                     <tr>
-                        <td data-label="Name"><a class="md-name" href="/Account/Webhooks/Edit?id=@w.Id">@Ui.Icon("webhook")<span>@w.Name</span></a></td>
-                        <td data-label="Ziel">@w.Target</td>
-                        <td data-label="Status">@if (w.IsActive) { <span class="mat-pill mat-pill--ok">Aktiv</span> } else { <span class="mat-pill mat-pill--plain">Abgeschaltet</span> }</td>
-                        <td data-label="Zuletzt" class="mat-hide-md mat-mono">@(w.LastUsed is null ? "Nie" : Dates.Stamp(w.LastUsed, Model.Zone))</td>
-                        <td data-label="Aufrufe" class="mat-num mat-mono mat-hide-sm">@w.Uses</td>
-                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Account/Webhooks/Edit?id=@w.Id" aria-label="@w.Name bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                        <td data-label="@L["Common.Name"]"><a class="md-name" href="/Account/Webhooks/Edit?id=@w.Id">@Ui.Icon("webhook")<span>@w.Name</span></a></td>
+                        <td data-label="@L["Webhooks.Col.Target"]">@(w.Target ?? L["Project.Inbox"].Value)</td>
+                        <td data-label="@L["Common.Status"]">@if (w.IsActive) { <span class="mat-pill mat-pill--ok">@L["Common.Active"]</span> } else { <span class="mat-pill mat-pill--plain">@L["Webhooks.Off"]</span> }</td>
+                        <td data-label="@L["Webhooks.Col.LastUsed"]" class="mat-hide-md mat-mono">@(w.LastUsed is null ? L["Common.Never"].Value : Dates.Stamp(w.LastUsed, Model.Zone))</td>
+                        <td data-label="@L["Webhooks.Col.Uses"]" class="mat-num mat-mono mat-hide-sm">@w.Uses</td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Account/Webhooks/Edit?id=@w.Id" aria-label="@L["Common.EditNamed", w.Name]" data-tip="@L["Common.Edit"]">@Ui.Icon("edit")</a></div></td>
                     </tr>
                 }
             </tbody>
@@ -48,6 +43,6 @@
     <partial name="_Pager" model="Model.Pager" />
 
     <div class="mat-actions">
-        <a class="mat-btn mat-btn--primary" href="/Account/Webhooks/Edit">@Ui.Icon("plus")<span>Neuer Webhook</span></a>
+        <a class="mat-btn mat-btn--primary" href="/Account/Webhooks/Edit">@Ui.Icon("plus")<span>@L["Webhooks.New"]</span></a>
     </div>
 </div>

@@ -1,4 +1,5 @@
 using System.Globalization;
+using MatDo.Localization;
 
 namespace MatDo.Services;
 
@@ -28,16 +29,16 @@ public static class TaskTools
     {
         var filters = new List<FilterField>
         {
-            new("priority", "Priorität", Ui.Priorities.Select(x => new FilterOption(x.Value.ToString(CultureInfo.InvariantCulture), x.Label)).ToList(), q.Priority?.ToString(CultureInfo.InvariantCulture)),
+            new("priority", Text.T("Tasks.Tools.Priority"), Ui.Priorities.Select(x => new FilterOption(x.Value.ToString(CultureInfo.InvariantCulture), x.Label)).ToList(), q.Priority?.ToString(CultureInfo.InvariantCulture)),
         };
         if (labels.Count > 0)
         {
-            filters.Add(new FilterField("label", "Label", labels.Select(x => new FilterOption(x.Id.ToString(CultureInfo.InvariantCulture), x.Name)).ToList(), q.LabelId?.ToString(CultureInfo.InvariantCulture)));
+            filters.Add(new FilterField("label", Text.T("Tasks.Tools.Label"), labels.Select(x => new FilterOption(x.Id.ToString(CultureInfo.InvariantCulture), x.Name)).ToList(), q.LabelId?.ToString(CultureInfo.InvariantCulture)));
         }
 
         if (dueFilter)
         {
-            filters.Add(new FilterField("due", "Fällig", [new("overdue", "Überfällig"), new("today", "Heute"), new("week", "Nächste 7 Tage"), new("none", "Ohne Datum")], q.Due));
+            filters.Add(new FilterField("due", Text.T("Tasks.Tools.Due"), [new("overdue", Text.T("Tasks.Tools.Overdue")), new("today", Text.T("Common.Date.Today")), new("week", Text.T("Tasks.Tools.Next7")), new("none", Text.T("Tasks.Tools.NoDate"))], q.Due));
         }
 
         if (extra is not null)
@@ -49,20 +50,20 @@ public static class TaskTools
         {
             Id = id,
             Action = action,
-            Label = "Aufgaben",
+            Label = Text.T("Tasks.Noun"),
             Search = q.Search,
             SearchField = true,
-            SearchPlaceholder = "Aufgaben durchsuchen",
+            SearchPlaceholder = Text.T("Tasks.Tools.Search"),
             Filters = filters,
-            SortOptions = sorts ?? [new("manual", "Manuell"), new("due", "Datum"), new("priority", "Priorität"), new("name", "Name"), new("created", "Erstellt")],
+            SortOptions = sorts ?? [new("manual", Text.T("Tasks.Sort.Manual")), new("due", Text.T("Tasks.Sort.Due")), new("priority", Text.T("Tasks.Sort.Priority")), new("name", Text.T("Tasks.Sort.Name")), new("created", Text.T("Tasks.Sort.Created"))],
             Sort = q.Sort,
             Descending = q.Descending,
             DefaultSort = defaultSort,
             DefaultDescending = defaultDescending,
             Total = total,
             Matching = matching,
-            Noun = "Aufgaben",
-            NounOne = "Aufgabe",
+            Noun = Text.T("Tasks.Many"),
+            NounOne = Text.T("Tasks.NounOne"),
             Keep = keep ?? new Dictionary<string, string?>(),
         };
     }

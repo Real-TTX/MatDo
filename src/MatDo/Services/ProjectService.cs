@@ -12,11 +12,13 @@ public sealed record ProjectInfo(long Id, string Name, string Color, bool IsInbo
 /// </summary>
 public sealed class ProjectService(AppDbContext db)
 {
-    public static readonly IReadOnlyList<(string Value, string Name)> Colors =
+    public static IReadOnlyList<(string Value, string Name)> Colors => ColorKeys.Select(c => (c.Value, Localization.Text.T("Color." + c.Key))).ToList();
+
+    private static readonly IReadOnlyList<(string Value, string Key)> ColorKeys =
     [
-        ("#d03d33", "Rot"), ("#eb8909", "Orange"), ("#c9a400", "Gelb"), ("#7ecc49", "Hellgrün"), ("#299438", "Grün"), ("#158fad", "Petrol"),
-        ("#14aaf5", "Himmelblau"), ("#246fe0", "Blau"), ("#884dff", "Violett"), ("#af38eb", "Lila"), ("#e05194", "Pink"), ("#b8255f", "Beere"),
-        ("#ff8d85", "Lachs"), ("#808080", "Grau"), ("#ccac93", "Taupe"),
+        ("#d03d33", "Red"), ("#eb8909", "Orange"), ("#c9a400", "Yellow"), ("#7ecc49", "LightGreen"), ("#299438", "Green"), ("#158fad", "Teal"),
+        ("#14aaf5", "SkyBlue"), ("#246fe0", "Blue"), ("#884dff", "Violet"), ("#af38eb", "Purple"), ("#e05194", "Pink"), ("#b8255f", "Berry"),
+        ("#ff8d85", "Salmon"), ("#808080", "Grey"), ("#ccac93", "Taupe"),
     ];
 
     public IQueryable<Project> Visible(long userId)
@@ -30,7 +32,7 @@ public sealed class ProjectService(AppDbContext db)
         var inbox = await db.Projects.FirstOrDefaultAsync(p => p.OwnerId == userId && p.IsInbox && p.TeamId == null);
         if (inbox is null)
         {
-            inbox = new Project { OwnerId = userId, Name = "Eingang", IsInbox = true, Color = "#246fe0", CreateUserId = userId };
+            inbox = new Project { OwnerId = userId, Name = "Inbox", IsInbox = true, Color = "#246fe0", CreateUserId = userId };
             db.Projects.Add(inbox);
             await db.SaveChangesAsync();
         }

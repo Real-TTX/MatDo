@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using System.Globalization;
 using MatDo.Controls;
 using MatDo.Data;
@@ -44,7 +45,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
         }
         else
         {
-            Name = "iPhone Kurzbefehl";
+            Name = Text.T("Webhooks.DefaultName");
         }
 
         await LoadAsync();
@@ -65,7 +66,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
 
         if (string.IsNullOrWhiteSpace(Name))
         {
-            ModelState.AddModelError(nameof(Name), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(Name), Text.T("Common.NameRequired"));
         }
 
         long? project = null;
@@ -74,7 +75,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
             var found = await projects.FindAsync(UserId, p);
             if (found is null)
             {
-                ModelState.AddModelError(nameof(ProjectId), "Dieses Projekt gibt es nicht.");
+                ModelState.AddModelError(nameof(ProjectId), Text.T("Projects.NotFound"));
             }
             else if (!found.IsInbox)
             {
@@ -99,7 +100,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
         hook.ProjectId = project;
         hook.IsActive = IsActive;
         await db.SaveChangesAsync();
-        Flash(IsNew ? "Webhook angelegt. Kopiere jetzt die Adresse." : "Gespeichert.");
+        Flash(IsNew ? Text.T("Webhooks.Created") : Text.T("Common.Saved"));
         return LocalRedirect($"/Account/Webhooks/Edit?id={hook.Id}");
     }
 
@@ -114,7 +115,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
 
         hook.Token = Guid.NewGuid();
         await db.SaveChangesAsync();
-        Flash("Neue Adresse erzeugt. Die alte funktioniert nicht mehr.");
+        Flash(Text.T("Webhooks.Renewed"));
         return LocalRedirect($"/Account/Webhooks/Edit?id={hook.Id}");
     }
 
@@ -128,7 +129,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
 
         db.Webhooks.Remove(hook);
         await db.SaveChangesAsync();
-        Flash($"Webhook „{hook.Name}“ gelöscht.");
+        Flash(Text.T("Common.DeletedNamed", hook.Name));
         return LocalRedirect("/Account/Webhooks");
     }
 
@@ -142,7 +143,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
         }
 
         Projects = (await projects.ListAsync(UserId))
-            .Select(x => new Choice(x.IsInbox ? string.Empty : x.Id.ToString(CultureInfo.InvariantCulture), x.IsInbox ? "Eingang" : x.TeamName is null ? x.Name : $"{x.Name} ({x.TeamName})", null, x.IsInbox ? null : x.Color))
+            .Select(x => new Choice(x.IsInbox ? string.Empty : x.Id.ToString(CultureInfo.InvariantCulture), x.IsInbox ? Text.T("Project.Inbox") : x.TeamName is null ? x.Name : $"{x.Name} ({x.TeamName})", null, x.IsInbox ? null : x.Color))
             .ToList();
     }
 }

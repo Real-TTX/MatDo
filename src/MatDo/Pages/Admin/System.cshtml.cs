@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -29,7 +30,7 @@ public sealed class SystemModel(AppDbContext db, AccountService accounts) : AppP
         var url = PublicUrl.Trim().TrimEnd('/');
         if (url.Length > 0 && (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")))
         {
-            ModelState.AddModelError(nameof(PublicUrl), "Bitte eine vollständige Adresse wie https://todo.example.com eingeben, oder leer lassen.");
+            ModelState.AddModelError(nameof(PublicUrl), Text.T("System.PublicUrl.Invalid"));
             await LoadAsync();
             return Page();
         }
@@ -38,7 +39,7 @@ public sealed class SystemModel(AppDbContext db, AccountService accounts) : AppP
         s.RegistrationOpen = RegistrationOpen;
         s.PublicUrl = url.Length == 0 ? null : url;
         await db.SaveChangesAsync();
-        Flash("Gespeichert.");
+        Flash(Text.T("Common.Saved"));
         return LocalRedirect("/Admin/System");
     }
 

@@ -1,4 +1,5 @@
 using MatDo.Data;
+using MatDo.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace MatDo.Services;
@@ -57,13 +58,13 @@ public sealed class TeamService(AppDbContext db)
         email = AccountService.Normalize(email);
         if (!AccountService.IsEmail(email))
         {
-            return "Bitte eine gültige E-Mail-Adresse eingeben.";
+            return Text.T("Account.Email.Invalid");
         }
 
         var user = await db.Users.FirstOrDefaultAsync(u => u.Email == email && u.IsActive);
         if (user is null || await db.TeamMembers.AnyAsync(m => m.TeamId == teamId && m.UserId == user.Id))
         {
-            return "Diese Person kann nicht hinzugefügt werden. Sie braucht ein MatDo-Konto mit genau dieser Adresse und darf noch nicht Mitglied sein.";
+            return Text.T("Teams.Members.CannotAdd");
         }
 
         db.TeamMembers.Add(new TeamMember { TeamId = teamId, UserId = user.Id, Role = TeamRole.Member });
@@ -76,12 +77,12 @@ public sealed class TeamService(AppDbContext db)
         var member = await db.TeamMembers.FirstOrDefaultAsync(m => m.Id == memberId && m.TeamId == teamId);
         if (member is null)
         {
-            return "Dieses Mitglied gibt es nicht.";
+            return Text.T("Teams.Members.NotFound");
         }
 
         if (member.Role == TeamRole.Owner && role != TeamRole.Owner && await db.TeamMembers.CountAsync(m => m.TeamId == teamId && m.Role == TeamRole.Owner) == 1)
         {
-            return "Ein Team braucht mindestens einen Eigentümer.";
+            return Text.T("Teams.Members.NeedsOwner");
         }
 
         member.Role = role;
@@ -95,12 +96,12 @@ public sealed class TeamService(AppDbContext db)
         var member = await db.TeamMembers.FirstOrDefaultAsync(m => m.Id == memberId && m.TeamId == teamId);
         if (member is null)
         {
-            return "Dieses Mitglied gibt es nicht.";
+            return Text.T("Teams.Members.NotFound");
         }
 
         if (member.Role == TeamRole.Owner && await db.TeamMembers.CountAsync(m => m.TeamId == teamId && m.Role == TeamRole.Owner) == 1)
         {
-            return "Der letzte Eigentümer kann das Team nicht verlassen. Bitte zuerst jemand anderen zum Eigentümer machen oder das Team löschen.";
+            return Text.T("Teams.Members.LastOwner");
         }
 
         var projectIds = db.Projects.Where(p => p.TeamId == teamId).Select(p => p.Id);

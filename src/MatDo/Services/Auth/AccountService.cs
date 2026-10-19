@@ -1,10 +1,14 @@
 using System.Net.Mail;
 using MatDo.Data;
+using MatDo.Localization;
 using Microsoft.EntityFrameworkCore;
 
 namespace MatDo.Services;
 
 public sealed record SignInResult(User? User, string? Error);
+
+/// <summary>A message for one field of a form.</summary>
+public sealed record FieldError(string Field, string Message);
 
 /// <summary>Accounts: registering (the first account is the administrator), signing in with a lockout after failed attempts, and what a new account gets (its inbox, the keywords).</summary>
 public sealed class AccountService(AppDbContext db, PasswordService passwords)
@@ -55,22 +59,22 @@ public sealed class AccountService(AppDbContext db, PasswordService passwords)
     }
 
     /// <summary>Creates an account with its inbox and the default keywords. The very first account is an administrator.</summary>
-    public async Task<(User? User, string? Error)> RegisterAsync(string email, string displayName, string password, string? timeZone = null, UserRole? role = null)
+    public async Task<(User? User, FieldError? Error)> RegisterAsync(string email, string displayName, string password, string? timeZone = null, UserRole? role = null, string? language = null)
     {
         email = Normalize(email);
         if (!IsEmail(email))
         {
-            return (null, "Bitte eine gültige E-Mail-Adresse eingeben.");
+            return (null, new FieldError("Email", Text.T("Account.Email.Invalid")));
         }
 
         if (PasswordService.Check(password, email) is { } problem)
         {
-            return (null, problem);
+            return (null, new FieldError("Password", problem));
         }
 
         if (await db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == email))
         {
-            return (null, "Mit dieser Adresse gibt es schon ein Konto.");
+            return (null, new FieldError("Email", Text.T("Account.Email.Taken")));
         }
 
         var first = !await AnyUserAsync();
@@ -81,6 +85,7 @@ public sealed class AccountService(AppDbContext db, PasswordService passwords)
             PasswordHash = passwords.Hash(password),
             Role = role ?? (first ? UserRole.Admin : UserRole.User),
             TimeZone = Dates.IsZone(timeZone) ? timeZone! : "Europe/Berlin",
+            Language = Languages.Normalize(language),
         };
         db.Users.Add(user);
         await db.SaveChangesAsync();
@@ -93,7 +98,7 @@ public sealed class AccountService(AppDbContext db, PasswordService passwords)
     {
         if (!await db.Projects.AnyAsync(p => p.OwnerId == user.Id && p.IsInbox))
         {
-            db.Projects.Add(new Project { OwnerId = user.Id, Name = "Eingang", IsInbox = true, Color = "#246fe0", CreateUserId = user.Id });
+            db.Projects.Add(new Project { OwnerId = user.Id, Name = "Inbox", IsInbox = true, Color = "#246fe0", CreateUserId = user.Id });
         }
 
         if (!await db.Keywords.AnyAsync(k => k.UserId == user.Id))
@@ -115,13 +120,13 @@ public sealed class AccountService(AppDbContext db, PasswordService passwords)
         if (user is null)
         {
             passwords.SpendTime(password);
-            return new SignInResult(null, "E-Mail-Adresse oder Passwort stimmen nicht.");
+            return new SignInResult(null, Text.T("Account.Login.Wrong"));
         }
 
         var now = DateTime.UtcNow;
         if (user.LockoutUntil is { } until && until > now)
         {
-            return new SignInResult(null, "Zu viele Fehlversuche. Bitte in ein paar Minuten noch einmal versuchen.");
+            return new SignInResult(null, Text.T("Account.LockedOut"));
         }
 
         if (!passwords.Verify(user.PasswordHash, password))
@@ -134,12 +139,12 @@ public sealed class AccountService(AppDbContext db, PasswordService passwords)
             }
 
             await db.SaveChangesAsync();
-            return new SignInResult(null, "E-Mail-Adresse oder Passwort stimmen nicht.");
+            return new SignInResult(null, Text.T("Account.Login.Wrong"));
         }
 
         if (!user.IsActive)
         {
-            return new SignInResult(null, "Dieses Konto ist gesperrt.");
+            return new SignInResult(null, Text.T("Account.Login.Inactive"));
         }
 
         user.FailedLogins = 0;

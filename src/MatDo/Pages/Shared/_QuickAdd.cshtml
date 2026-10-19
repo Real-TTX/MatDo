@@ -32,36 +32,36 @@
         <div class="md-qa__field">
             <div class="md-qa__mirror" aria-hidden="true" data-qa-mirror></div>
             <textarea class="md-qa__title" id="@id-text" name="Text" rows="1" maxlength="2000" required placeholder="@Model.Placeholder"
-                      aria-label="Name der Aufgabe" aria-describedby="@id-chips" autocomplete="off" spellcheck="true" data-qa-input
-                      data-msg-required="Bitte einen Namen für die Aufgabe eingeben."></textarea>
+                      aria-label="@L["QuickAdd.TaskName"]" aria-describedby="@id-chips" autocomplete="off" spellcheck="true" data-qa-input
+                      data-msg-required="@L["Tasks.NameRequired"]"></textarea>
         </div>
-        <textarea class="md-qa__desc" id="@id-desc" name="Description" rows="1" maxlength="10000" placeholder="Beschreibung" aria-label="Beschreibung" data-qa-desc></textarea>
+        <textarea class="md-qa__desc" id="@id-desc" name="Description" rows="1" maxlength="10000" placeholder="@L["Tasks.Description"]" aria-label="@L["Tasks.Description"]" data-qa-desc></textarea>
 
         <div class="md-qa__chips" id="@id-chips" aria-live="polite" data-qa-chips></div>
 
         <div class="md-qa__tools">
             <div class="md-qa__tool">
-                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="date" aria-expanded="false" aria-controls="@id-pop-date">@Ui.Icon("calendar")<span data-qa-date-label>Datum</span></button>
-                <div class="md-qa__pop" id="@id-pop-date" role="dialog" aria-label="Datum wählen" hidden data-qa-pop="date">
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="date" aria-expanded="false" aria-controls="@id-pop-date">@Ui.Icon("calendar")<span data-qa-date-label>@L["QuickAdd.Date"]</span></button>
+                <div class="md-qa__pop" id="@id-pop-date" role="dialog" aria-label="@L["QuickAdd.ChooseDate"]" hidden data-qa-pop="date">
                     <div class="md-qa__quick">
-                        <button type="button" class="md-qa__opt" data-qa-date="today">@Ui.Icon("calendar-today")<span>Heute</span></button>
-                        <button type="button" class="md-qa__opt" data-qa-date="tomorrow">@Ui.Icon("sun")<span>Morgen</span></button>
-                        <button type="button" class="md-qa__opt" data-qa-date="weekend">@Ui.Icon("sofa")<span>Am Wochenende</span></button>
-                        <button type="button" class="md-qa__opt" data-qa-date="nextweek">@Ui.Icon("calendar-days")<span>Nächste Woche</span></button>
-                        <button type="button" class="md-qa__opt" data-qa-date="none">@Ui.Icon("x-circle")<span>Kein Datum</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="today">@Ui.Icon("calendar-today")<span>@L["Common.Date.Today"]</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="tomorrow">@Ui.Icon("sun")<span>@L["Common.Date.Tomorrow"]</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="weekend">@Ui.Icon("sofa")<span>@L["QuickAdd.Weekend"]</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="nextweek">@Ui.Icon("calendar-days")<span>@L["QuickAdd.NextWeek"]</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="none">@Ui.Icon("x-circle")<span>@L["QuickAdd.NoDate"]</span></button>
                     </div>
                     <div class="md-qa__pick">
-                        <label class="mat-label" for="@id-pick-date">Datum</label>
+                        <label class="mat-label" for="@id-pick-date">@L["QuickAdd.Date"]</label>
                         <input class="mat-input mat-input--sm" type="date" id="@id-pick-date" data-qa-pick-date />
-                        <label class="mat-label" for="@id-pick-time">Uhrzeit</label>
+                        <label class="mat-label" for="@id-pick-time">@L["QuickAdd.Time"]</label>
                         <input class="mat-input mat-input--sm" type="time" id="@id-pick-time" data-qa-pick-time />
-                        <button type="button" class="mat-btn mat-btn--primary mat-btn--sm" data-qa-pick-apply>Übernehmen</button>
+                        <button type="button" class="mat-btn mat-btn--primary mat-btn--sm" data-qa-pick-apply>@L["QuickAdd.Apply"]</button>
                     </div>
                 </div>
             </div>
             <div class="md-qa__tool">
-                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="priority" aria-expanded="false" aria-controls="@id-pop-priority">@Ui.Icon("flag")<span data-qa-priority-label>Priorität</span></button>
-                <div class="md-qa__pop" id="@id-pop-priority" role="dialog" aria-label="Priorität wählen" hidden data-qa-pop="priority">
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="priority" aria-expanded="false" aria-controls="@id-pop-priority">@Ui.Icon("flag")<span data-qa-priority-label>@L["QuickAdd.Priority"]</span></button>
+                <div class="md-qa__pop" id="@id-pop-priority" role="dialog" aria-label="@L["QuickAdd.ChoosePriority"]" hidden data-qa-pop="priority">
                     @foreach (var (value, label) in Ui.Priorities)
                     {
                         <button type="button" class="md-qa__opt" data-qa-set-priority="@value">@Ui.Icon("flag", Ui.PriorityClass(value))<span>@label</span></button>
@@ -69,11 +69,11 @@
                 </div>
             </div>
             <div class="md-qa__tool">
-                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="labels" aria-expanded="false" aria-controls="@id-pop-labels">@Ui.Icon("tag")<span data-qa-labels-label>Labels</span></button>
-                <div class="md-qa__pop" id="@id-pop-labels" role="dialog" aria-label="Labels wählen" hidden data-qa-pop="labels">
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="labels" aria-expanded="false" aria-controls="@id-pop-labels">@Ui.Icon("tag")<span data-qa-labels-label>@L["Labels.Title"]</span></button>
+                <div class="md-qa__pop" id="@id-pop-labels" role="dialog" aria-label="@L["QuickAdd.ChooseLabels"]" hidden data-qa-pop="labels">
                     @if (Model.Labels.Count == 0)
                     {
-                        <p class="mat-hint">Noch keine Labels. Tippe <kbd>@@name</kbd> in den Text, dann wird das Label angelegt.</p>
+                        <p class="mat-hint">@Html.Raw(L["QuickAdd.NoLabels"].Value)</p>
                     }
                     @foreach (var l in Model.Labels)
                     {
@@ -81,11 +81,11 @@
                     }
                 </div>
             </div>
-            <label class="mat-sr-only" for="@id-project">Projekt</label>
+            <label class="mat-sr-only" for="@id-project">@L["Tasks.Project"]</label>
             <select class="mat-select mat-select--sm md-qa__project" id="@id-project" name="DefaultProjectId" data-qa-project hidden="@(Model.ParentId is not null)">
                 @foreach (var p in personal)
                 {
-                    <option value="@p.Id" selected="@(p.Id == Model.DefaultProjectId)">@(p.IsInbox ? "Eingang" : p.Name)</option>
+                    <option value="@p.Id" selected="@(p.Id == Model.DefaultProjectId)">@(p.IsInbox ? L["Project.Inbox"].Value : p.Name)</option>
                 }
                 @foreach (var g in teams)
                 {
@@ -101,8 +101,8 @@
 
         <div class="mat-btn-row mat-btn-row--plain md-qa__foot">
             <button type="submit" class="mat-btn mat-btn--primary mat-btn--sm" data-qa-submit>@Ui.Icon("plus")<span>@Model.AddLabel</span></button>
-            <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-cancel>Abbrechen</button>
+            <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-cancel>@L["Common.Cancel"]</button>
         </div>
-        <p class="md-qa__keys mat-hide-sm"><kbd>Enter</kbd> hinzufügen · <kbd>Esc</kbd> schließen · <kbd>Q</kbd> öffnet die Schnelleingabe überall</p>
+        <p class="md-qa__keys mat-hide-sm">@Html.Raw(L["QuickAdd.Keys"].Value)</p>
     </form>
 </details>

@@ -1,8 +1,8 @@
 @page "/Upcoming"
 @model MatDo.Pages.UpcomingModel
 @{
-    ViewData["Title"] = "Demnächst";
-    ViewData["PageSub"] = $"{Dates.Short(Model.From)} bis {Dates.Short(Model.From.AddDays(UpcomingModel.Days - 1))}";
+    ViewData["Title"] = L["Upcoming.Title"].Value;
+    ViewData["PageSub"] = L["Upcoming.Range", Dates.Short(Model.From), Dates.Short(Model.From.AddDays(UpcomingModel.Days - 1))].Value;
     ViewData["ActiveNav"] = "upcoming";
     ViewData["Width"] = "narrow";
     var prev = Model.From.AddDays(-7) <= Model.Today ? null : Dates.Iso(Model.From.AddDays(-7));
@@ -11,23 +11,23 @@
 <div class="mat-list md-view">
     <partial name="_Toolbar" model="Model.Toolbar" />
 
-    <nav class="md-weeknav" aria-label="Zeitraum">
+    <nav class="md-weeknav" aria-label="@L["Upcoming.Period"]">
         @if (Model.From > Model.Today)
         {
-            <a class="mat-btn mat-btn--ghost mat-btn--sm" href="/Upcoming@(prev is null ? "" : "?from=" + prev)">@Ui.Icon("chevron-left")<span>Früher</span></a>
-            <a class="mat-btn mat-btn--ghost mat-btn--sm" href="/Upcoming">@Ui.Icon("calendar-today")<span>Heute</span></a>
+            <a class="mat-btn mat-btn--ghost mat-btn--sm" href="/Upcoming@(prev is null ? "" : "?from=" + prev)">@Ui.Icon("chevron-left")<span>@L["Upcoming.Earlier"]</span></a>
+            <a class="mat-btn mat-btn--ghost mat-btn--sm" href="/Upcoming">@Ui.Icon("calendar-today")<span>@L["Common.Date.Today"]</span></a>
         }
-        <a class="mat-btn mat-btn--ghost mat-btn--sm" href="/Upcoming?from=@Dates.Iso(Model.From.AddDays(7))"><span>Später</span>@Ui.Icon("chevron-right")</a>
+        <a class="mat-btn mat-btn--ghost mat-btn--sm" href="/Upcoming?from=@Dates.Iso(Model.From.AddDays(7))"><span>@L["Upcoming.Later"]</span>@Ui.Icon("chevron-right")</a>
     </nav>
 
     @if (Model.Overdue is not null)
     {
         <section class="md-group" aria-labelledby="h-overdue">
             <div class="md-group__head">
-                <h2 class="md-group__title md-due--overdue" id="h-overdue">Überfällig <span class="md-group__count">@Model.Overdue.Rows.Count</span></h2>
+                <h2 class="md-group__title md-due--overdue" id="h-overdue">@L["Today.Overdue"] <span class="md-group__count">@Model.Overdue.Rows.Count</span></h2>
                 <form method="post" action="/Today?handler=Reschedule">
                     @Html.AntiForgeryToken()
-                    <button type="submit" class="mat-btn mat-btn--ghost mat-btn--sm">@Ui.Icon("calendar-today")<span>Auf heute verschieben</span></button>
+                    <button type="submit" class="mat-btn mat-btn--ghost mat-btn--sm">@Ui.Icon("calendar-today")<span>@L["Today.Reschedule"]</span></button>
                 </form>
             </div>
             <partial name="_TaskList" model="Model.Overdue" />
@@ -39,7 +39,7 @@
         <section class="md-group" aria-labelledby="h-@list.Id">
             <div class="md-group__head">
                 <h2 class="md-group__title @(day == Model.Today ? "md-due--today" : "")" id="h-@list.Id">
-                    @Dates.Short(day)@(day == Model.Today ? " · Heute" : day == Model.Today.AddDays(1) ? " · Morgen" : $" · {Dates.WeekdayName(day.DayOfWeek)}")
+                    @Dates.Short(day) · @(day == Model.Today ? L["Common.Date.Today"].Value : day == Model.Today.AddDays(1) ? L["Common.Date.Tomorrow"].Value : Dates.WeekdayName(day.DayOfWeek))
                     @if (list.Rows.Count > 0) { <span class="md-group__count">@list.Rows.Count</span> }
                 </h2>
             </div>
@@ -55,9 +55,9 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("search")</span>
-            <div class="mat-empty__title">Keine Aufgabe passt</div>
-            <p>Ändere die Suche oder die Filter.</p>
-            <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>Zurücksetzen</span></a>
+            <div class="mat-empty__title">@L["Tasks.NoMatch"]</div>
+            <p>@L["Lists.ChangeTools"]</p>
+            <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
         </div>
     }
 </div>

@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.EntityFrameworkCore;
@@ -52,19 +53,19 @@ public sealed class IndexModel(AppDbContext db) : AppPageModel
         {
             Id = "labels",
             Action = "/Labels",
-            Label = "Labels",
+            Label = Text.T("Labels.Title"),
             Search = search,
             SearchField = true,
-            SearchPlaceholder = "Labels durchsuchen",
-            Filters = [new FilterField("state", "Status", [new("favorite", "Favoriten"), new("used", "In Gebrauch"), new("unused", "Ohne offene Aufgaben")], state)],
-            SortOptions = [new("name", "Name"), new("open", "Offene Aufgaben")],
+            SearchPlaceholder = Text.T("Labels.Search"),
+            Filters = [new FilterField("state", Text.T("Common.Status"), [new("favorite", Text.T("Menu.Favorites")), new("used", Text.T("Labels.Used")), new("unused", Text.T("Labels.Unused"))], state)],
+            SortOptions = [new("name", Text.T("Common.Name")), new("open", Text.T("Labels.Col.Open"))],
             Sort = sort,
             Descending = desc,
             DefaultSort = "name",
             Total = all.Count,
             Matching = filtered.Count,
-            Noun = "Labels",
-            NounOne = "Label",
+            Noun = Text.T("Labels.Many"),
+            NounOne = Text.T("Labels.One"),
         };
         var page = ListQuery.Page(Request);
         Items = ListQuery.Slice(filtered, page, PageSize).ToList();

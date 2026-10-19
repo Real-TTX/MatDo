@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.EntityFrameworkCore;
@@ -81,23 +82,23 @@ public sealed class IndexModel(AppDbContext db) : AppPageModel
         {
             Id = "users",
             Action = "/Admin/Users",
-            Label = "Benutzer",
+            Label = Text.T("Users.Title"),
             Search = search,
             SearchField = true,
-            SearchPlaceholder = "Name oder E-Mail",
+            SearchPlaceholder = Text.T("Users.Search"),
             Filters =
             [
-                new FilterField("role", "Rolle", [new("admin", "Administrator"), new("user", "Benutzer")], role),
-                new FilterField("state", "Status", [new("active", "Aktiv"), new("disabled", "Gesperrt")], state),
+                new FilterField("role", Text.T("Users.Col.Role"), [new("admin", Text.T("Common.Role.Admin")), new("user", Text.T("Common.Role.User"))], role),
+                new FilterField("state", Text.T("Common.Status"), [new("active", Text.T("Common.Active")), new("disabled", Text.T("Users.Disabled"))], state),
             ],
-            SortOptions = [new("name", "Name"), new("email", "E-Mail"), new("login", "Letzte Anmeldung"), new("created", "Registriert")],
+            SortOptions = [new("name", Text.T("Common.Name")), new("email", Text.T("Account.Email")), new("login", Text.T("Users.Col.LastLogin")), new("created", Text.T("Users.Registered"))],
             Sort = sort,
             Descending = desc,
             DefaultSort = "name",
             Total = total,
             Matching = matching,
-            Noun = "Benutzer",
-            NounOne = "Benutzer",
+            Noun = Text.T("Users.Many"),
+            NounOne = Text.T("Users.One"),
         };
         Pager = new PagerModel { Page = page, PageSize = PageSize, Total = matching, Url = Toolbar.UrlWithPage };
     }

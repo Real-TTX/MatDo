@@ -1,13 +1,16 @@
+using System.Globalization;
 using System.Reflection;
 using System.Threading.RateLimiting;
 using MatDo;
 using MatDo.Api;
 using MatDo.Data;
+using MatDo.Localization;
 using MatDo.Services;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.HttpOverrides;
+using Microsoft.AspNetCore.Localization;
 using Microsoft.EntityFrameworkCore;
 
 if (args.Contains("--healthcheck"))
@@ -41,6 +44,17 @@ builder.Services.AddScoped<TeamService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<QuickAddEditor>();
 builder.Services.AddHostedService<MaintenanceService>();
+
+// The interface speaks English and German (MatDo.Localization); every localizer reads the one catalog of JSON texts.
+builder.Services.AddSingleton<Microsoft.Extensions.Localization.IStringLocalizerFactory, CatalogLocalizerFactory>();
+builder.Services.AddSingleton(typeof(Microsoft.Extensions.Localization.IStringLocalizer<>), typeof(CatalogLocalizer<>));
+builder.Services.Configure<RequestLocalizationOptions>(options =>
+{
+    options.DefaultRequestCulture = new RequestCulture(CultureInfo.InvariantCulture, Languages.UiCulture(Languages.Default));
+    options.SupportedCultures = [CultureInfo.InvariantCulture];
+    options.SupportedUICultures = [.. Languages.Codes.Select(Languages.UiCulture)];
+    options.RequestCultureProviders = [new AccountLanguageProvider(), new AcceptLanguageHeaderRequestCultureProvider()];
+});
 
 builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(o =>
@@ -140,7 +154,25 @@ app.UseStaticFiles(new StaticFileOptions
 app.UseRouting();
 app.UseRateLimiter();
 app.UseAuthentication();
+app.UseRequestLocalization();
 app.UseAuthorization();
+
+// The language switch (EN / DE): the cookie for the pages without an account, and the account of a signed-in person.
+app.MapPost("/language", async (HttpContext http, CurrentUser me, AppDbContext db, Microsoft.AspNetCore.Antiforgery.IAntiforgery anti) =>
+{
+    await anti.ValidateRequestAsync(http);
+    var form = await http.Request.ReadFormAsync();
+    var code = Languages.Normalize(form["language"].ToString());
+    Languages.SetCookie(http.Response, code, http.Request.IsHttps);
+    if (me.Id is { } id)
+    {
+        await db.Users.Where(u => u.Id == id).ExecuteUpdateAsync(s => s.SetProperty(u => u.Language, code));
+        SessionService.Invalidate();
+    }
+
+    var back = form["returnUrl"].ToString();
+    return Results.LocalRedirect(!string.IsNullOrEmpty(back) && back.StartsWith('/') && !back.StartsWith("//", StringComparison.Ordinal) ? back : "/");
+}).AllowAnonymous();
 
 app.MapGet("/health", async (AppDbContext db) => await db.Database.CanConnectAsync() ? Results.Ok("ok") : Results.StatusCode(503)).AllowAnonymous();
 app.MapWebhookApi();

@@ -1,7 +1,7 @@
 @page "/Today"
 @model MatDo.Pages.TodayModel
 @{
-    ViewData["Title"] = "Heute";
+    ViewData["Title"] = L["Today.Title"].Value;
     ViewData["PageSub"] = Dates.Long(Model.Today) + " · " + Model.Toolbar.Counted(Model.Toolbar.Matching);
     ViewData["ActiveNav"] = "today";
     ViewData["Width"] = "narrow";
@@ -14,9 +14,9 @@
     {
         <section class="md-group" aria-labelledby="h-overdue">
             <div class="md-group__head">
-                <h2 class="md-group__title md-due--overdue" id="h-overdue">Überfällig <span class="md-group__count">@Model.Overdue.Rows.Count</span></h2>
+                <h2 class="md-group__title md-due--overdue" id="h-overdue">@L["Today.Overdue"] <span class="md-group__count">@Model.Overdue.Rows.Count</span></h2>
                 <form method="post" asp-page-handler="Reschedule">
-                    <button type="submit" class="mat-btn mat-btn--ghost mat-btn--sm">@Ui.Icon("calendar-today")<span>Auf heute verschieben</span></button>
+                    <button type="submit" class="mat-btn mat-btn--ghost mat-btn--sm">@Ui.Icon("calendar-today")<span>@L["Today.Reschedule"]</span></button>
                 </form>
             </div>
             <partial name="_TaskList" model="Model.Overdue" />
@@ -25,7 +25,7 @@
 
     <section class="md-group" aria-labelledby="h-today">
         <div class="md-group__head">
-            <h2 class="md-group__title" id="h-today">@Dates.Short(Model.Today) · Heute <span class="md-group__count">@Model.Due.Rows.Count</span></h2>
+            <h2 class="md-group__title" id="h-today">@Dates.Short(Model.Today) · @L["Common.Date.Today"] <span class="md-group__count">@Model.Due.Rows.Count</span></h2>
         </div>
         <partial name="_TaskList" model="Model.Due" />
         <partial name="_QuickAdd" model="Model.Editor" />
@@ -35,8 +35,8 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("circle-check")</span>
-            <div class="mat-empty__title">Alles erledigt für heute</div>
-            <p>Genieß den Tag – oder plane etwas für morgen: <kbd>Q</kbd> öffnet die Schnelleingabe.</p>
+            <div class="mat-empty__title">@L["Today.Empty.Title"]</div>
+            <p>@Html.Raw(L["Today.Empty.Text"].Value)</p>
         </div>
     }
 </div>

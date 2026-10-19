@@ -1,17 +1,11 @@
 @page "/Account/Keywords"
 @model MatDo.Pages.Account.Keywords.IndexModel
 @{
-    ViewData["Title"] = "Einstellungen";
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Einstellungen", "/Account"), ("Schlüsselwörter", null) };
+    ViewData["Title"] = L["Keywords.Title"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, "/Account"), (L["Keywords.Title"].Value, null) };
 }
 
-<partial name="_AccountTabs" model="@("keywords")" />
-
-<p class="mat-muted md-intro">
-    Schlüsselwörter leiten in der Schnelleingabe und im Webhook einen Wert ein, ideal für Sprachbefehle:
-    <em>„Projekt EIMER Angebot schreiben morgen um 9 Uhr Priorität 1“</em>. Datum und Uhrzeit (heute, morgen, übermorgen, am Freitag, am 24.12., um 15 Uhr, jeden Montag …)
-    werden immer erkannt, dafür braucht es keine Schlüsselwörter.
-</p>
+<p class="mat-muted md-intro">@Html.Raw(L["Keywords.Intro"].Value)</p>
 
 <div class="mat-cols">
     <div class="mat-col-12 mat-col-lg-7">
@@ -22,24 +16,24 @@
             {
                 <div class="mat-empty">
                     <span class="mat-empty__icon">@Ui.Icon("keyboard")</span>
-                    <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Keine Schlüsselwörter" : "Kein Schlüsselwort passt")</div>
-                    <p>@(Model.Toolbar.Total == 0 ? "Stelle die Standardwörter wieder her oder lege eigene an." : "Ändere die Suche oder die Filter.")</p>
+                    <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Keywords.Empty.Title" : "Keywords.NoMatch"]</div>
+                    <p>@L[Model.Toolbar.Total == 0 ? "Keywords.Empty.Text" : "Lists.ChangeTools"]</p>
                 </div>
             }
             else
             {
-                <md-table caption="Schlüsselwörter">
+                <md-table caption="@L["Keywords.Title"]">
                     <thead>
-                        <tr><th scope="col">Wort</th><th scope="col">Art</th><th scope="col" class="mat-hide-md">Beispiel</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+                        <tr><th scope="col">@L["Keywords.Col.Word"]</th><th scope="col">@L["Keywords.Col.Kind"]</th><th scope="col" class="mat-hide-md">@L["Keywords.Col.Example"]</th><th scope="col"><span class="mat-sr-only">@L["Common.Actions"]</span></th></tr>
                     </thead>
                     <tbody>
                         @foreach (var k in Model.Items)
                         {
                             <tr>
-                                <td data-label="Wort"><a class="mat-mono" href="/Account/Keywords/Edit?id=@k.Id">@k.Word</a></td>
-                                <td data-label="Art"><span class="mat-pill mat-pill--plain">@KeywordKinds.Name(k.Kind)</span></td>
-                                <td data-label="Beispiel" class="mat-hide-md mat-muted">@KeywordKinds.Example(k.Kind).Replace(KeywordKinds.Name(k.Kind), k.Word)</td>
-                                <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Account/Keywords/Edit?id=@k.Id" aria-label="@k.Word bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                                <td data-label="@L["Keywords.Col.Word"]"><a class="mat-mono" href="/Account/Keywords/Edit?id=@k.Id">@k.Word</a></td>
+                                <td data-label="@L["Keywords.Col.Kind"]"><span class="mat-pill mat-pill--plain">@KeywordKinds.Name(k.Kind)</span></td>
+                                <td data-label="@L["Keywords.Col.Example"]" class="mat-hide-md mat-muted">@KeywordKinds.Example(k.Kind)</td>
+                                <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Account/Keywords/Edit?id=@k.Id" aria-label="@L["Common.EditNamed", k.Word]" data-tip="@L["Common.Edit"]">@Ui.Icon("edit")</a></div></td>
                             </tr>
                         }
                     </tbody>
@@ -49,9 +43,9 @@
             <partial name="_Pager" model="Model.Pager" />
 
             <div class="mat-actions">
-                <a class="mat-btn mat-btn--primary" href="/Account/Keywords/Edit">@Ui.Icon("plus")<span>Neues Schlüsselwort</span></a>
+                <a class="mat-btn mat-btn--primary" href="/Account/Keywords/Edit">@Ui.Icon("plus")<span>@L["Keywords.New"]</span></a>
                 <form method="post" asp-page-handler="Defaults">
-                    <button type="submit" class="mat-btn mat-btn--secondary">@Ui.Icon("restore")<span>Standardwörter ergänzen</span></button>
+                    <button type="submit" class="mat-btn mat-btn--secondary">@Ui.Icon("restore")<span>@L["Keywords.Defaults"]</span></button>
                 </form>
             </div>
         </div>
@@ -59,34 +53,34 @@
 
     <div class="mat-col-12 mat-col-lg-5">
         <div class="mat-card" id="try">
-            <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("sparkles")Ausprobieren</h2></div>
+            <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("sparkles")@L["Keywords.Try"]</h2></div>
             <div class="mat-card__body">
                 <form class="mat-form" method="get" action="/Account/Keywords#try">
-                    <md-field name="try" id="try-text" label="Satz" value="@Model.Try" placeholder="Projekt EIMER Angebot schreiben übermorgen 9:30" hint="Zeigt, was MatDo erkennt, ohne etwas anzulegen." />
+                    <md-field name="try" id="try-text" label="@L["Keywords.Try.Sentence"]" value="@Model.Try" placeholder="@L["Keywords.Try.Placeholder"]" hint="@L["Keywords.Try.Hint"]" />
                     <div class="mat-btn-row mat-btn-row--plain">
-                        <button type="submit" class="mat-btn mat-btn--secondary mat-btn--sm">@Ui.Icon("search")<span>Erkennen</span></button>
+                        <button type="submit" class="mat-btn mat-btn--secondary mat-btn--sm">@Ui.Icon("search")<span>@L["Keywords.Try.Run"]</span></button>
                     </div>
                 </form>
                 @if (Model.Preview is { } pv)
                 {
                     var p = pv.Parse;
                     <dl class="md-dl">
-                        <dt>Titel</dt><dd><strong>@(string.IsNullOrEmpty(p.Title) ? "–" : p.Title)</strong></dd>
-                        <dt>Projekt</dt><dd>@(pv.ProjectName is null ? "Eingang" : pv.ProjectName + (pv.ProjectIsNew ? " (wird angelegt)" : ""))</dd>
-                        @if (p.Section is not null) { <dt>Abschnitt</dt><dd>@p.Section</dd> }
-                        <dt>Fällig</dt><dd>@Model.Format(p.DueDate, p.DueTime)</dd>
-                        @if (p.Recurrence is not null) { <dt>Wiederholung</dt><dd>@Recurrence.Describe(p.Recurrence)</dd> }
-                        @if (p.Deadline is not null) { <dt>Frist</dt><dd>@Model.Format(p.Deadline, null)</dd> }
-                        <dt>Priorität</dt><dd>@(p.Priority is null ? "–" : Ui.PriorityName(p.Priority.Value))</dd>
-                        <dt>Labels</dt><dd>@(p.Labels.Count == 0 ? "–" : string.Join(", ", p.Labels))</dd>
-                        @if (p.Description is not null) { <dt>Beschreibung</dt><dd>@p.Description</dd> }
-                        <dt>Erkannt</dt>
+                        <dt>@L["Keywords.Try.Title"]</dt><dd><strong>@(string.IsNullOrEmpty(p.Title) ? "–" : p.Title)</strong></dd>
+                        <dt>@L["Tasks.Project"]</dt><dd>@(pv.ProjectName is null ? L["Project.Inbox"].Value : pv.ProjectName + (pv.ProjectIsNew ? " " + L["Keywords.Try.WillCreate"].Value : ""))</dd>
+                        @if (p.Section is not null) { <dt>@L["Tasks.Section"]</dt><dd>@p.Section</dd> }
+                        <dt>@L["Keywords.Try.Due"]</dt><dd>@Model.Format(p.DueDate, p.DueTime)</dd>
+                        @if (p.Recurrence is not null) { <dt>@L["Tasks.Recurrence"]</dt><dd>@Recurrence.Describe(p.Recurrence)</dd> }
+                        @if (p.Deadline is not null) { <dt>@L["Tasks.Deadline"]</dt><dd>@Model.Format(p.Deadline, null)</dd> }
+                        <dt>@L["QuickAdd.Priority"]</dt><dd>@(p.Priority is null ? "–" : Ui.PriorityName(p.Priority.Value))</dd>
+                        <dt>@L["Labels.Title"]</dt><dd>@(p.Labels.Count == 0 ? "–" : string.Join(", ", p.Labels))</dd>
+                        @if (p.Description is not null) { <dt>@L["Tasks.Description"]</dt><dd>@p.Description</dd> }
+                        <dt>@L["Keywords.Try.Found"]</dt>
                         <dd>
                             @foreach (var t in p.Tokens)
                             {
-                                <span class="mat-pill mat-pill--accent">@MatDo.Pages.Account.Keywords.IndexModel.TokenName(t.Kind): „@t.Text“</span>
+                                <span class="mat-pill mat-pill--accent">@L[$"Token.{t.Kind}"]: „@t.Text“</span>
                             }
-                            @if (p.Tokens.Count == 0) { <span class="mat-muted">nichts</span> }
+                            @if (p.Tokens.Count == 0) { <span class="mat-muted">@L["Keywords.Try.Nothing"]</span> }
                         </dd>
                     </dl>
                 }

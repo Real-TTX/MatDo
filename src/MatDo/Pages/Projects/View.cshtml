@@ -5,23 +5,24 @@
     ViewData["OwnHead"] = true;
     ViewData["Width"] = "narrow";
     ViewData["Crumbs"] = Model.Project.IsInbox
-        ? new List<(string, string?)> { ("Eingang", null) }
-        : new List<(string, string?)> { (Model.Project.Team?.Name ?? "Meine Projekte", Model.Project.TeamId is null ? "/Projects" : $"/Teams/Members?id={Model.Project.TeamId}"), (Model.Project.Name, null) };
+        ? new List<(string, string?)> { (L["Project.Inbox"].Value, null) }
+        : new List<(string, string?)> { (Model.Project.Team?.Name ?? L["Menu.MyProjects"].Value, Model.Project.TeamId is null ? "/Projects" : $"/Teams/Members?id={Model.Project.TeamId}"), (Model.Project.Name, null) };
     var doneUrl = $"/Projects/View?id={Model.Project.Id}" + (Model.ShowDone ? "" : "&done=true");
+    var sub = Model.Project.Team is { } team ? L["Projects.View.TeamOpen", team.Name, Model.Toolbar.Counted(Model.Toolbar.Total)].Value
+        : Model.Project.IsInbox ? L["Projects.View.InboxOpen", Model.Toolbar.Counted(Model.Toolbar.Total)].Value
+        : L["Projects.View.Open", Model.Toolbar.Counted(Model.Toolbar.Total)].Value;
 }
 
 <div class="mat-page__head">
     <div class="mat-page__title">
         <h1 class="md-title">@if (Model.Project.IsInbox) { @Ui.Icon("inbox") } else { @Ui.Icon("hash", null, Model.Project.Color) }@Model.Title</h1>
-        <p class="mat-page__sub">
-            @(Model.Project.Team is { } team ? $"Team {team.Name} · " : Model.Project.IsInbox ? "Hierhin kommt alles ohne Projekt, auch was der Webhook schickt · " : "")@Model.Toolbar.Counted(Model.Toolbar.Total) offen
-        </p>
+        <p class="mat-page__sub">@sub</p>
     </div>
     <div class="mat-page__actions">
-        <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@doneUrl">@Ui.Icon(Model.ShowDone ? "eye-off" : "circle-check")<span>@(Model.ShowDone ? "Erledigte ausblenden" : "Erledigte anzeigen")</span></a>
+        <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@doneUrl">@Ui.Icon(Model.ShowDone ? "eye-off" : "circle-check")<span>@L[Model.ShowDone ? "Projects.View.HideDone" : "Projects.View.ShowDone"]</span></a>
         @if (Model.CanManage && !Model.Project.IsInbox)
         {
-            <a class="mat-btn mat-btn--secondary mat-btn--sm" href="/Projects/Edit?id=@Model.Project.Id">@Ui.Icon("edit")<span>Projekt bearbeiten</span></a>
+            <a class="mat-btn mat-btn--secondary mat-btn--sm" href="/Projects/Edit?id=@Model.Project.Id">@Ui.Icon("edit")<span>@L["Projects.View.Edit"]</span></a>
         }
     </div>
 </div>
@@ -29,7 +30,7 @@
 <div class="mat-list md-view">
     <partial name="_Toolbar" model="Model.Toolbar" />
 
-    <section class="md-group" aria-label="Aufgaben ohne Abschnitt">
+    <section class="md-group" aria-label="@L["Projects.View.NoSection"]">
         <partial name="_TaskList" model="Model.Loose" />
         @if (Model.LooseEditor is not null)
         {
@@ -39,8 +40,8 @@
         {
             <div class="mat-empty">
                 <span class="mat-empty__icon">@Ui.Icon("search")</span>
-                <div class="mat-empty__title">Keine Aufgabe passt</div>
-                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>Zurücksetzen</span></a>
+                <div class="mat-empty__title">@L["Tasks.NoMatch"]</div>
+                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
             </div>
         }
     </section>
@@ -50,7 +51,7 @@
         <section class="md-group md-section" aria-labelledby="h-@list.Id">
             <div class="md-group__head">
                 <h2 class="md-group__title" id="h-@list.Id">@sec.Name <span class="md-group__count">@list.Rows.Count</span></h2>
-                <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Sections/Edit?id=@sec.Id" aria-label="Abschnitt @sec.Name bearbeiten" data-tip="Abschnitt bearbeiten">@Ui.Icon("edit")</a>
+                <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Sections/Edit?id=@sec.Id" aria-label="@L["Sections.EditNamed", sec.Name]" data-tip="@L["Sections.Edit"]">@Ui.Icon("edit")</a>
             </div>
             <partial name="_TaskList" model="list" />
             <partial name="_QuickAdd" model="editor" />
@@ -60,12 +61,12 @@
     @if (!Model.Filtered)
     {
         <details class="md-newsection">
-            <summary class="md-newsection__add">@Ui.Icon("plus")<span>Abschnitt hinzufügen</span></summary>
+            <summary class="md-newsection__add">@Ui.Icon("plus")<span>@L["Sections.Add"]</span></summary>
             <form class="md-newsection__form" method="post" asp-page-handler="AddSection" asp-route-id="@Model.Project.Id" novalidate>
-                <label class="mat-sr-only" for="SectionName">Name des Abschnitts</label>
-                <input class="mat-input" id="SectionName" name="SectionName" maxlength="120" required placeholder="Name des Abschnitts" data-msg-required="Bitte einen Namen eingeben." />
+                <label class="mat-sr-only" for="SectionName">@L["Sections.Name"]</label>
+                <input class="mat-input" id="SectionName" name="SectionName" maxlength="120" required placeholder="@L["Sections.Name"]" data-msg-required="@L["Common.NameRequired"]" />
                 <div class="mat-btn-row mat-btn-row--plain">
-                    <button type="submit" class="mat-btn mat-btn--primary mat-btn--sm">@Ui.Icon("plus")<span>Abschnitt hinzufügen</span></button>
+                    <button type="submit" class="mat-btn mat-btn--primary mat-btn--sm">@Ui.Icon("plus")<span>@L["Sections.Add"]</span></button>
                 </div>
             </form>
         </details>
@@ -74,7 +75,7 @@
     @if (Model.Done is not null)
     {
         <section class="md-group" aria-labelledby="h-done">
-            <div class="md-group__head"><h2 class="md-group__title" id="h-done">Erledigt <span class="md-group__count">@Model.Done.Rows.Count</span></h2></div>
+            <div class="md-group__head"><h2 class="md-group__title" id="h-done">@L["Completed.Title"] <span class="md-group__count">@Model.Done.Rows.Count</span></h2></div>
             <partial name="_TaskList" model="Model.Done" />
         </section>
     }

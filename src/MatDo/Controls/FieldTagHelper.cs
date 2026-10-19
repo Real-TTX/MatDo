@@ -117,7 +117,7 @@ public sealed class FieldTagHelper : TagHelper
         if (Required)
         {
             common.Append(" required");
-            common.Append($" data-msg-required=\"{E(MsgRequired ?? "Bitte dieses Feld ausfüllen.")}\"");
+            common.Append($" data-msg-required=\"{E(MsgRequired ?? Localization.Text.T("Common.Validation.Required"))}\"");
         }
 
         if (Disabled)
@@ -159,7 +159,7 @@ public sealed class FieldTagHelper : TagHelper
                     }
                     else if (Optional)
                     {
-                        sb.Append(" <span class=\"mat-opt\">(optional)</span>");
+                        sb.Append($" <span class=\"mat-opt\">({E(Localization.Text.T("Common.Optional"))})</span>");
                     }
 
                     sb.Append("</label>");

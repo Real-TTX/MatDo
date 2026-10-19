@@ -1,5 +1,6 @@
 using System.Text.Json;
 using MatDo.Data;
+using MatDo.Localization;
 using MatDo.Services;
 using Microsoft.EntityFrameworkCore;
 
@@ -43,10 +44,14 @@ public static class WebhookApi
             return NotFound();
         }
 
+        // the answer (message, dates) is in the language of the person the token belongs to; without one, the language of the calling device
+        var language = Languages.IsSupported(user.Language) ? user.Language : http.Request.Headers.AcceptLanguage.ToString();
+        System.Globalization.CultureInfo.CurrentUICulture = Languages.UiCulture(language);
+
         var (text, description) = await ReadAsync(http.Request);
         if (string.IsNullOrWhiteSpace(text))
         {
-            return Results.Json(new { error = "Der Text fehlt. Bitte {\"text\": \"...\"} senden." }, statusCode: StatusCodes.Status400BadRequest);
+            return Results.Json(new { error = Text.T("Webhook.TextMissing") }, statusCode: StatusCodes.Status400BadRequest);
         }
 
         services.GetRequiredService<CurrentUser>().ActingUserId = user.Id;
@@ -74,7 +79,7 @@ public static class WebhookApi
             id = task.Id,
             content = task.Content,
             description = task.Description,
-            project = task.Project?.Name,
+            project = ProjectName(task),
             due = task.DueDate is { } d ? Dates.Iso(d) : null,
             time = task.DueTime is { } t ? Dates.Time(t) : null,
             dueText = task.DueDate is { } dd ? Dates.Relative(dd, task.DueTime, today) : null,
@@ -90,13 +95,13 @@ public static class WebhookApi
     /// <summary>One sentence for the notification of the shortcut: "„Milch kaufen“ – Morgen 17:00 – Einkauf".</summary>
     private static string Summary(TaskItem task, IReadOnlyList<string> labels, DateOnly today)
     {
-        var parts = new List<string> { $"„{task.Content}“" };
+        var parts = new List<string> { Text.T("Webhook.Quoted", task.Content) };
         if (task.DueDate is { } d)
         {
             parts.Add(Dates.Relative(d, task.DueTime, today));
         }
 
-        parts.Add(task.Project?.Name ?? "Eingang");
+        parts.Add(ProjectName(task));
         if (task.Priority < 4)
         {
             parts.Add($"P{task.Priority}");
@@ -141,5 +146,7 @@ public static class WebhookApi
 
     private static string? Value(Microsoft.Extensions.Primitives.StringValues v) => string.IsNullOrWhiteSpace(v.ToString()) ? null : v.ToString();
 
-    private static IResult NotFound() => Results.Json(new { error = "Unbekannter oder abgeschalteter Webhook." }, statusCode: StatusCodes.Status404NotFound);
+    private static string ProjectName(TaskItem task) => task.Project is null or { IsInbox: true } ? Text.T("Project.Inbox") : task.Project.Name;
+
+    private static IResult NotFound() => Results.Json(new { error = Text.T("Webhook.Unknown") }, statusCode: StatusCodes.Status404NotFound);
 }

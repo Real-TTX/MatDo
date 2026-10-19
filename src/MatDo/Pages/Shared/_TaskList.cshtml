@@ -13,7 +13,7 @@
 }
 else
 {
-    <ul class="mat-itemlist mat-itemlist--lines-inset md-tasks" id="@Model.Id" data-itemlist @(Model.Reorder ? "data-reorder" : "") aria-label="Aufgaben">
+    <ul class="mat-itemlist mat-itemlist--lines-inset md-tasks" id="@Model.Id" data-itemlist @(Model.Reorder ? "data-reorder" : "") aria-label="@L["Tasks.Noun"]">
         @foreach (var t in Model.Rows)
         {
             var desc = t.Description?.Split('\n', 2)[0].Trim();
@@ -23,7 +23,7 @@ else
                     <input type="hidden" name="id" value="@t.Id" />
                     <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
                     <button type="submit" class="md-check @Ui.PriorityClass(t.Priority) @(t.IsCompleted ? "is-checked" : "")"
-                            aria-label="@(t.IsCompleted ? "Wieder öffnen" : "Erledigen"): @t.Content" title="@(t.IsCompleted ? "Wieder öffnen" : "Erledigen")">
+                            aria-label="@L[t.IsCompleted ? "Tasks.Reopen" : "Tasks.Complete"]: @t.Content" title="@L[t.IsCompleted ? "Tasks.Reopen" : "Tasks.Complete"]">
                         @Ui.Icon("check")
                     </button>
                 </form>
@@ -42,7 +42,7 @@ else
                             }
                             @if (t.Deadline is { } dl)
                             {
-                                <span class="md-meta @(dl < Model.Today ? "md-due--overdue" : "")">@Ui.Icon("target")Frist @Dates.Relative(dl, Model.Today)</span>
+                                <span class="md-meta @(dl < Model.Today ? "md-due--overdue" : "")">@Ui.Icon("target")@L["Tasks.DeadlineShort", Dates.Relative(dl, Model.Today)]</span>
                             }
                             @if (t.SubTasks > 0)
                             {
@@ -62,19 +62,19 @@ else
                             }
                             @if (t.IsCompleted && t.CompletedDate is not null)
                             {
-                                <span class="md-meta">@Ui.Icon("check")Erledigt</span>
+                                <span class="md-meta">@Ui.Icon("check")@L["Tasks.Done"]</span>
                             }
                         </span>
                     </span>
                     @if (Model.ShowProject)
                     {
-                        <span class="md-task__project">@(t.ProjectIsInbox ? "Eingang" : t.ProjectName)@Ui.Icon(t.ProjectIsInbox ? "inbox" : "hash", null, t.ProjectIsInbox ? null : t.ProjectColor)</span>
+                        <span class="md-task__project">@(t.ProjectIsInbox ? L["Project.Inbox"].Value : t.ProjectName)@Ui.Icon(t.ProjectIsInbox ? "inbox" : "hash", null, t.ProjectIsInbox ? null : t.ProjectColor)</span>
                     }
                 </a>
                 @if (Model.Reorder)
                 {
                     <div class="mat-item__aside md-task__aside">
-                        <button type="button" class="mat-item__handle" aria-label="„@t.Content“ verschieben">@Ui.Icon("grip")</button>
+                        <button type="button" class="mat-item__handle" aria-label="@L["Tasks.Move", t.Content]">@Ui.Icon("grip")</button>
                     </div>
                 }
             </li>

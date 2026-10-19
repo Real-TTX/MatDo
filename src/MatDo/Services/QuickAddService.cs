@@ -1,4 +1,5 @@
 using MatDo.Data;
+using MatDo.Localization;
 using MatDo.Services.Parsing;
 using Microsoft.EntityFrameworkCore;
 
@@ -86,7 +87,8 @@ public sealed class QuickAddService(AppDbContext db, ProjectService projects, Ta
         var ctx = await ContextAsync(user, disabled);
         var parse = QuickAddParser.Parse(text, ctx);
         var project = await ResolveProjectAsync(user.Id, parse.Project);
-        return new QuickAddPreview(parse, project?.Id, project?.Name ?? (parse.ProjectIsNew ? parse.Project : null), project?.Color, project is null && parse.ProjectIsNew, parse.Section);
+        var name = project is { IsInbox: true } ? Text.T("Project.Inbox") : project?.Name ?? (parse.ProjectIsNew ? parse.Project : null);
+        return new QuickAddPreview(parse, project?.Id, name, project?.Color, project is null && parse.ProjectIsNew, parse.Section);
     }
 
     public async Task<(TaskItem? Task, string? Error)> CreateAsync(User user, QuickAddInput input)
@@ -95,7 +97,7 @@ public sealed class QuickAddService(AppDbContext db, ProjectService projects, Ta
         var parse = QuickAddParser.Parse(input.Text, ctx);
         if (string.IsNullOrWhiteSpace(parse.Title))
         {
-            return (null, "Bitte einen Namen für die Aufgabe eingeben.");
+            return (null, Text.T("Tasks.NameRequired"));
         }
 
         // the project: chosen by hand, else what the text says, else where the editor stands, else the inbox
@@ -127,7 +129,7 @@ public sealed class QuickAddService(AppDbContext db, ProjectService projects, Ta
             parent = await tasks.Visible(user.Id).FirstOrDefaultAsync(t => t.Id == parentId);
             if (parent is null)
             {
-                return (null, "Die übergeordnete Aufgabe gibt es nicht.");
+                return (null, Text.T("Tasks.ParentMissing"));
             }
 
             project = await projects.FindAsync(user.Id, parent.ProjectId);

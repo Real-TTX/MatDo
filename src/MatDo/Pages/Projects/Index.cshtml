@@ -1,8 +1,8 @@
 @page "/Projects"
 @model MatDo.Pages.Projects.IndexModel
 @{
-    ViewData["Title"] = "Projekte";
-    ViewData["PageSub"] = "Deine persönlichen Projekte und die Projekte deiner Teams.";
+    ViewData["Title"] = L["Projects.Title"].Value;
+    ViewData["PageSub"] = L["Projects.Sub"].Value;
 }
 
 <div class="mat-list">
@@ -12,33 +12,33 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("hash")</span>
-            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch keine Projekte" : "Kein Projekt passt")</div>
-            <p>@(Model.Toolbar.Total == 0 ? "Projekte bündeln Aufgaben, z. B. „Haushalt“ oder „Kunde EIMER“." : "Ändere die Suche oder die Filter.")</p>
+            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Projects.Empty.Title" : "Projects.NoMatch"]</div>
+            <p>@L[Model.Toolbar.Total == 0 ? "Projects.Empty.Text" : "Lists.ChangeTools"]</p>
             @if (Model.Toolbar.Total > 0)
             {
-                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>Zurücksetzen</span></a>
+                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
             }
         </div>
     }
     else
     {
-        <md-table caption="Projekte">
+        <md-table caption="@L["Projects.Title"]">
             <thead>
-                <tr><th scope="col">Projekt</th><th scope="col">Team</th><th scope="col" class="mat-num">Offen</th><th scope="col" class="mat-hide-sm">Status</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+                <tr><th scope="col">@L["Projects.Col.Project"]</th><th scope="col">@L["Projects.Col.Team"]</th><th scope="col" class="mat-num">@L["Projects.Col.Open"]</th><th scope="col" class="mat-hide-sm">@L["Common.Status"]</th><th scope="col"><span class="mat-sr-only">@L["Common.Actions"]</span></th></tr>
             </thead>
             <tbody>
                 @foreach (var p in Model.Items)
                 {
                     <tr>
-                        <td data-label="Projekt"><a class="md-name" href="/Projects/View?id=@p.Id">@Ui.Icon("hash", null, p.Color)<span>@p.Name</span></a></td>
-                        <td data-label="Team">@(p.TeamName ?? "Persönlich")</td>
-                        <td data-label="Offen" class="mat-num mat-mono">@p.Open</td>
-                        <td data-label="Status" class="mat-hide-sm">
-                            @if (p.IsArchived) { <span class="mat-pill mat-pill--plain">Archiviert</span> }
-                            else if (p.IsFavorite) { <span class="mat-pill mat-pill--accent">@Ui.Icon("star")Favorit</span> }
-                            else { <span class="mat-pill mat-pill--ok">Aktiv</span> }
+                        <td data-label="@L["Projects.Col.Project"]"><a class="md-name" href="/Projects/View?id=@p.Id">@Ui.Icon("hash", null, p.Color)<span>@p.Name</span></a></td>
+                        <td data-label="@L["Projects.Col.Team"]">@(p.TeamName ?? L["Projects.Personal"].Value)</td>
+                        <td data-label="@L["Projects.Col.Open"]" class="mat-num mat-mono">@p.Open</td>
+                        <td data-label="@L["Common.Status"]" class="mat-hide-sm">
+                            @if (p.IsArchived) { <span class="mat-pill mat-pill--plain">@L["Projects.Archived"]</span> }
+                            else if (p.IsFavorite) { <span class="mat-pill mat-pill--accent">@Ui.Icon("star")@L["Common.Favorite"]</span> }
+                            else { <span class="mat-pill mat-pill--ok">@L["Common.Active"]</span> }
                         </td>
-                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Projects/Edit?id=@p.Id" aria-label="@p.Name bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Projects/Edit?id=@p.Id" aria-label="@L["Common.EditNamed", p.Name]" data-tip="@L["Common.Edit"]">@Ui.Icon("edit")</a></div></td>
                     </tr>
                 }
             </tbody>
@@ -48,6 +48,6 @@
     <partial name="_Pager" model="Model.Pager" />
 
     <div class="mat-actions">
-        <a class="mat-btn mat-btn--primary" href="/Projects/Edit">@Ui.Icon("plus")<span>Neues Projekt</span></a>
+        <a class="mat-btn mat-btn--primary" href="/Projects/Edit">@Ui.Icon("plus")<span>@L["Projects.New"]</span></a>
     </div>
 </div>

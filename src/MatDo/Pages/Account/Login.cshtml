@@ -2,28 +2,28 @@
 @model MatDo.Pages.Account.LoginModel
 @{
     Layout = "_LayoutAuth";
-    ViewData["Title"] = "Anmelden";
+    ViewData["Title"] = L["Account.Login.Title"].Value;
 }
 
 <div class="mat-auth__card">
     <div class="mat-auth__brand">
         @Ui.Logo("lg")
-        <h1>Anmelden</h1>
-        <p class="mat-muted">Willkommen zurück bei MatDo.</p>
+        <h1>@L["Account.Login.Title"]</h1>
+        <p class="mat-muted">@L["Account.Login.Welcome"]</p>
     </div>
 
     <form class="mat-form" method="post" novalidate>
         <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
         <partial name="_FormSummary" model="ViewData.ModelState" />
-        <md-field name="Email" kind="email" label="E-Mail-Adresse" required autocomplete="username" inputmode="email" value="@Model.Email" autofocus msg-required="Bitte die E-Mail-Adresse eingeben." />
-        <md-field name="Password" kind="password" label="Passwort" required autocomplete="current-password" msg-required="Bitte das Passwort eingeben." />
-        <md-field name="Remember" kind="check" label="Auf diesem Gerät angemeldet bleiben" value="@Model.Remember.ToString()" />
+        <md-field name="Email" kind="email" label="@L["Account.Email"]" required autocomplete="username" inputmode="email" value="@Model.Email" autofocus msg-required="@L["Account.Login.Email.Required"]" />
+        <md-field name="Password" kind="password" label="@L["Account.Password"]" required autocomplete="current-password" msg-required="@L["Account.Login.Password.Required"]" />
+        <md-field name="Remember" kind="check" label="@L["Account.Login.Remember"]" value="@Model.Remember.ToString()" />
         <div class="mat-btn-row mat-btn-row--plain">
-            <button type="submit" class="mat-btn mat-btn--primary mat-btn--block">@Ui.Icon("login")<span>Anmelden</span></button>
+            <button type="submit" class="mat-btn mat-btn--primary mat-btn--block">@Ui.Icon("login")<span>@L["Account.Login.Title"]</span></button>
         </div>
         @if (Model.CanRegister)
         {
-            <p class="mat-muted">Noch kein Konto? <a href="/Account/Register">Jetzt registrieren</a>.</p>
+            <p class="mat-muted">@L["Account.Login.NoAccount"] <a href="/Account/Register">@L["Account.Login.RegisterNow"]</a></p>
         }
     </form>
 </div>

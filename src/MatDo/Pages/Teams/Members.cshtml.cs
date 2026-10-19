@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -39,7 +40,7 @@ public sealed class MembersModel(TeamService teams, ProjectService projects) : A
             return Page();
         }
 
-        Flash($"{Email.Trim()} ist jetzt Mitglied.");
+        Flash(Text.T("Teams.Members.Added", Email.Trim()));
         return LocalRedirect($"/Teams/Members?id={Id}");
     }
 
@@ -53,7 +54,7 @@ public sealed class MembersModel(TeamService teams, ProjectService projects) : A
         var error = await teams.SetRoleAsync(Id, memberId, role);
         if (error is null)
         {
-            Flash("Rolle geändert.");
+            Flash(Text.T("Teams.Members.RoleChanged"));
         }
         else
         {
@@ -83,7 +84,7 @@ public sealed class MembersModel(TeamService teams, ProjectService projects) : A
             return LocalRedirect($"/Teams/Members?id={Id}");
         }
 
-        Flash(self ? $"Du hast das Team „{Team.Name}“ verlassen." : "Mitglied entfernt.");
+        Flash(self ? Text.T("Teams.Members.Left", Team.Name) : Text.T("Teams.Members.Removed"));
         return LocalRedirect(self ? "/Teams" : $"/Teams/Members?id={Id}");
     }
 

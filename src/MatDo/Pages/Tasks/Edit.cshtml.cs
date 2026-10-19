@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using System.Globalization;
 using MatDo.Controls;
 using MatDo.Data;
@@ -102,13 +103,13 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         var content = Name.Trim();
         if (content.Length == 0)
         {
-            ModelState.AddModelError(nameof(Name), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(Name), Text.T("Common.NameRequired"));
         }
 
         var project = Item.ParentId is null ? await projects.FindAsync(UserId, ProjectId) : Item.Project;
         if (project is null)
         {
-            ModelState.AddModelError(nameof(ProjectId), "Dieses Projekt gibt es nicht.");
+            ModelState.AddModelError(nameof(ProjectId), Text.T("Projects.NotFound"));
         }
 
         DateOnly? due = Dates.ParseIso(DueDate);
@@ -123,7 +124,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
             var parse = QuickAddParser.Parse(DueText, ctx);
             if (parse.DueDate is null)
             {
-                ModelState.AddModelError(nameof(DueText), "Dieses Datum habe ich nicht verstanden, z. B. „morgen 9 Uhr“ oder „jeden Montag“.");
+                ModelState.AddModelError(nameof(DueText), Text.T("Tasks.DueText.NotUnderstood"));
             }
             else
             {
@@ -193,7 +194,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         }
 
         await db.SaveChangesAsync();
-        Flash("Aufgabe gespeichert.");
+        Flash(Text.T("Common.Saved"));
         return LocalRedirect(BackUrl);
     }
 
@@ -205,7 +206,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         }
 
         var (completed, next) = await tasks.CompleteAsync(UserId, Id, Today);
-        Flash(completed ? $"„{Item.Content}“ erledigt." : next is { } n ? $"Nächster Termin: {Dates.Relative(n, Today)}." : "Gespeichert.");
+        Flash(completed ? Text.T("Tasks.CompletedNamed", Item.Content) : next is { } n ? Text.T("Tasks.NextDue", Dates.Relative(n, Today)) : Text.T("Common.Saved"));
         return LocalRedirect(completed ? BackUrl : $"/Tasks/Edit?id={Id}");
     }
 
@@ -218,7 +219,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
 
         var back = Parent is not null ? $"/Tasks/Edit?id={Parent.Id}" : $"/Projects/View?id={Item.ProjectId}";
         await tasks.DeleteAsync(UserId, Id);
-        Flash($"„{Item.Content}“ gelöscht.");
+        Flash(Text.T("Common.DeletedNamed", Item.Content));
         return LocalRedirect(!string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl) && !ReturnUrl.Contains($"id={Id}", StringComparison.Ordinal) ? ReturnUrl : back);
     }
 
@@ -234,7 +235,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         {
             db.Comments.Add(new TaskComment { TaskId = Id, AuthorId = UserId, Text = text.Length > 5000 ? text[..5000] : text });
             await db.SaveChangesAsync();
-            Flash("Kommentar gespeichert.");
+            Flash(Text.T("Comments.Saved"));
         }
 
         return LocalRedirect($"/Tasks/Edit?id={Id}#comments");
@@ -252,7 +253,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         {
             db.Comments.Remove(comment);
             await db.SaveChangesAsync();
-            Flash("Kommentar gelöscht.");
+            Flash(Text.T("Comments.Deleted"));
         }
 
         return LocalRedirect($"/Tasks/Edit?id={Id}#comments");
@@ -275,12 +276,12 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
     private async Task ChoicesAsync()
     {
         var all = await projects.ListAsync(UserId);
-        ProjectChoices = all.Select(p => new Choice(p.Id.ToString(CultureInfo.InvariantCulture), p.IsInbox ? "Eingang" : p.TeamName is null ? p.Name : $"{p.Name} ({p.TeamName})", null, p.IsInbox ? null : p.Color)).ToList();
-        SectionChoices = [new Choice(string.Empty, "Kein Abschnitt")];
+        ProjectChoices = all.Select(p => new Choice(p.Id.ToString(CultureInfo.InvariantCulture), p.IsInbox ? Text.T("Project.Inbox") : p.TeamName is null ? p.Name : $"{p.Name} ({p.TeamName})", null, p.IsInbox ? null : p.Color)).ToList();
+        SectionChoices = [new Choice(string.Empty, Text.T("Tasks.NoSection"))];
         SectionChoices.AddRange(await db.Sections.Where(s => s.ProjectId == Item.ProjectId).OrderBy(s => s.SortOrder).Select(s => new Choice(s.Id.ToString(), s.Name, null, null)).ToListAsync());
 
         var due = Item.DueDate ?? Today;
-        RecurrenceChoices = [new Choice(string.Empty, "Keine Wiederholung")];
+        RecurrenceChoices = [new Choice(string.Empty, Text.T("Tasks.NoRecurrence"))];
         RecurrenceChoices.AddRange(Services.Recurrence.Presets(due).Select(p => new Choice(p.Value, p.Label)));
         if (Item.Recurrence is { } r && RecurrenceChoices.All(c => c.Value != r))
         {
@@ -292,7 +293,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         AssigneeChoices = (await projects.AssigneesAsync(project)).Select(m => new Choice(m.Id.ToString(CultureInfo.InvariantCulture), m.Name)).ToList();
         if (AssigneeChoices.Count > 0)
         {
-            AssigneeChoices.Insert(0, new Choice(string.Empty, "Niemand"));
+            AssigneeChoices.Insert(0, new Choice(string.Empty, Text.T("Tasks.Nobody")));
         }
 
         var children = tasks.Visible(UserId).Where(t => t.ParentId == Id);
@@ -306,7 +307,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
             ShowProject = false,
             Reorder = true,
         };
-        SubEditor = await editors.CreateAsync("qa-sub", $"/Tasks/Edit?id={Id}", projectId: Item.ProjectId, parentId: Id, open: Request.Query["qa"] == "qa-sub", addLabel: "Unteraufgabe hinzufügen");
+        SubEditor = await editors.CreateAsync("qa-sub", $"/Tasks/Edit?id={Id}", projectId: Item.ProjectId, parentId: Id, open: Request.Query["qa"] == "qa-sub", addLabel: Text.T("Tasks.AddSubTask"));
 
         Comments = (await db.Comments.Where(c => c.TaskId == Id).OrderBy(c => c.CreateDate)
                 .Select(c => new { c.Id, c.AuthorId, Author = c.Author!.DisplayName, c.Text, c.CreateDate }).AsNoTracking().ToListAsync())

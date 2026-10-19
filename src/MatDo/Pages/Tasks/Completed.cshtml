@@ -1,8 +1,8 @@
 @page "/Tasks/Completed"
 @model MatDo.Pages.Tasks.CompletedModel
 @{
-    ViewData["Title"] = "Erledigt";
-    ViewData["PageSub"] = "Was geschafft ist. Ein Klick auf den Haken öffnet eine Aufgabe wieder.";
+    ViewData["Title"] = L["Completed.Title"].Value;
+    ViewData["PageSub"] = L["Completed.Sub"].Value;
     ViewData["ActiveNav"] = "done";
     ViewData["Width"] = "narrow";
 }
@@ -14,10 +14,10 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("circle-check")</span>
-            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch nichts erledigt" : "Keine Aufgabe passt")</div>
+            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Completed.Empty" : "Tasks.NoMatch"]</div>
             @if (Model.Toolbar.Total > 0)
             {
-                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>Zurücksetzen</span></a>
+                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>@L["Lists.Reset"]</span></a>
             }
         </div>
     }

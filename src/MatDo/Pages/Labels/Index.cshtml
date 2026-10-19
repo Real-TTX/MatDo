@@ -1,8 +1,8 @@
 @page "/Labels"
 @model MatDo.Pages.Labels.IndexModel
 @{
-    ViewData["Title"] = "Labels";
-    ViewData["PageSub"] = "Labels ordnen Aufgaben quer über alle Projekte. In der Schnelleingabe: @name.";
+    ViewData["Title"] = L["Labels.Title"].Value;
+    ViewData["PageSub"] = L["Labels.Sub"].Value;
 }
 
 <div class="mat-list">
@@ -12,24 +12,24 @@
     {
         <div class="mat-empty">
             <span class="mat-empty__icon">@Ui.Icon("tag")</span>
-            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch keine Labels" : "Kein Label passt")</div>
-            <p>@(Model.Toolbar.Total == 0 ? "Tippe @einkauf in die Schnelleingabe, dann entsteht das Label von selbst." : "Ändere die Suche oder die Filter.")</p>
+            <div class="mat-empty__title">@L[Model.Toolbar.Total == 0 ? "Labels.Empty.Title" : "Labels.NoMatch"]</div>
+            <p>@L[Model.Toolbar.Total == 0 ? "Labels.Empty.Text" : "Lists.ChangeTools"]</p>
         </div>
     }
     else
     {
-        <md-table caption="Labels">
+        <md-table caption="@L["Labels.Title"]">
             <thead>
-                <tr><th scope="col">Label</th><th scope="col" class="mat-num">Offene Aufgaben</th><th scope="col" class="mat-hide-sm">Favorit</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+                <tr><th scope="col">@L["Labels.Col.Label"]</th><th scope="col" class="mat-num">@L["Labels.Col.Open"]</th><th scope="col" class="mat-hide-sm">@L["Common.Favorite"]</th><th scope="col"><span class="mat-sr-only">@L["Common.Actions"]</span></th></tr>
             </thead>
             <tbody>
                 @foreach (var l in Model.Items)
                 {
                     <tr>
-                        <td data-label="Label"><a class="md-name" href="/Labels/View?id=@l.Id">@Ui.Icon("tag", null, l.Color)<span>@l.Name</span></a></td>
-                        <td data-label="Offen" class="mat-num mat-mono">@l.Open</td>
-                        <td data-label="Favorit" class="mat-hide-sm">@if (l.IsFavorite) { <span class="mat-pill mat-pill--accent">@Ui.Icon("star")Favorit</span> } else { <span class="mat-muted">–</span> }</td>
-                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Labels/Edit?id=@l.Id" aria-label="@l.Name bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                        <td data-label="@L["Labels.Col.Label"]"><a class="md-name" href="/Labels/View?id=@l.Id">@Ui.Icon("tag", null, l.Color)<span>@l.Name</span></a></td>
+                        <td data-label="@L["Labels.Col.Open"]" class="mat-num mat-mono">@l.Open</td>
+                        <td data-label="@L["Common.Favorite"]" class="mat-hide-sm">@if (l.IsFavorite) { <span class="mat-pill mat-pill--accent">@Ui.Icon("star")@L["Common.Favorite"]</span> } else { <span class="mat-muted">–</span> }</td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Labels/Edit?id=@l.Id" aria-label="@L["Common.EditNamed", l.Name]" data-tip="@L["Common.Edit"]">@Ui.Icon("edit")</a></div></td>
                     </tr>
                 }
             </tbody>
@@ -39,6 +39,6 @@
     <partial name="_Pager" model="Model.Pager" />
 
     <div class="mat-actions">
-        <a class="mat-btn mat-btn--primary" href="/Labels/Edit">@Ui.Icon("plus")<span>Neues Label</span></a>
+        <a class="mat-btn mat-btn--primary" href="/Labels/Edit">@Ui.Icon("plus")<span>@L["Labels.New"]</span></a>
     </div>
 </div>

@@ -1,0 +1,22 @@
+{
+  "Labels.Many": { "en": "labels", "de": "Labels" },
+  "Labels.Title": { "en": "Labels", "de": "Labels" },
+  "Labels.One": { "en": "label", "de": "Label" },
+  "Labels.Sub": { "en": "Labels sort tasks across all projects. In the quick add: @name.", "de": "Labels ordnen Aufgaben quer über alle Projekte. In der Schnelleingabe: @name." },
+  "Labels.Search": { "en": "Search labels", "de": "Labels durchsuchen" },
+  "Labels.New": { "en": "New label", "de": "Neues Label" },
+  "Labels.Create": { "en": "Create label", "de": "Label anlegen" },
+  "Labels.Edit": { "en": "Edit label", "de": "Label bearbeiten" },
+  "Labels.Delete": { "en": "Delete label", "de": "Label löschen" },
+  "Labels.DeleteConfirm": { "en": "Delete the label? It is removed from every task; the tasks stay.", "de": "Label löschen? Es wird von allen Aufgaben entfernt; die Aufgaben bleiben." },
+  "Labels.Empty.Title": { "en": "No labels yet", "de": "Noch keine Labels" },
+  "Labels.Empty.Text": { "en": "Type @shopping in the quick add and the label is created by itself.", "de": "Tippe @einkauf in die Schnelleingabe, dann entsteht das Label von selbst." },
+  "Labels.NoMatch": { "en": "No label matches", "de": "Kein Label passt" },
+  "Labels.Col.Label": { "en": "Label", "de": "Label" },
+  "Labels.Col.Open": { "en": "Open tasks", "de": "Offene Aufgaben" },
+  "Labels.Used": { "en": "In use", "de": "In Gebrauch" },
+  "Labels.Unused": { "en": "Without open tasks", "de": "Ohne offene Aufgaben" },
+  "Labels.Name.Hint": { "en": "One word; in the quick add you type @name.", "de": "Ein Wort; in der Schnelleingabe schreibst du @name." },
+  "Labels.Taken": { "en": "There is a label with this name already.", "de": "Ein Label mit diesem Namen gibt es schon." },
+  "Labels.View.Empty": { "en": "No open tasks with this label.", "de": "Keine offenen Aufgaben mit diesem Label." }
+}

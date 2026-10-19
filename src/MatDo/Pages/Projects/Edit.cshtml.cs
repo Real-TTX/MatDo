@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using System.Globalization;
 using MatDo.Controls;
 using MatDo.Data;
@@ -69,11 +70,11 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TeamServ
         var name = Name.Trim();
         if (name.Length == 0)
         {
-            ModelState.AddModelError(nameof(Name), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(Name), Text.T("Common.NameRequired"));
         }
         else if (name.Equals("Eingang", StringComparison.OrdinalIgnoreCase) || name.Equals("Inbox", StringComparison.OrdinalIgnoreCase))
         {
-            ModelState.AddModelError(nameof(Name), "„Eingang“ ist schon vergeben.");
+            ModelState.AddModelError(nameof(Name), Text.T("Projects.InboxReserved"));
         }
 
         if (!Ui.IsColour(Color))
@@ -86,7 +87,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TeamServ
         {
             if (await teams.FindAsync(UserId, t) is null)
             {
-                ModelState.AddModelError(nameof(Team), "Dieses Team gibt es nicht.");
+                ModelState.AddModelError(nameof(Team), Text.T("Teams.NotFound"));
             }
             else
             {
@@ -117,7 +118,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TeamServ
         project.IsFavorite = IsFavorite;
         project.IsArchived = IsArchived;
         await db.SaveChangesAsync();
-        Flash(IsNew ? $"Projekt „{project.Name}“ angelegt." : "Gespeichert.");
+        Flash(IsNew ? Text.T("Common.CreatedNamed", project.Name) : Text.T("Common.Saved"));
         return LocalRedirect($"/Projects/View?id={project.Id}");
     }
 
@@ -134,7 +135,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TeamServ
         await db.Webhooks.Where(w => w.ProjectId == id).ExecuteUpdateAsync(s => s.SetProperty(w => w.ProjectId, (long?)null));
         db.Projects.Remove(project);
         await db.SaveChangesAsync();
-        Flash($"Projekt „{project.Name}“ gelöscht.");
+        Flash(Text.T("Common.DeletedNamed", project.Name));
         return LocalRedirect("/Projects");
     }
 
@@ -147,7 +148,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TeamServ
 
     private async Task ChoicesAsync()
     {
-        TeamChoices = [new Choice(string.Empty, "Persönlich (nur ich)")];
-        TeamChoices.AddRange((await teams.ListAsync(UserId)).Select(x => new Choice(x.Id.ToString(CultureInfo.InvariantCulture), $"Team {x.Name}")));
+        TeamChoices = [new Choice(string.Empty, Text.T("Projects.PersonalOnlyMe"))];
+        TeamChoices.AddRange((await teams.ListAsync(UserId)).Select(x => new Choice(x.Id.ToString(CultureInfo.InvariantCulture), Text.T("Projects.TeamNamed", x.Name))));
     }
 }

@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
@@ -28,7 +29,7 @@ public sealed class ViewModel(AppDbContext db, TaskService tasks) : AppPageModel
         var rows = await tasks.RowsAsync(query, q, Today);
         Toolbar = TaskTools.Toolbar("label", "/Labels/View", q, [], await query.CountAsync(), rows.Count,
             new Dictionary<string, string?> { ["id"] = id.ToString(System.Globalization.CultureInfo.InvariantCulture) }, "due");
-        List = new TaskListModel { Id = "label-list", Rows = rows, Today = Today, ReturnUrl = Here, Empty = "Keine offenen Aufgaben mit diesem Label." };
+        List = new TaskListModel { Id = "label-list", Rows = rows, Today = Today, ReturnUrl = Here, Empty = Text.T("Labels.View.Empty") };
         return Page();
     }
 }

@@ -30,7 +30,7 @@ public sealed class TableTagHelper : TagHelper
 [HtmlTargetElement("md-tabs")]
 public sealed class TabsTagHelper : TagHelper
 {
-    [HtmlAttributeName("label")] public string Label { get; set; } = "Bereiche";
+    [HtmlAttributeName("label")] public string Label { get; set; } = Localization.Text.T("Common.Sections");
 
     public override void Process(TagHelperContext context, TagHelperOutput output)
     {

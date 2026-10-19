@@ -1,21 +1,21 @@
 @page "/Labels/Edit"
 @model MatDo.Pages.Labels.EditModel
 @{
-    ViewData["Title"] = Model.IsNew ? "Neues Label" : "Label bearbeiten";
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Labels", "/Labels"), (Model.IsNew ? "Neu" : Model.Name, null) };
+    ViewData["Title"] = L[Model.IsNew ? "Labels.New" : "Labels.Edit"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Labels.Title"].Value, "/Labels"), (Model.IsNew ? L["Common.New"].Value : Model.Name, null) };
     ViewData["Width"] = "narrow";
-    var swatches = string.Join(",", ProjectService.Colors.Select(c => $"{c.Value}:{c.Name}"));
+    var swatches = string.Join(",", ProjectService.Colors.Select(c => $"{c.Value}:{c.Name.Replace(' ', '-')}"));
 }
 
 <form class="mat-form" method="post" novalidate>
     <partial name="_FormSummary" model="ViewData.ModelState" />
     <div class="mat-card">
         <div class="mat-card__body mat-form">
-            <md-field name="Name" label="Name" required value="@Model.Name" maxlength="60" autofocus hint="Ein Wort; in der Schnelleingabe schreibst du @@name." msg-required="Bitte einen Namen eingeben." />
-            <md-field name="Color" kind="colour" label="Farbe" value="@Model.Color" picker="swatches=@swatches" />
-            <md-field name="IsFavorite" kind="switch" label="Favorit" value="@Model.IsFavorite.ToString()" />
+            <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="60" autofocus hint="@L["Labels.Name.Hint"]" msg-required="@L["Common.NameRequired"]" />
+            <md-field name="Color" kind="colour" label="@L["Common.Color"]" value="@Model.Color" picker="swatches=@swatches" />
+            <md-field name="IsFavorite" kind="switch" label="@L["Common.Favorite"]" value="@Model.IsFavorite.ToString()" />
         </div>
     </div>
-    <md-buttons save="@(Model.IsNew ? "Label anlegen" : "Speichern")" back="/Labels" delete-handler="@(Model.IsNew ? null : "Delete")" delete-label="Label löschen"
-                delete-confirm="Label löschen? Es wird von allen Aufgaben entfernt; die Aufgaben bleiben." />
+    <md-buttons save="@L[Model.IsNew ? "Labels.Create" : "Common.Save"]" back="/Labels" delete-handler="@(Model.IsNew ? null : "Delete")" delete-label="@L["Labels.Delete"]"
+                delete-confirm="@L["Labels.DeleteConfirm"]" />
 </form>

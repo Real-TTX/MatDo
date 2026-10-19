@@ -1,0 +1,18 @@
+@*
+    EN / DE: the language of the interface. Posts to /language (a cookie, and the account of a signed-in person) and comes back to this page.
+    Several can be on a page; each is its own small form.
+*@
+@{
+    var current = Languages.Current;
+    var back = Context.Request.Path + Context.Request.QueryString;
+}
+<form class="md-lang" method="post" action="/language">
+    @Html.AntiForgeryToken()
+    <input type="hidden" name="returnUrl" value="@back" />
+    <div class="mat-seg" role="group" aria-label="@L["Common.Language"]">
+        @foreach (var (code, label, name) in Languages.Supported)
+        {
+            <button type="submit" class="mat-seg__btn" name="language" value="@code" aria-pressed="@(code == current ? "true" : "false")" lang="@code" title="@name">@label</button>
+        }
+    </div>
+</form>

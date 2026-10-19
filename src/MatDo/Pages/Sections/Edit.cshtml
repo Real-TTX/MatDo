@@ -1,8 +1,8 @@
 @page "/Sections/Edit"
 @model MatDo.Pages.Sections.EditModel
 @{
-    ViewData["Title"] = "Abschnitt bearbeiten";
-    ViewData["Crumbs"] = new List<(string, string?)> { (Model.Project.IsInbox ? "Eingang" : Model.Project.Name, $"/Projects/View?id={Model.Project.Id}"), (Model.Name, null) };
+    ViewData["Title"] = L["Sections.Edit"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (Model.Project.IsInbox ? L["Project.Inbox"].Value : Model.Project.Name, $"/Projects/View?id={Model.Project.Id}"), (Model.Name, null) };
     ViewData["Width"] = "narrow";
 }
 
@@ -10,10 +10,10 @@
     <partial name="_FormSummary" model="ViewData.ModelState" />
     <div class="mat-card">
         <div class="mat-card__body mat-form">
-            <md-field name="Name" label="Name" required value="@Model.Name" maxlength="120" autofocus msg-required="Bitte einen Namen eingeben." />
-            <md-field name="SortOrder" kind="number" label="Reihenfolge" value="@Model.SortOrder" min="0" max="10000" hint="Kleinere Zahlen stehen weiter oben." />
+            <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="120" autofocus msg-required="@L["Common.NameRequired"]" />
+            <md-field name="SortOrder" kind="number" label="@L["Sections.Order"]" value="@Model.SortOrder" min="0" max="10000" hint="@L["Sections.Order.Hint"]" />
         </div>
     </div>
-    <md-buttons save="Speichern" back="@($"/Projects/View?id={Model.Project.Id}")" delete-handler="Delete" delete-label="Abschnitt löschen"
-                delete-confirm="Abschnitt löschen? Seine Aufgaben bleiben erhalten und stehen danach ohne Abschnitt im Projekt." />
+    <md-buttons save="@L["Common.Save"]" back="@($"/Projects/View?id={Model.Project.Id}")" delete-handler="Delete" delete-label="@L["Sections.Delete"]"
+                delete-confirm="@L["Sections.DeleteConfirm"]" />
 </form>

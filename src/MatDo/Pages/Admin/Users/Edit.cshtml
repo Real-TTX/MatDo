@@ -1,8 +1,8 @@
 @page "/Admin/Users/Edit"
 @model MatDo.Pages.Admin.Users.EditModel
 @{
-    ViewData["Title"] = Model.IsNew ? "Neuer Benutzer" : Model.DisplayName;
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Administration", null), ("Benutzer", "/Admin/Users"), (Model.IsNew ? "Neu" : Model.DisplayName, null) };
+    ViewData["Title"] = Model.IsNew ? L["Users.New"].Value : Model.DisplayName;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Admin.Title"].Value, null), (L["Users.Title"].Value, "/Admin/Users"), (Model.IsNew ? L["Common.New"].Value : Model.DisplayName, null) };
     ViewData["Width"] = "narrow";
 }
 
@@ -10,14 +10,14 @@
     <partial name="_FormSummary" model="ViewData.ModelState" />
     <div class="mat-card">
         <div class="mat-card__body mat-form">
-            <md-field name="DisplayName" label="Name" required value="@Model.DisplayName" maxlength="120" msg-required="Bitte einen Namen eingeben." />
-            <md-field name="Email" kind="email" label="E-Mail-Adresse" required value="@Model.Email" autocomplete="off" msg-required="Bitte eine E-Mail-Adresse eingeben." />
-            <md-field name="Role" kind="select" label="Rolle" value="@Model.Role" options="Model.Roles" />
-            <md-field name="IsActive" kind="switch" label="Kann sich anmelden" value="@Model.IsActive.ToString()" />
-            <md-field name="Password" kind="password" label="@(Model.IsNew ? "Passwort" : "Neues Passwort")" required="@Model.IsNew" optional="@(!Model.IsNew)" autocomplete="new-password"
-                      hint="@(Model.IsNew ? $"Mindestens {PasswordService.MinLength} Zeichen." : "Leer lassen, um es nicht zu ändern. Ein neues Passwort meldet die Person überall ab.")" />
+            <md-field name="DisplayName" label="@L["Account.Name"]" required value="@Model.DisplayName" maxlength="120" msg-required="@L["Account.Name.Required"]" />
+            <md-field name="Email" kind="email" label="@L["Account.Email"]" required value="@Model.Email" autocomplete="off" msg-required="@L["Account.Login.Email.Required"]" />
+            <md-field name="Role" kind="select" label="@L["Users.Col.Role"]" value="@Model.Role" options="Model.Roles" />
+            <md-field name="IsActive" kind="switch" label="@L["Users.CanSignIn"]" value="@Model.IsActive.ToString()" />
+            <md-field name="Password" kind="password" label="@L[Model.IsNew ? "Account.Password" : "Password.New"]" required="@Model.IsNew" optional="@(!Model.IsNew)" autocomplete="new-password"
+                      hint="@(Model.IsNew ? L["Account.Password.Hint", PasswordService.MinLength].Value : L["Users.Password.Hint"].Value)" />
         </div>
     </div>
-    <md-buttons save="@(Model.IsNew ? "Konto anlegen" : "Speichern")" back="/Admin/Users" delete-handler="@(Model.IsNew || Model.IsSelf ? null : "Delete")" delete-label="Konto löschen"
-                delete-confirm="@($"Konto von {Model.DisplayName} löschen? Die Person wird abgemeldet und kann sich nicht mehr anmelden.")" />
+    <md-buttons save="@L[Model.IsNew ? "Users.Create" : "Common.Save"]" back="/Admin/Users" delete-handler="@(Model.IsNew || Model.IsSelf ? null : "Delete")" delete-label="@L["Users.Delete"]"
+                delete-confirm="@L["Users.DeleteConfirm", Model.DisplayName]" />
 </form>

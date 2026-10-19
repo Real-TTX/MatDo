@@ -3,8 +3,8 @@
 @inject MenuService Menus
 @inject QuickAddEditor Editors
 @{
-    // A page fills these in: Title, PageSub (one line under it), Crumbs (the breadcrumb: a list of (Text, Url?) after the name of the app),
-    // Width ("narrow" or "wide"), OwnHead (the page draws its own head), ActiveNav (the item of the menu), ActiveProject (the id of a project).
+    // A page fills these in: Title, PageSub (one line under it), Crumbs (the breadcrumb: a list of (Text, Url?)), Width ("narrow" or "wide"),
+    // OwnHead (the page draws its own head), ActiveNav (the item of the menu), ActiveProject (the id of a project). The menu (tasks, settings, admin) follows the address.
     var user = Me.Snapshot!;
     var title = ViewData["Title"] as string ?? Ui.AppName;
     var sub = ViewData["PageSub"] as string;
@@ -15,10 +15,12 @@
     var here = Context.Request.Path + Context.Request.QueryString;
     var dialogEditor = await Editors.CreateAsync("md-qa-dialog", here.ToString(), inDialog: true);
     var themeAttr = user.Theme is "light" or "dark" ? $" data-theme=\"{user.Theme}\"" : string.Empty;
+    var area = MenuService.AreaOf(Context.Request.Path.Value);
+    var areas = MenuService.Areas(Me.IsAdmin);
+    var current = areas.First(a => a.Id == area);
 }
 <!DOCTYPE html>
-<html lang="de" data-app="@Ui.AppId" data-scheme="@user.Scheme"@Html.Raw(themeAttr)
-      data-dlg-ok="OK" data-dlg-cancel="Abbrechen" data-dlg-close="Schließen" data-dlg-confirm="Bitte bestätigen" data-dlg-notice="Hinweis" data-copied="Kopiert">
+<html @ClientTexts.RootAttributes() data-app="@Ui.AppId" data-scheme="@user.Scheme"@Html.Raw(themeAttr)>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
@@ -35,25 +37,33 @@
     <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
 </head>
 <body>
-    <a class="mat-skip" href="#main">Zum Inhalt springen</a>
+    <a class="mat-skip" href="#main">@L["Shell.SkipToContent"]</a>
     @Html.Raw(Toolkit.Sprite)
 
     <div class="mat-app">
         <aside class="mat-nav" id="mat-nav">
             <div class="mat-nav__brand">
-                <a href="/Today" aria-label="@Ui.AppName, Heute">
+                <a href="/Today" aria-label="@L["Shell.HomeLabel"]">
                     @Ui.Logo()
                     <span>
                         <span class="mat-nav__name">@Ui.AppName</span>
-                        <span class="mat-nav__tagline">Aufgaben, Projekte, Teams</span>
+                        <span class="mat-nav__tagline">@L["Shell.Tagline"]</span>
                     </span>
                 </a>
-                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-nav__close" data-nav-close aria-label="Menü schließen">@Ui.Icon("x")</button>
+                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-nav__close" data-nav-close aria-label="@L["Shell.CloseMenu"]">@Ui.Icon("x")</button>
             </div>
 
-            <partial name="_Menu" model="menu" />
+            <partial name="_Menu" model="(menu, area)" />
 
             <div class="mat-nav__foot">
+                <div class="mat-nav__switch mat-nav__switch--foot">
+                    <button type="button" class="mat-switcher" data-menu-toggle="nav-switch-menu" data-menu-place="top" aria-haspopup="menu" aria-expanded="false">
+                        <span class="mat-switcher__icon">@Ui.Icon(current.Icon)</span>
+                        <span class="mat-switcher__text"><small data-nav-label="@L["Shell.Menu"]">@L["Shell.Menu"]</small><span class="mat-switcher__name">@current.Title</span></span>
+                        @Ui.Icon("chevron-up", "mat-switcher__chev")
+                        <span class="mat-switcher__dot" hidden></span>
+                    </button>
+                </div>
                 <div class="mat-nav__account">
                     <button type="button" class="mat-user" data-menu-toggle="user-menu" data-menu-place="top" aria-haspopup="menu" aria-expanded="false">
                         <span class="mat-avatar" aria-hidden="true">@Ui.Initials(user.DisplayName)</span>
@@ -63,7 +73,7 @@
                         </span>
                         @Ui.Icon("chevron-up", "mat-user__chev")
                     </button>
-                    <button type="button" class="mat-theme" data-theme-toggle data-theme-state="@user.Theme" data-theme-save-url="/Account?handler=Theme" aria-label="Design" title="Design">
+                    <button type="button" class="mat-theme" data-theme-toggle data-theme-state="@user.Theme" data-theme-save-url="/Account?handler=Theme" aria-label="@L["Shell.Theme"]" title="@L["Shell.Theme"]">
                         <svg class="mat-icon" data-theme-icon="system" aria-hidden="true" focusable="false"><use href="#mat-i-monitor"></use></svg>
                         <svg class="mat-icon" data-theme-icon="light" aria-hidden="true" focusable="false"><use href="#mat-i-sun"></use></svg>
                         <svg class="mat-icon" data-theme-icon="dark" aria-hidden="true" focusable="false"><use href="#mat-i-moon"></use></svg>
@@ -75,8 +85,8 @@
 
         <div class="mat-main">
             <header class="mat-topbar">
-                <button type="button" class="mat-burger" data-nav-toggle aria-label="Menü öffnen" aria-controls="mat-nav" aria-expanded="false">@Ui.Icon("menu")</button>
-                <nav class="mat-crumbs" aria-label="Brotkrumen">
+                <button type="button" class="mat-burger" data-nav-toggle aria-label="@L["Shell.OpenMenu"]" aria-controls="mat-nav" aria-expanded="false">@Ui.Icon("menu")</button>
+                <nav class="mat-crumbs" aria-label="@L["Shell.Breadcrumb"]">
                     <ol>
                         @if (crumbs.Count == 0)
                         {
@@ -101,7 +111,7 @@
                 </nav>
                 <div class="mat-topbar__actions">
                     @await RenderSectionAsync("TopActions", required: false)
-                    <button type="button" class="mat-btn mat-btn--primary mat-btn--icon" data-dialog-open="md-quick" aria-haspopup="dialog" aria-label="Aufgabe hinzufügen (Q)" data-tip="Aufgabe hinzufügen (Q)">@Ui.Icon("plus")</button>
+                    <button type="button" class="mat-btn mat-btn--primary mat-btn--icon" data-dialog-open="md-quick" aria-haspopup="dialog" aria-label="@L["QuickAdd.AddShortcut"]" data-tip="@L["QuickAdd.AddShortcut"]">@Ui.Icon("plus")</button>
                 </div>
             </header>
 
@@ -124,19 +134,27 @@
         </div>
     </div>
 
+    @* the switcher of the menus (SHELL-15): tasks, settings and – for an administrator – the administration *@
+    <div class="mat-menu" id="nav-switch-menu" role="menu" aria-label="@L["Shell.Menus"]" data-nav-scope="mat-nav" hidden>
+        @foreach (var a in areas)
+        {
+            <button type="button" class="mat-menu__item" role="menuitemradio" aria-checked="@(a.Id == area ? "true" : "false")" data-nav-set="@a.Id" data-nav-title="@a.Title">
+                @Ui.Icon(a.Icon)<span>@a.Title</span>
+                @Ui.Icon("check", "mat-menu__check")
+            </button>
+        }
+    </div>
+
     <div class="mat-menu" id="user-menu" role="menu" aria-label="@user.DisplayName" hidden>
         <div class="mat-menu__head">
             <span class="mat-avatar" aria-hidden="true">@Ui.Initials(user.DisplayName)</span>
             <div><strong>@user.DisplayName</strong><small>@user.Email</small></div>
         </div>
-        <a class="mat-menu__item" role="menuitem" href="/Account">@Ui.Icon("user")<span>Profil</span></a>
-        <a class="mat-menu__item" role="menuitem" href="/Account/Keywords">@Ui.Icon("keyboard")<span>Schlüsselwörter</span></a>
-        <a class="mat-menu__item" role="menuitem" href="/Account/Webhooks">@Ui.Icon("webhook")<span>Webhooks</span></a>
-        <a class="mat-menu__item" role="menuitem" href="/Account/Password">@Ui.Icon("lock")<span>Passwort</span></a>
+        <a class="mat-menu__item" role="menuitem" href="/Account">@Ui.Icon("settings")<span>@L["Settings.Title"]</span></a>
         <div class="mat-menu__sep" role="separator"></div>
         <form method="post" action="/Account/Logout">
             @Html.AntiForgeryToken()
-            <button type="submit" class="mat-menu__item mat-menu__item--danger" role="menuitem">@Ui.Icon("logout")<span>Abmelden</span></button>
+            <button type="submit" class="mat-menu__item mat-menu__item--danger" role="menuitem">@Ui.Icon("logout")<span>@L["Shell.SignOut"]</span></button>
         </form>
     </div>
 
@@ -144,8 +162,8 @@
         <div class="mat-dialog__form">
             <div class="mat-dialog__head">
                 @Ui.Icon("plus")
-                <h2 class="mat-dialog__title" id="md-quick-title">Schnell hinzufügen</h2>
-                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="Schließen">@Ui.Icon("x")</button>
+                <h2 class="mat-dialog__title" id="md-quick-title">@L["QuickAdd.DialogTitle"]</h2>
+                <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-dialog__close" data-dialog-close aria-label="@L["Common.Dialog.Close"]">@Ui.Icon("x")</button>
             </div>
             <div class="mat-dialog__body">
                 <partial name="_QuickAdd" model="dialogEditor" />
@@ -166,6 +184,7 @@
         <div data-toast="@flashError" data-tone="danger" hidden></div>
     }
 
+    @ClientTexts.Script()
     <script src="~/matui/matui.js" asp-append-version="true"></script>
     <script src="~/js/quickadd.js" asp-append-version="true"></script>
     <script src="~/js/tasks.js" asp-append-version="true"></script>

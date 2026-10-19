@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using MatDo.Data;
+using MatDo.Localization;
 using Microsoft.AspNetCore.Identity;
 
 namespace MatDo.Services;
@@ -26,18 +27,18 @@ public sealed class PasswordService
     {
         if (string.IsNullOrEmpty(password) || password.Length < MinLength)
         {
-            return $"Das Passwort braucht mindestens {MinLength} Zeichen.";
+            return Text.T("Account.Password.TooShort", MinLength);
         }
 
         if (password.Length > 200)
         {
-            return "Das Passwort ist zu lang.";
+            return Text.T("Account.Password.TooLong");
         }
 
         var local = email?.Split('@')[0];
         if (!string.IsNullOrEmpty(local) && local.Length >= 3 && password.Contains(local, StringComparison.OrdinalIgnoreCase))
         {
-            return "Das Passwort darf die E-Mail-Adresse nicht enthalten.";
+            return Text.T("Account.Password.ContainsEmail");
         }
 
         return null;

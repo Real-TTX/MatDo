@@ -1,10 +1,11 @@
+using MatDo.Localization;
 using MatDo.Data;
 using MatDo.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace MatDo.Pages.Account.Webhooks;
 
-public sealed record WebhookRow(long Id, string Name, string Target, bool IsActive, DateTime? LastUsed, int Uses);
+public sealed record WebhookRow(long Id, string Name, string? Target, bool IsActive, DateTime? LastUsed, int Uses);
 
 public sealed class IndexModel(AppDbContext db) : AppPageModel
 {
@@ -21,9 +22,9 @@ public sealed class IndexModel(AppDbContext db) : AppPageModel
     public async Task OnGetAsync()
     {
         var all = (await db.Webhooks.Where(w => w.UserId == UserId)
-                .Select(w => new { w.Id, w.Name, w.IsActive, w.LastUsedDate, w.UseCount, Project = db.Projects.Where(p => p.Id == w.ProjectId).Select(p => p.IsInbox ? "Eingang" : p.Name).FirstOrDefault() })
+                .Select(w => new { w.Id, w.Name, w.IsActive, w.LastUsedDate, w.UseCount, Project = db.Projects.Where(p => p.Id == w.ProjectId).Select(p => p.IsInbox ? null : p.Name).FirstOrDefault() })
                 .AsNoTracking().ToListAsync())
-            .Select(w => new WebhookRow(w.Id, w.Name, w.Project ?? "Eingang", w.IsActive, w.LastUsedDate, w.UseCount)).ToList();
+            .Select(w => new WebhookRow(w.Id, w.Name, w.Project, w.IsActive, w.LastUsedDate, w.UseCount)).ToList();
         var search = ListQuery.Text(Request, "q");
         var state = ListQuery.Text(Request, "state");
         var sort = ListQuery.Text(Request, "sort") ?? "name";
@@ -57,19 +58,19 @@ public sealed class IndexModel(AppDbContext db) : AppPageModel
         {
             Id = "webhooks",
             Action = "/Account/Webhooks",
-            Label = "Webhooks",
+            Label = Text.T("Webhooks.Title"),
             Search = search,
             SearchField = true,
-            SearchPlaceholder = "Webhooks durchsuchen",
-            Filters = [new FilterField("state", "Status", [new("on", "Aktiv"), new("off", "Abgeschaltet")], state)],
-            SortOptions = [new("name", "Name"), new("used", "Zuletzt benutzt"), new("uses", "Aufrufe")],
+            SearchPlaceholder = Text.T("Webhooks.Search"),
+            Filters = [new FilterField("state", Text.T("Common.Status"), [new("on", Text.T("Common.Active")), new("off", Text.T("Webhooks.Off"))], state)],
+            SortOptions = [new("name", Text.T("Common.Name")), new("used", Text.T("Webhooks.Col.LastUsed")), new("uses", Text.T("Webhooks.Col.Uses"))],
             Sort = sort,
             Descending = desc,
             DefaultSort = "name",
             Total = all.Count,
             Matching = filtered.Count,
-            Noun = "Webhooks",
-            NounOne = "Webhook",
+            Noun = Text.T("Webhooks.Many"),
+            NounOne = Text.T("Webhooks.One"),
         };
         var page = ListQuery.Page(Request);
         Items = ListQuery.Slice(filtered, page, PageSize).ToList();

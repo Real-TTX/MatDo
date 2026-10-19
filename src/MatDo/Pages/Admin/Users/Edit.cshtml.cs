@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Controls;
 using MatDo.Data;
 using MatDo.Services;
@@ -25,7 +26,7 @@ public sealed class EditModel(AppDbContext db, AccountService accounts, Password
 
     public bool IsSelf => Id == UserId;
 
-    public List<Choice> Roles { get; } = [new("User", "Benutzer"), new("Admin", "Administrator")];
+    public List<Choice> Roles { get; } = [new("User", Text.T("Common.Role.User")), new("Admin", Text.T("Common.Role.Admin"))];
 
     public async Task<IActionResult> OnGetAsync()
     {
@@ -50,16 +51,16 @@ public sealed class EditModel(AppDbContext db, AccountService accounts, Password
     {
         if (Id is null)
         {
-            var (created, error) = await accounts.RegisterAsync(Email, DisplayName, Password, Me.TimeZone, Role);
+            var (created, error) = await accounts.RegisterAsync(Email, DisplayName, Password, Me.TimeZone, Role, Languages.Current);
             if (created is null)
             {
-                ModelState.AddModelError(error!.Contains("Passwort", StringComparison.Ordinal) ? nameof(Password) : nameof(Email), error);
+                ModelState.AddModelError(error!.Field, error.Message);
                 return Page();
             }
 
             created.IsActive = IsActive;
             await db.SaveChangesAsync();
-            Flash($"Konto für {created.Email} angelegt.");
+            Flash(Text.T("Users.Created", created.Email));
             return LocalRedirect("/Admin/Users");
         }
 
@@ -72,21 +73,21 @@ public sealed class EditModel(AppDbContext db, AccountService accounts, Password
         var email = AccountService.Normalize(Email);
         if (!AccountService.IsEmail(email))
         {
-            ModelState.AddModelError(nameof(Email), "Bitte eine gültige E-Mail-Adresse eingeben.");
+            ModelState.AddModelError(nameof(Email), Text.T("Account.Email.Invalid"));
         }
         else if (await db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email == email && u.Id != user.Id))
         {
-            ModelState.AddModelError(nameof(Email), "Mit dieser Adresse gibt es schon ein Konto.");
+            ModelState.AddModelError(nameof(Email), Text.T("Account.Email.Taken"));
         }
 
         if (string.IsNullOrWhiteSpace(DisplayName))
         {
-            ModelState.AddModelError(nameof(DisplayName), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(DisplayName), Text.T("Account.Name.Required"));
         }
 
         if ((Role != UserRole.Admin || !IsActive) && user.Role == UserRole.Admin && await LastAdminAsync(user.Id))
         {
-            ModelState.AddModelError(nameof(Role), "Das ist der letzte aktive Administrator: er bleibt Administrator und aktiv.");
+            ModelState.AddModelError(nameof(Role), Text.T("Users.LastAdmin"));
         }
 
         if (!string.IsNullOrEmpty(Password) && PasswordService.Check(Password, email) is { } problem)
@@ -117,7 +118,7 @@ public sealed class EditModel(AppDbContext db, AccountService accounts, Password
         }
 
         SessionService.Invalidate();
-        Flash("Gespeichert.");
+        Flash(Text.T("Common.Saved"));
         return LocalRedirect("/Admin/Users");
     }
 
@@ -131,7 +132,7 @@ public sealed class EditModel(AppDbContext db, AccountService accounts, Password
 
         if (user.Id == UserId || (user.Role == UserRole.Admin && await LastAdminAsync(user.Id)))
         {
-            FlashError("Das eigene Konto und den letzten Administrator kannst du hier nicht löschen.");
+            FlashError(Text.T("Users.CannotDelete"));
             return LocalRedirect($"/Admin/Users/Edit?id={user.Id}");
         }
 
@@ -143,7 +144,7 @@ public sealed class EditModel(AppDbContext db, AccountService accounts, Password
         db.TeamMembers.RemoveRange(await db.TeamMembers.Where(m => m.UserId == user.Id).ToListAsync());
         await db.SaveChangesAsync();
         await sessions.RevokeAllAsync(user.Id);
-        Flash($"Konto von {DisplayName} gelöscht.");
+        Flash(Text.T("Users.Deleted", DisplayName));
         return LocalRedirect("/Admin/Users");
     }
 

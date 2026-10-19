@@ -1,3 +1,4 @@
+using MatDo.Localization;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
@@ -39,19 +40,19 @@ public sealed class RegisterModel(AccountService accounts, SessionService sessio
 
         if (string.IsNullOrWhiteSpace(DisplayName))
         {
-            ModelState.AddModelError(nameof(DisplayName), "Bitte einen Namen eingeben.");
+            ModelState.AddModelError(nameof(DisplayName), Text.T("Account.Name.Required"));
             return Page();
         }
 
-        var (user, error) = await accounts.RegisterAsync(Email, DisplayName, Password, TimeZone);
+        var (user, error) = await accounts.RegisterAsync(Email, DisplayName, Password, TimeZone, language: Languages.Current);
         if (user is null)
         {
-            ModelState.AddModelError(error!.Contains("Passwort", StringComparison.Ordinal) ? nameof(Password) : nameof(Email), error);
+            ModelState.AddModelError(error!.Field, error.Message);
             return Page();
         }
 
         await sessions.SignInAsync(HttpContext, user, remember: true);
-        TempData["Flash"] = "Willkommen bei MatDo! Probiere die Schnelleingabe: „Milch kaufen morgen 17 Uhr p1“.";
+        TempData["Flash"] = Text.T("Account.Register.Welcome");
         return LocalRedirect("/Today");
     }
 }

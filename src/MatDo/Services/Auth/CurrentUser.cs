@@ -3,7 +3,7 @@ using MatDo.Data;
 namespace MatDo.Services;
 
 /// <summary>What the pages need to know about the signed-in person, read once per request from the session (no query of its own).</summary>
-public sealed record UserSnapshot(long Id, string Email, string DisplayName, UserRole Role, string Theme, string Scheme, string TimeZone);
+public sealed record UserSnapshot(long Id, string Email, string DisplayName, UserRole Role, string Theme, string Scheme, string TimeZone, string Language);
 
 /// <summary>The signed-in user of the request. Background work and the webhook have none (<see cref="Id"/> is <c>null</c>).</summary>
 public sealed class CurrentUser(IHttpContextAccessor accessor)
@@ -30,5 +30,5 @@ public sealed class CurrentUser(IHttpContextAccessor accessor)
 
     public DateOnly Today => Dates.Today(TimeZone);
 
-    public string RoleName => Snapshot?.Role == UserRole.Admin ? "Administrator" : "Benutzer";
+    public string RoleName => Localization.Text.T(Snapshot?.Role == UserRole.Admin ? "Common.Role.Admin" : "Common.Role.User");
 }

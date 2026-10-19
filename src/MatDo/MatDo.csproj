@@ -3,8 +3,9 @@
   <PropertyGroup>
     <RootNamespace>MatDo</RootNamespace>
     <AssemblyName>MatDo</AssemblyName>
-    <!-- Dates and names are formatted by the app itself (German and English): no ICU library is needed in the image. -->
-    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- The UI culture (en, de) chooses the texts; dates are formatted by the app itself. -->
+    <InvariantGlobalization>false</InvariantGlobalization>
   </PropertyGroup>
 
   <ItemGroup>
@@ -18,6 +19,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="MatDo.Tests" />
+    <EmbeddedResource Include="Resources\Texts\*.json" />
   </ItemGroup>
 
 </Project>

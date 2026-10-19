@@ -7,23 +7,19 @@ namespace MatDo.Pages;
 [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
 public sealed class ErrorModel : PageModel
 {
-    public string Title { get; private set; } = "Etwas ist schiefgegangen";
-
-    public string Text { get; private set; } = "Bitte versuche es gleich noch einmal.";
+    /// <summary>The kind of the error, a part of the keys of its texts (Errors.NotFound.Title ...).</summary>
+    public string Kind { get; private set; } = "General";
 
     public void OnGet(int? code) => Set(code);
 
     public void OnPost(int? code) => Set(code);
 
-    private void Set(int? code)
+    private void Set(int? code) => Kind = code switch
     {
-        (Title, Text) = code switch
-        {
-            404 => ("Nicht gefunden", "Diese Seite gibt es nicht, oder sie gehört jemand anderem."),
-            403 => ("Kein Zugriff", "Dafür fehlt die Berechtigung."),
-            400 => ("Ungültige Anfrage", "Bitte lade die Seite neu und versuche es noch einmal."),
-            429 => ("Zu viele Anfragen", "Bitte einen Moment warten."),
-            _ => (Title, Text),
-        };
-    }
+        404 => "NotFound",
+        403 => "Forbidden",
+        400 => "BadRequest",
+        429 => "TooMany",
+        _ => "General",
+    };
 }

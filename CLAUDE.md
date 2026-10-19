@@ -7,7 +7,7 @@ Guidance for working in this repository. Keep it in sync with the code.
 A SaaS task manager with the features of Todoist plus teams. The heart is the **quick add**: one line of German or English text is read into a task (date, time,
 repeating, `#project`, `/section`, `@label`, `p1..p4`, `{deadline}` and the **keywords** each person defines, e.g. "Projekt EIMER"). The same parser serves the
 editor (live, marks in the text) and the **webhook** (`POST /api/v1/webhook/{token}`, for Apple Shortcuts dictation). Teams share projects; tasks of team projects can be assigned.
-UI language: German. Port **6006**. Accent **#d03d33** (Todoist-like red, AA with white).
+UI languages: **English and German** (catalog, see below). Port **6006**. Accent **#d03d33** (Todoist-like red, AA with white).
 
 Stack: .NET 10, ASP.NET Core **Razor Pages**, EF Core + **PostgreSQL**, the **MatUi** toolkit of the sister project MatDesign (copied into `wwwroot/matui`, never edited by hand;
 copied from `../MatNote/src/MatNote/wwwroot/matui`, version in the first line of `matui.css`).
@@ -35,7 +35,9 @@ src/MatDo
   Services/QuickAddService.cs   ParseContext of a person (projects, labels, sections, keywords) + CreateAsync (editor and webhook); manual choices win over the text, Default* lose
   Services/ProjectService.cs    visibility: personal (owner) or team (members) – every task query starts with Visible()
   Services/TaskService.cs       rows of lists (TaskRow), complete/reopen/delete/reorder, labels
-  Services/TeamService.cs, MenuService.cs, Dates.cs (German formatting, user time zone), Ui.cs, TaskTools.cs (toolbar of task lists), QuickAddEditor.cs (editors of a page)
+  Localization/                 TextCatalog + CatalogLocalizer (L, Text.T), Languages (en/de, provider, cookie), ClientTexts (html attributes, Js.* block)
+  Resources/Texts/*.json        the texts, EN and DE
+  Services/TeamService.cs, MenuService.cs (menus of the switcher), Dates.cs (German formatting, user time zone), Ui.cs, TaskTools.cs (toolbar of task lists), QuickAddEditor.cs (editors of a page)
   Api/WebhookApi.cs             POST /api/v1/webhook/{token} (+ Bearer variant): JSON / form / text → task, 201 JSON with message
   Api/AppApi.cs                 /api/app/parse (live parse), tasks/{id}/complete|reopen, tasks/reorder (cookie + RequestVerificationToken header)
   Controls/                     ONE code base per control: <md-field>, <md-buttons>, <md-table>, <md-tabs>; partials _Toolbar, _Pager, _FormSummary, _TaskList, _QuickAdd
@@ -49,11 +51,14 @@ src/MatDo
 
 ## Conventions
 
+- **Languages (EN / DE) – every text**: `Resources/Texts/*.json`, one key `Area.Thing` → `{"en", "de"}` (MatBill pattern). Views: `@L["Key"]` (injected in `_ViewImports`), code: `Text.T("Key", args)` (`MatDo.Localization`), scripts: keys `Js.*` come as a JSON block (`ClientTexts.Script()`, read with `t(...)`). Language: account (`User.Language`, empty = browser) → cookie `.MatDo.Language` (switch on the pages without a menu, POST `/language`) → Accept-Language → en. `Dates` writes names in the current language. The webhook answers in the language of the token owner. `TextCatalogTests` fails for a missing key, a missing language or different placeholders. No literal UI text in code.
+- **Shell**: the menu switcher sits at the foot of the menu (`mat-nav__switch--foot`): *tasks*, *settings* (`/Account/*`), *admin* (`/Admin/*`, admins only); `MenuService.AreaOf` picks the panel by the address. New settings pages go into the settings panel of `_Menu`, admin pages into the admin panel – no tabs for them.
+
 - **Database**: PascalCase tables and columns, `Id` BIGINT, `CreateDate/CreateUserId/UpdateDate/UpdateUserId` everywhere, `UpdateState` (0 deleted, 1 created, 2 updated) where soft delete makes sense,
   a `Token` (uuid) where a key is a secret. Dates of tasks are `DateOnly`/`TimeOnly` in the person's zone ("floating", like Todoist); moments are UTC.
 - **Security**: a project/task the person may not see answers 404. CSP without inline script/style. Webhook token = the secret (renewable). Registration answers do not tell who has an account
   (team add uses one message for "no account" and "already member").
 - **UI (MatDesign)**: CRUD = list page (toolbar above: search, filter, sort; table; pager directly under; list actions left below) + separate create/edit page with buttons Save, Back, space,
   Delete. Icons via `Ui.Icon` (toolkit sprite + `wwwroot/img/app-icons.svg`). Dependent fields `show-if`. Every `td` has `data-label`. Several controls of a kind per page get their ids from the model.
-- **Code**: Microsoft C# conventions, file-scoped namespaces, English identifiers/comments, German UI texts. Posted texts are never null.
+- **Code**: Microsoft C# conventions, file-scoped namespaces, English identifiers/comments, German UI texts only in the catalog. Posted texts are never null.
 - **Git**: commit under the user's name only, never a Claude/Anthropic co-author trailer or "generated with" line. Branches `main` (release) and `dev` (nightly).

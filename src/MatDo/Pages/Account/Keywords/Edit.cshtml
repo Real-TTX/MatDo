@@ -1,8 +1,8 @@
 @page "/Account/Keywords/Edit"
 @model MatDo.Pages.Account.Keywords.EditModel
 @{
-    ViewData["Title"] = Model.IsNew ? "Neues Schlüsselwort" : "Schlüsselwort bearbeiten";
-    ViewData["Crumbs"] = new List<(string, string?)> { ("Einstellungen", "/Account"), ("Schlüsselwörter", "/Account/Keywords"), (Model.IsNew ? "Neu" : Model.Word, null) };
+    ViewData["Title"] = L[Model.IsNew ? "Keywords.New" : "Keywords.Edit"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, "/Account"), (L["Keywords.Title"].Value, "/Account/Keywords"), (Model.IsNew ? L["Common.New"].Value : Model.Word, null) };
     ViewData["Width"] = "narrow";
 }
 
@@ -10,10 +10,10 @@
     <partial name="_FormSummary" model="ViewData.ModelState" />
     <div class="mat-card">
         <div class="mat-card__body mat-form">
-            <md-field name="Word" label="Wort" required value="@Model.Word" maxlength="40" autofocus hint="Groß- und Kleinschreibung ist egal. Mehrere Wörter gehen auch, z. B. „für Projekt“." msg-required="Bitte ein Wort eingeben." />
-            <md-field name="Kind" kind="picker" label="Was das Wort einleitet" value="@Model.Kind" options="Model.Kinds" />
+            <md-field name="Word" label="@L["Keywords.Col.Word"]" required value="@Model.Word" maxlength="40" autofocus hint="@L["Keywords.Word.Hint"]" msg-required="@L["Keywords.Word.Required"]" />
+            <md-field name="Kind" kind="picker" label="@L["Keywords.KindField"]" value="@Model.Kind" options="Model.Kinds" />
         </div>
     </div>
-    <md-buttons save="@(Model.IsNew ? "Anlegen" : "Speichern")" back="/Account/Keywords" delete-handler="@(Model.IsNew ? null : "Delete")" delete-label="Löschen"
-                delete-confirm="@($"Schlüsselwort „{Model.Word}“ löschen?")" />
+    <md-buttons save="@L[Model.IsNew ? "Common.Create" : "Common.Save"]" back="/Account/Keywords" delete-handler="@(Model.IsNew ? null : "Delete")" delete-label="@L["Common.Delete"]"
+                delete-confirm="@L["Keywords.DeleteConfirm", Model.Word]" />
 </form>
