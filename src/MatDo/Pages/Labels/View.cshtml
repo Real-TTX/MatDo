@@ -1,0 +1,17 @@
+@page "/Labels/View"
+@model MatDo.Pages.Labels.ViewModel
+@{
+    ViewData["Title"] = "@" + Model.Label.Name;
+    ViewData["PageSub"] = Model.Toolbar.Counted(Model.Toolbar.Total) + " offen";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Labels", "/Labels"), (Model.Label.Name, null) };
+    ViewData["Width"] = "narrow";
+}
+
+@section TopActions {
+    <a class="mat-btn mat-btn--ghost mat-btn--icon" href="/Labels/Edit?id=@Model.Label.Id" aria-label="Label bearbeiten" data-tip="Label bearbeiten">@Ui.Icon("edit")</a>
+}
+
+<div class="mat-list md-view">
+    <partial name="_Toolbar" model="Model.Toolbar" />
+    <partial name="_TaskList" model="Model.List" />
+</div>

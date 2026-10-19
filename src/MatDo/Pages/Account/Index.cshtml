@@ -1,0 +1,32 @@
+@page "/Account"
+@model MatDo.Pages.Account.IndexModel
+@{
+    ViewData["Title"] = "Einstellungen";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Einstellungen", null) };
+    ViewData["Width"] = "narrow";
+}
+
+<partial name="_AccountTabs" model="@("profile")" />
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-card">
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("user")Profil</h2></div>
+        <div class="mat-card__body mat-form">
+            <md-field name="DisplayName" label="Name" required value="@Model.DisplayName" maxlength="120" autocomplete="name" msg-required="Bitte einen Namen eingeben." />
+            <md-field name="EmailShown" kind="email" label="E-Mail-Adresse" value="@Model.Email" disabled hint="Die Adresse zum Anmelden; ein Administrator kann sie ändern." />
+            <md-field name="TimeZone" kind="picker" label="Zeitzone" value="@Model.TimeZone" options="Model.Zones" picker="search"
+                      hint="„Heute“, „morgen“ und jede Uhrzeit gelten in dieser Zone." />
+            <md-field name="Scheme" kind="select" label="Farbschema" value="@Model.Scheme" options="Model.Schemes" hint="Hell, dunkel oder automatisch stellst du unten links im Menü um." />
+        </div>
+    </div>
+    <div class="mat-card">
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("keyboard")Schnelleingabe und Webhook</h2></div>
+        <div class="mat-card__body mat-form">
+            <md-field name="AutoCreateProjects" kind="switch" label="Unbekannte Projekte anlegen" value="@Model.AutoCreateProjects.ToString()"
+                      hint="„#Neubau“ oder „Projekt Neubau“ legt das Projekt an, wenn es noch keins gibt. Aus: die Wörter bleiben im Titel, die Aufgabe landet im Eingang." />
+            <md-field name="AutoCreateLabels" kind="switch" label="Unbekannte Labels anlegen" value="@Model.AutoCreateLabels.ToString()" hint="„@@einkauf“ legt das Label an, wenn es noch keins gibt." />
+        </div>
+    </div>
+    <md-buttons save="Speichern" back="/Today" />
+</form>

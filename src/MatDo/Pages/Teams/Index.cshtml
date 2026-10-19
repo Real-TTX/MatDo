@@ -1,0 +1,51 @@
+@page "/Teams"
+@model MatDo.Pages.Teams.IndexModel
+@{
+    ViewData["Title"] = "Teams";
+    ViewData["PageSub"] = "Teams teilen Projekte: jedes Mitglied sieht und ändert die Projekte des Teams.";
+}
+
+<div class="mat-list">
+    <partial name="_Toolbar" model="Model.Toolbar" />
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="mat-empty">
+            <span class="mat-empty__icon">@Ui.Icon("users")</span>
+            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch in keinem Team" : "Kein Team passt")</div>
+            <p>@(Model.Toolbar.Total == 0 ? "Lege ein Team an und füge Personen über ihre E-Mail-Adresse hinzu." : "Ändere die Suche oder die Filter.")</p>
+        </div>
+    }
+    else
+    {
+        <md-table caption="Teams">
+            <thead>
+                <tr><th scope="col">Team</th><th scope="col">Meine Rolle</th><th scope="col" class="mat-num">Mitglieder</th><th scope="col" class="mat-num mat-hide-sm">Projekte</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var t in Model.Items)
+                {
+                    <tr>
+                        <td data-label="Team"><a class="md-name" href="/Teams/Members?id=@t.Id">@Ui.Icon("users", null, t.Color)<span>@t.Name</span></a>@if (!string.IsNullOrEmpty(t.Description)) { <small class="mat-muted md-block-line">@t.Description</small> }</td>
+                        <td data-label="Rolle"><span class="mat-pill @(t.Role == TeamRole.Owner ? "mat-pill--accent" : "mat-pill--plain")">@(t.Role == TeamRole.Owner ? "Eigentümer" : "Mitglied")</span></td>
+                        <td data-label="Mitglieder" class="mat-num mat-mono">@t.Members</td>
+                        <td data-label="Projekte" class="mat-num mat-mono mat-hide-sm">@t.Projects</td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions">
+                            <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Teams/Members?id=@t.Id" aria-label="Mitglieder von @t.Name" data-tip="Mitglieder">@Ui.Icon("users")</a>
+                            @if (t.Role == TeamRole.Owner)
+                            {
+                                <a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Teams/Edit?id=@t.Id" aria-label="@t.Name bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a>
+                            }
+                        </div></td>
+                    </tr>
+                }
+            </tbody>
+        </md-table>
+    }
+
+    <partial name="_Pager" model="Model.Pager" />
+
+    <div class="mat-actions">
+        <a class="mat-btn mat-btn--primary" href="/Teams/Edit">@Ui.Icon("plus")<span>Neues Team</span></a>
+    </div>
+</div>

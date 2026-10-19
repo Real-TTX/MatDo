@@ -1,0 +1,176 @@
+/* ==========================================================================
+   MatDo: the colour of the app, and the few styles that only this app has (prefix md-).
+   Everything else is the toolkit (matui.css). No literal colours here except the accent: the rest are --mat-* tokens.
+   ========================================================================== */
+
+/* The accent: a red like Todoist's, a little darker and warmer. White text on it reaches 4.78:1 (AA); the toolkit derives hover, tints and the dark mode from it. */
+[data-app="matdo"] { --mat-app-accent: #d03d33; }
+
+/* The priorities: the colours of the toolkit's meanings (p1 danger, p2 warning, p3 info, p4 the muted text) */
+.md-p1 { --md-prio: var(--mat-danger); }
+.md-p2 { --md-prio: var(--mat-warning); }
+.md-p3 { --md-prio: var(--mat-info); }
+.md-p4 { --md-prio: var(--mat-text-muted); }
+.mat-icon.md-p1, .mat-icon.md-p2, .mat-icon.md-p3, .mat-icon.md-p4 { color: var(--md-prio); }
+
+.md-muted { color: var(--mat-text-muted); }
+.md-danger { color: var(--mat-danger-text); }
+.md-sep { margin-left: var(--mat-space-3); }
+.md-intro { max-width: 80ch; margin: 0 0 var(--mat-space-4); }
+.md-name { display: inline-flex; align-items: center; gap: var(--mat-space-2); font-weight: 560; }
+.md-block-line { display: block; }
+.md-title { display: flex; align-items: center; gap: var(--mat-space-2); }
+.md-plainlist { list-style: none; margin: 0 0 var(--mat-space-3); padding: 0; display: grid; gap: var(--mat-space-2); }
+.md-dl { display: grid; grid-template-columns: max-content 1fr; gap: var(--mat-space-2) var(--mat-space-4); margin: var(--mat-space-4) 0 0; }
+.md-dl dt { color: var(--mat-text-muted); }
+.md-dl dd { margin: 0; display: flex; flex-wrap: wrap; gap: var(--mat-space-1); }
+.md-steps { margin: 0; padding-left: 1.25rem; display: grid; gap: var(--mat-space-2); }
+.md-code { margin: 0 0 var(--mat-space-3); padding: var(--mat-space-3) var(--mat-space-4); background: var(--mat-surface-2); border: 1px solid var(--mat-border); border-radius: var(--mat-radius); overflow-x: auto; font-family: var(--mat-font-mono); font-size: var(--mat-fs-sm); white-space: pre; }
+.md-empty-line { margin: 0; padding: var(--mat-space-2) var(--mat-space-4); color: var(--mat-text-muted); font-size: var(--mat-fs-sm); }
+.md-inline-form { margin-top: var(--mat-space-4); max-width: 520px; }
+
+/* ---- Groups of a view: a heading with a count, a list, an editor ---------------------------------------------------- */
+.md-view { gap: var(--mat-space-5); }
+.md-group { display: flex; flex-direction: column; min-width: 0; }
+.md-group__head { display: flex; align-items: center; justify-content: space-between; gap: var(--mat-space-2); padding: 0 0 var(--mat-space-2); border-bottom: 1px solid var(--mat-border); margin-bottom: var(--mat-space-1); }
+.md-group__title { margin: 0; font-size: var(--mat-fs-md); font-weight: 650; display: flex; align-items: center; gap: var(--mat-space-2); }
+.md-group__count { color: var(--mat-text-muted); font-weight: 500; font-size: var(--mat-fs-sm); }
+.md-weeknav { display: flex; flex-wrap: wrap; gap: var(--mat-space-2); }
+.md-block { margin-top: var(--mat-space-6); max-width: 900px; }
+.md-block__title { display: flex; align-items: center; gap: var(--mat-space-2); margin: 0 0 var(--mat-space-2); font-size: var(--mat-fs-lg); }
+
+/* ---- The tasks of a list ----------------------------------------------------------------------------------------- */
+.md-tasks { border-block: 0; background: transparent; --mat-item-pad: var(--mat-space-1); --mat-item-inset: 36px; }
+.md-task { align-items: flex-start; }
+.md-task__check { flex: none; display: flex; padding: 10px 0 0 var(--mat-space-1); }
+.md-task__main.mat-item__main { align-items: flex-start; padding-left: var(--mat-space-2); padding-block: var(--mat-space-2); min-height: 0; }
+.md-task__title { color: var(--mat-text); overflow-wrap: anywhere; line-height: 1.4; }
+.md-task__desc { color: var(--mat-text-muted); font-size: var(--mat-fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-task__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--mat-space-3); font-size: var(--mat-fs-xs); color: var(--mat-text-muted); }
+.md-task__meta:empty { display: none; }
+.md-task__meta .mat-icon { width: 14px; height: 14px; font-size: 14px; margin-right: 3px; vertical-align: -2px; }
+.md-task__project { flex: none; display: inline-flex; align-items: center; gap: var(--mat-space-1); margin-left: auto; padding-top: 2px; color: var(--mat-text-muted); font-size: var(--mat-fs-xs); max-width: 40%; }
+.md-task__project .mat-icon { width: 14px; height: 14px; }
+.md-task.is-done .md-task__title { color: var(--mat-text-muted); text-decoration: line-through; }
+.md-task.is-leaving { opacity: 0; transform: translateX(8px); transition: opacity var(--mat-dur-slow) var(--mat-ease), transform var(--mat-dur-slow) var(--mat-ease); }
+.md-task__aside { align-self: center; opacity: .0; transition: opacity var(--mat-dur-fast) var(--mat-ease); }
+.md-task:hover .md-task__aside, .md-task:focus-within .md-task__aside, .mat-itemlist.is-reordering .md-task__aside { opacity: 1; }
+@media (pointer: coarse) { .md-task__aside { opacity: 1; } }
+.md-label { display: inline-flex; align-items: center; }
+.md-meta { display: inline-flex; align-items: center; }
+
+/* the due date: overdue red, today green, tomorrow orange, this week violet (Todoist's convention), with the toolkit's colours */
+.md-due { display: inline-flex; align-items: center; }
+.md-due--overdue { color: var(--mat-danger-text); }
+.md-due--today { color: var(--mat-success-text); }
+.md-due--tomorrow { color: var(--mat-warning-text); }
+.md-due--week { color: var(--mat-info-text); }
+
+/* the round check in the colour of the priority; the tick shows on hover and when done */
+.md-check {
+  position: relative; display: inline-grid; place-items: center; flex: none;
+  width: 20px; height: 20px; padding: 0; border-radius: 50%;
+  border: 1.5px solid var(--md-prio, var(--mat-text-muted));
+  background: color-mix(in srgb, var(--md-prio, var(--mat-text-muted)) 10%, transparent);
+  color: var(--md-prio, var(--mat-text-muted)); cursor: pointer;
+}
+.md-check.md-p4 { background: transparent; }
+.md-check .mat-icon { width: 12px; height: 12px; opacity: 0; stroke-width: 3; transition: opacity var(--mat-dur-fast) var(--mat-ease); }
+.md-check:hover .mat-icon, .md-check:focus-visible .mat-icon { opacity: 1; }
+.md-check.is-checked { background: var(--md-prio, var(--mat-text-muted)); border-color: var(--md-prio, var(--mat-text-muted)); color: var(--mat-surface); }
+.md-check.is-checked .mat-icon { opacity: 1; }
+.md-check--static { cursor: default; width: 22px; height: 22px; }
+.md-check--static .mat-icon { opacity: 0; }
+@media (pointer: coarse) { .md-check::before { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); } }
+
+/* ---- The quick add editor ----------------------------------------------------------------------------------------- */
+.md-qa { margin-top: var(--mat-space-1); }
+.md-qa__add { display: inline-flex; align-items: center; gap: var(--mat-space-2); padding: var(--mat-space-2) var(--mat-space-1); list-style: none; color: var(--mat-text-muted); cursor: pointer; border-radius: var(--mat-radius); min-height: 36px; }
+.md-qa__add::-webkit-details-marker { display: none; }
+.md-qa__add:hover { color: var(--mat-accent-text); }
+.md-qa__plus { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 50%; color: var(--mat-accent-text); }
+.md-qa__add:hover .md-qa__plus { background: var(--mat-accent); color: var(--mat-on-accent); }
+.md-qa[open] > .md-qa__add { display: none; }
+.md-qa__form { display: flex; flex-direction: column; gap: var(--mat-space-2); padding: var(--mat-space-3); border: 1px solid var(--mat-border-strong); border-radius: var(--mat-radius-lg); background: var(--mat-surface); }
+.md-qa__form:focus-within { border-color: var(--mat-text-muted); }
+.md-qa--dialog .md-qa__form { border: 0; padding: 0; }
+
+/* the title: a textarea over a mirror of the same text, in which the parts that were understood are marked */
+.md-qa__field { position: relative; }
+.md-qa__mirror, .md-qa__title {
+  margin: 0; padding: 0; border: 0; box-sizing: border-box; width: 100%;
+  font: inherit; font-size: var(--mat-fs-md, 1rem); font-weight: 600; line-height: 1.5; letter-spacing: normal;
+  white-space: pre-wrap; overflow-wrap: break-word; word-break: normal; tab-size: 4;
+}
+.md-qa__mirror { position: absolute; inset: 0; color: transparent; pointer-events: none; overflow: hidden; }
+.md-qa__mirror mark { color: transparent; background: var(--mat-accent-soft-strong); border-radius: 3px; box-shadow: 0 0 0 2px var(--mat-accent-soft-strong); }
+.md-qa__mirror mark.md-hl--project, .md-qa__mirror mark.md-hl--section { background: color-mix(in srgb, var(--mat-info) 22%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mat-info) 22%, transparent); }
+.md-qa__mirror mark.md-hl--label { background: color-mix(in srgb, var(--mat-success) 22%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mat-success) 22%, transparent); }
+.md-qa__mirror mark.md-hl--priority { background: color-mix(in srgb, var(--mat-warning) 25%, transparent); box-shadow: 0 0 0 2px color-mix(in srgb, var(--mat-warning) 25%, transparent); }
+.md-qa__title { position: relative; display: block; resize: none; overflow: hidden; background: transparent; color: var(--mat-text); caret-color: var(--mat-text); min-height: 1.5em; outline: none; }
+.md-qa__title::placeholder { color: var(--mat-text-muted); font-weight: 500; }
+.md-qa__desc { display: block; width: 100%; margin: 0; padding: 0; border: 0; background: transparent; color: var(--mat-text); font: inherit; font-size: var(--mat-fs-sm); line-height: 1.5; resize: none; overflow: hidden; outline: none; }
+.md-qa__desc::placeholder { color: var(--mat-text-muted); }
+
+.md-qa__chips { display: flex; flex-wrap: wrap; gap: var(--mat-space-1); }
+.md-qa__chips:empty { display: none; }
+.md-chip { display: inline-flex; align-items: center; gap: 4px; min-height: 26px; padding: 0 4px 0 8px; border: 1px solid var(--mat-border); border-radius: 999px; font-size: var(--mat-fs-sm); background: var(--mat-surface-2); color: var(--mat-text); }
+.md-chip .mat-icon { width: 14px; height: 14px; }
+.md-chip--manual { border-style: dashed; }
+.md-chip__x { display: inline-grid; place-items: center; width: 20px; height: 20px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--mat-text-muted); cursor: pointer; }
+.md-chip__x:hover { background: var(--mat-surface-3); color: var(--mat-text); }
+.md-chip__x .mat-icon { width: 12px; height: 12px; }
+.md-chip__new { font-size: var(--mat-fs-xs); color: var(--mat-text-muted); }
+
+.md-qa__tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mat-space-2); }
+.md-qa__tool { position: relative; }
+.md-qa__tool .mat-btn.is-set { border-color: var(--mat-accent); color: var(--mat-accent-text); }
+.md-qa__project { width: auto; max-width: 220px; }
+.md-qa__pop {
+  position: absolute; z-index: 30; top: calc(100% + 4px); left: 0; min-width: 240px; max-height: 360px; overflow-y: auto;
+  display: flex; flex-direction: column; gap: var(--mat-space-1); padding: var(--mat-space-2);
+  background: var(--mat-surface); border: 1px solid var(--mat-border); border-radius: var(--mat-radius-lg); box-shadow: var(--mat-shadow-3);
+}
+.md-qa__pop[hidden] { display: none; }
+.md-qa__quick { display: flex; flex-direction: column; gap: 2px; padding-bottom: var(--mat-space-2); border-bottom: 1px solid var(--mat-border); }
+.md-qa__opt { display: flex; align-items: center; gap: var(--mat-space-2); min-height: 36px; padding: 0 var(--mat-space-2); border: 0; border-radius: var(--mat-radius); background: transparent; color: var(--mat-text); font: inherit; text-align: left; cursor: pointer; }
+.md-qa__opt:hover, .md-qa__opt:focus-visible { background: var(--mat-surface-3); }
+.md-qa__pick { display: grid; grid-template-columns: auto 1fr; align-items: center; gap: var(--mat-space-2); padding-top: var(--mat-space-1); }
+.md-qa__pick .mat-btn { grid-column: 1 / -1; }
+.md-qa__check .mat-check__text { display: inline-flex; align-items: center; gap: var(--mat-space-1); }
+.md-qa__foot { justify-content: flex-start; align-items: center; }
+.md-qa__keys { margin: 0; color: var(--mat-text-muted); font-size: var(--mat-fs-xs); }
+@media (max-width: 599px) { .md-qa__pop { position: fixed; left: var(--mat-space-3); right: var(--mat-space-3); top: auto; bottom: var(--mat-space-3); max-height: 70vh; } }
+
+/* the dialog of the shortcut Q: a little wider than a small dialog, the editor without its own frame */
+.md-quick { width: min(640px, calc(100vw - 2 * var(--mat-space-4))); }
+.md-quick .mat-dialog__body { overflow: visible; }
+
+/* a new section at the end of a project */
+.md-newsection { margin-top: var(--mat-space-2); }
+.md-newsection__add { display: inline-flex; align-items: center; gap: var(--mat-space-2); list-style: none; cursor: pointer; color: var(--mat-text-muted); padding: var(--mat-space-2) var(--mat-space-1); }
+.md-newsection__add::-webkit-details-marker { display: none; }
+.md-newsection__add:hover { color: var(--mat-accent-text); }
+.md-newsection__form { display: flex; flex-direction: column; gap: var(--mat-space-2); max-width: 480px; }
+
+/* ---- Comments ---------------------------------------------------------------------------------------------------- */
+.md-comments { list-style: none; margin: 0 0 var(--mat-space-3); padding: 0; display: grid; gap: var(--mat-space-3); }
+.md-comment { display: flex; gap: var(--mat-space-3); align-items: flex-start; }
+.md-comment__body { flex: 1 1 auto; min-width: 0; }
+.md-comment__head { display: flex; align-items: center; gap: var(--mat-space-2); }
+.md-comment__delete { margin-left: auto; }
+.md-comment__text { margin: var(--mat-space-1) 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.md-comment-form { max-width: 640px; }
+
+/* ---- The start page for visitors ----------------------------------------------------------------------------------- */
+.md-landing { max-width: 960px; margin-inline: auto; }
+.md-hero { display: flex; flex-direction: column; align-items: center; text-align: center; gap: var(--mat-space-3); padding: var(--mat-space-8) var(--mat-space-4) var(--mat-space-6); }
+.md-hero h1 { margin: 0; font-size: clamp(2rem, 5vw, 3rem); }
+.md-hero__lead { max-width: 60ch; margin: 0; color: var(--mat-text-muted); font-size: var(--mat-fs-lg); }
+.md-hero__actions { justify-content: center; }
+.md-features { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: var(--mat-space-4); width: 100%; padding: 0 var(--mat-space-4) var(--mat-space-6); }
+.md-features h2 { display: flex; align-items: center; gap: var(--mat-space-2); margin: 0 0 var(--mat-space-2); font-size: var(--mat-fs-md); }
+.md-features p { margin: 0; color: var(--mat-text-muted); }
+
+/* the title of the editor has no frame of its own: the editor is the frame */
+.md-qa .md-qa__title:focus, .md-qa .md-qa__title:focus-visible, .md-qa .md-qa__desc:focus, .md-qa .md-qa__desc:focus-visible { outline: none; box-shadow: none; border: 0; }

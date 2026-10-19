@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" class="mat-sprite" width="0" height="0" aria-hidden="true" focusable="false">
+  <symbol id="mat-i-matdo" viewBox="0 0 24 24"><path d='M5 7.5 7 9.5 10.5 6'/><path d='M13 8h6'/><path d='M5 15.5 7 17.5 10.5 14'/><path d='M13 16h6'/></symbol>
+  <symbol id="mat-i-inbox" viewBox="0 0 24 24"><polyline points='22 12 16 12 14 15 10 15 8 12 2 12'/><path d='M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z'/></symbol>
+  <symbol id="mat-i-calendar-today" viewBox="0 0 24 24"><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/><path d='m9 16 2 2 4-4'/></symbol>
+  <symbol id="mat-i-calendar-days" viewBox="0 0 24 24"><rect x='3' y='4' width='18' height='18' rx='2'/><line x1='16' y1='2' x2='16' y2='6'/><line x1='8' y1='2' x2='8' y2='6'/><line x1='3' y1='10' x2='21' y2='10'/><path d='M8 14h.01M12 14h.01M16 14h.01M8 18h.01M12 18h.01M16 18h.01'/></symbol>
+  <symbol id="mat-i-flag" viewBox="0 0 24 24"><path d='M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z'/><line x1='4' y1='22' x2='4' y2='15'/></symbol>
+  <symbol id="mat-i-repeat" viewBox="0 0 24 24"><path d='m17 2 4 4-4 4'/><path d='M3 11v-1a4 4 0 0 1 4-4h14'/><path d='m7 22-4-4 4-4'/><path d='M21 13v1a4 4 0 0 1-4 4H3'/></symbol>
+  <symbol id="mat-i-grip" viewBox="0 0 24 24"><circle cx='9' cy='5' r='1'/><circle cx='9' cy='12' r='1'/><circle cx='9' cy='19' r='1'/><circle cx='15' cy='5' r='1'/><circle cx='15' cy='12' r='1'/><circle cx='15' cy='19' r='1'/></symbol>
+  <symbol id="mat-i-hash" viewBox="0 0 24 24"><line x1='4' y1='9' x2='20' y2='9'/><line x1='4' y1='15' x2='20' y2='15'/><line x1='10' y1='3' x2='8' y2='21'/><line x1='16' y1='3' x2='14' y2='21'/></symbol>
+  <symbol id="mat-i-target" viewBox="0 0 24 24"><circle cx='12' cy='12' r='10'/><circle cx='12' cy='12' r='6'/><circle cx='12' cy='12' r='2'/></symbol>
+  <symbol id="mat-i-webhook" viewBox="0 0 24 24"><path d='M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2'/><path d='m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06'/><path d='m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8'/></symbol>
+  <symbol id="mat-i-at-sign" viewBox="0 0 24 24"><circle cx='12' cy='12' r='4'/><path d='M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8'/></symbol>
+  <symbol id="mat-i-list-tree" viewBox="0 0 24 24"><path d='M21 12h-8'/><path d='M21 6H8'/><path d='M21 18h-8'/><path d='M3 6v4c0 1.1.9 2 2 2h3'/><path d='M3 10v6c0 1.1.9 2 2 2h3'/></symbol>
+  <symbol id="mat-i-keyboard" viewBox="0 0 24 24"><rect x='2' y='4' width='20' height='16' rx='2'/><path d='M6 8h.01M10 8h.01M14 8h.01M18 8h.01M6 12h.01M10 12h.01M14 12h.01M18 12h.01M7 16h10'/></symbol>
+  <symbol id="mat-i-mic" viewBox="0 0 24 24"><path d='M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z'/><path d='M19 10v2a7 7 0 0 1-14 0v-2'/><line x1='12' y1='19' x2='12' y2='22'/></symbol>
+  <symbol id="mat-i-circle-check" viewBox="0 0 24 24"><circle cx='12' cy='12' r='10'/><path d='m9 12 2 2 4-4'/></symbol>
+  <symbol id="mat-i-folder-plus" viewBox="0 0 24 24"><path d='M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2z'/><path d='M12 10v6'/><path d='M9 13h6'/></symbol>
+  <symbol id="mat-i-unlock" viewBox="0 0 24 24"><rect x='3' y='11' width='18' height='11' rx='2' ry='2'/><path d='M7 11V7a5 5 0 0 1 9.9-1'/></symbol>
+  <symbol id="mat-i-sofa" viewBox="0 0 24 24"><path d='M20 9V6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v3'/><path d='M2 11v5a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-5a2 2 0 0 0-4 0v2H6v-2a2 2 0 0 0-4 0Z'/><path d='M4 18v2'/><path d='M20 18v2'/></symbol>
+  <symbol id="mat-i-share" viewBox="0 0 24 24"><circle cx='18' cy='5' r='3'/><circle cx='6' cy='12' r='3'/><circle cx='18' cy='19' r='3'/><line x1='8.59' y1='13.51' x2='15.42' y2='17.49'/><line x1='15.41' y1='6.51' x2='8.59' y2='10.49'/></symbol>
+</svg>

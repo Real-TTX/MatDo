@@ -1,0 +1,108 @@
+@model QuickAddModel
+@*
+    The quick add editor, like Todoist's: one line that is read while it is typed (dates, times, repeating, #project, @label, p1..p4, /section and the keywords of
+    the person: the parts that were understood are marked in the text and shown as chips under it, a chip's x stops reading that kind), a description, and the
+    buttons for what is easier to pick than to type (date, priority, labels, project). Enter adds the task, Escape closes the editor.
+    Without the script it is a plain form: the server reads the text the same way (/Tasks/Add). Several editors can be on one page (the ids come from Model.Id).
+*@
+@{
+    var id = Model.Id;
+    var personal = Model.Projects.Where(p => p.TeamId is null).ToList();
+    var teams = Model.Projects.Where(p => p.TeamId is not null).GroupBy(p => p.TeamName ?? "Team").ToList();
+}
+<details class="md-qa @(Model.InDialog ? "md-qa--dialog" : "")" id="@id" data-quickadd open="@(Model.Open || Model.InDialog)">
+    <summary class="md-qa__add" hidden="@Model.InDialog">
+        <span class="md-qa__plus" aria-hidden="true">@Ui.Icon("plus")</span><span>@Model.AddLabel</span>
+    </summary>
+    <form class="md-qa__form" method="post" action="/Tasks/Add" novalidate data-qa-form>
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+        <input type="hidden" name="Editor" value="@id" />
+        <input type="hidden" name="DefaultSectionId" value="@Model.DefaultSectionId" />
+        <input type="hidden" name="DefaultDueDate" value="@(Model.DefaultDueDate is { } d ? Dates.Iso(d) : "")" />
+        <input type="hidden" name="ParentId" value="@Model.ParentId" />
+        <input type="hidden" name="Off" value="" data-qa-off />
+        <input type="hidden" name="DueDate" value="" data-qa-due />
+        <input type="hidden" name="DueTime" value="" data-qa-time />
+        <input type="hidden" name="NoDate" value="false" data-qa-nodate />
+        <input type="hidden" name="Priority" value="" data-qa-priority />
+        <input type="hidden" name="Labels" value="" data-qa-labels />
+        <input type="hidden" name="ProjectTouched" value="false" data-qa-touched />
+
+        <div class="md-qa__field">
+            <div class="md-qa__mirror" aria-hidden="true" data-qa-mirror></div>
+            <textarea class="md-qa__title" id="@id-text" name="Text" rows="1" maxlength="2000" required placeholder="@Model.Placeholder"
+                      aria-label="Name der Aufgabe" aria-describedby="@id-chips" autocomplete="off" spellcheck="true" data-qa-input
+                      data-msg-required="Bitte einen Namen für die Aufgabe eingeben."></textarea>
+        </div>
+        <textarea class="md-qa__desc" id="@id-desc" name="Description" rows="1" maxlength="10000" placeholder="Beschreibung" aria-label="Beschreibung" data-qa-desc></textarea>
+
+        <div class="md-qa__chips" id="@id-chips" aria-live="polite" data-qa-chips></div>
+
+        <div class="md-qa__tools">
+            <div class="md-qa__tool">
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="date" aria-expanded="false" aria-controls="@id-pop-date">@Ui.Icon("calendar")<span data-qa-date-label>Datum</span></button>
+                <div class="md-qa__pop" id="@id-pop-date" role="dialog" aria-label="Datum wählen" hidden data-qa-pop="date">
+                    <div class="md-qa__quick">
+                        <button type="button" class="md-qa__opt" data-qa-date="today">@Ui.Icon("calendar-today")<span>Heute</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="tomorrow">@Ui.Icon("sun")<span>Morgen</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="weekend">@Ui.Icon("sofa")<span>Am Wochenende</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="nextweek">@Ui.Icon("calendar-days")<span>Nächste Woche</span></button>
+                        <button type="button" class="md-qa__opt" data-qa-date="none">@Ui.Icon("x-circle")<span>Kein Datum</span></button>
+                    </div>
+                    <div class="md-qa__pick">
+                        <label class="mat-label" for="@id-pick-date">Datum</label>
+                        <input class="mat-input mat-input--sm" type="date" id="@id-pick-date" data-qa-pick-date />
+                        <label class="mat-label" for="@id-pick-time">Uhrzeit</label>
+                        <input class="mat-input mat-input--sm" type="time" id="@id-pick-time" data-qa-pick-time />
+                        <button type="button" class="mat-btn mat-btn--primary mat-btn--sm" data-qa-pick-apply>Übernehmen</button>
+                    </div>
+                </div>
+            </div>
+            <div class="md-qa__tool">
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="priority" aria-expanded="false" aria-controls="@id-pop-priority">@Ui.Icon("flag")<span data-qa-priority-label>Priorität</span></button>
+                <div class="md-qa__pop" id="@id-pop-priority" role="dialog" aria-label="Priorität wählen" hidden data-qa-pop="priority">
+                    @foreach (var (value, label) in Ui.Priorities)
+                    {
+                        <button type="button" class="md-qa__opt" data-qa-set-priority="@value">@Ui.Icon("flag", Ui.PriorityClass(value))<span>@label</span></button>
+                    }
+                </div>
+            </div>
+            <div class="md-qa__tool">
+                <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-open="labels" aria-expanded="false" aria-controls="@id-pop-labels">@Ui.Icon("tag")<span data-qa-labels-label>Labels</span></button>
+                <div class="md-qa__pop" id="@id-pop-labels" role="dialog" aria-label="Labels wählen" hidden data-qa-pop="labels">
+                    @if (Model.Labels.Count == 0)
+                    {
+                        <p class="mat-hint">Noch keine Labels. Tippe <kbd>@@name</kbd> in den Text, dann wird das Label angelegt.</p>
+                    }
+                    @foreach (var l in Model.Labels)
+                    {
+                        <label class="mat-check md-qa__check"><input type="checkbox" value="@l.Name" data-qa-label /><span class="mat-check__text">@Ui.Icon("tag", null, l.Color)@l.Name</span></label>
+                    }
+                </div>
+            </div>
+            <label class="mat-sr-only" for="@id-project">Projekt</label>
+            <select class="mat-select mat-select--sm md-qa__project" id="@id-project" name="DefaultProjectId" data-qa-project hidden="@(Model.ParentId is not null)">
+                @foreach (var p in personal)
+                {
+                    <option value="@p.Id" selected="@(p.Id == Model.DefaultProjectId)">@(p.IsInbox ? "Eingang" : p.Name)</option>
+                }
+                @foreach (var g in teams)
+                {
+                    <optgroup label="@g.Key">
+                        @foreach (var p in g)
+                        {
+                            <option value="@p.Id" selected="@(p.Id == Model.DefaultProjectId)">@p.Name</option>
+                        }
+                    </optgroup>
+                }
+            </select>
+        </div>
+
+        <div class="mat-btn-row mat-btn-row--plain md-qa__foot">
+            <button type="submit" class="mat-btn mat-btn--primary mat-btn--sm" data-qa-submit>@Ui.Icon("plus")<span>@Model.AddLabel</span></button>
+            <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm" data-qa-cancel>Abbrechen</button>
+        </div>
+        <p class="md-qa__keys mat-hide-sm"><kbd>Enter</kbd> hinzufügen · <kbd>Esc</kbd> schließen · <kbd>Q</kbd> öffnet die Schnelleingabe überall</p>
+    </form>
+</details>

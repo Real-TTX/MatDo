@@ -1,0 +1,115 @@
+@page "/Tasks/Edit"
+@model MatDo.Pages.Tasks.EditModel
+@inject CurrentUser Me
+@{
+    var t = Model.Item;
+    ViewData["Title"] = t.Content;
+    ViewData["OwnHead"] = true;
+    var crumbs = new List<(string, string?)> { (t.Project!.IsInbox ? "Eingang" : t.Project.Name, $"/Projects/View?id={t.ProjectId}") };
+    if (Model.Parent is not null)
+    {
+        crumbs.Add((Model.Parent.Content, $"/Tasks/Edit?id={Model.Parent.Id}"));
+    }
+    crumbs.Add((t.Content, null));
+    ViewData["Crumbs"] = crumbs;
+}
+
+<div class="mat-page__head">
+    <div class="mat-page__title">
+        <h1 class="md-title">
+            <span class="md-check md-check--static @Ui.PriorityClass(t.Priority) @(t.IsCompleted ? "is-checked" : "")" aria-hidden="true">@Ui.Icon("check")</span>
+            @t.Content
+        </h1>
+        <p class="mat-page__sub">
+            @if (t.IsCompleted) { <span class="mat-pill mat-pill--ok">Erledigt</span> }
+            @if (t.Source == TaskSource.Webhook) { <span class="mat-pill mat-pill--plain">@Ui.Icon("webhook")Per Webhook angelegt</span> }
+            Angelegt am @Dates.Stamp(t.CreateDate, Me.TimeZone)
+        </p>
+    </div>
+</div>
+
+<form class="mat-form" method="post" novalidate id="task-form">
+    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-cols">
+        <div class="mat-col-12 mat-col-lg-8">
+            <div class="mat-card">
+                <div class="mat-card__body mat-form">
+                    <md-field name="Name" label="Aufgabe" required value="@Model.Name" maxlength="500" msg-required="Bitte einen Namen eingeben." />
+                    <md-field name="Description" kind="textarea" label="Beschreibung" value="@Model.Description" rows="6" maxlength="10000" optional />
+                </div>
+            </div>
+        </div>
+        <div class="mat-col-12 mat-col-lg-4">
+            <div class="mat-card">
+                <div class="mat-card__body mat-form">
+                    @if (Model.Parent is null)
+                    {
+                        <md-field name="ProjectId" kind="picker" label="Projekt" value="@Model.ProjectId" options="Model.ProjectChoices" picker="search" />
+                        @if (Model.SectionChoices.Count > 1)
+                        {
+                            <md-field name="SectionId" kind="select" label="Abschnitt" value="@Model.SectionId" options="Model.SectionChoices" hint="Nach einem Projektwechsel steht die Aufgabe ohne Abschnitt." />
+                        }
+                    }
+                    <md-field name="DueDate" kind="date" label="Datum" value="@Model.DueDate" optional />
+                    <md-field name="DueTime" kind="text" label="Uhrzeit" value="@Model.DueTime" placeholder="hh:mm" pattern="([01]?[0-9]|2[0-3]):[0-5][0-9]" inputmode="numeric" optional show-if="#DueDate" />
+                    <md-field name="Recurrence" kind="select" label="Wiederholung" value="@Model.Recurrence" options="Model.RecurrenceChoices" />
+                    <md-field name="DueText" label="Oder Datum in Worten" placeholder="z. B. jeden Montag 9 Uhr" optional hint="Wird wie die Schnelleingabe gelesen und ersetzt Datum, Uhrzeit und Wiederholung." />
+                    <md-field name="Deadline" kind="date" label="Frist" value="@Model.Deadline" optional hint="Bis wann es spätestens fertig sein muss." />
+                    <md-field name="Priority" kind="select" label="Priorität" value="@Model.Priority" options="Model.PriorityChoices" />
+                    <md-field name="LabelIds" kind="picker" label="Labels" value="@Model.LabelIds" options="Model.LabelChoices" picker="multiple search clearable" placeholder="Keine Labels" optional />
+                    @if (Model.AssigneeChoices.Count > 0)
+                    {
+                        <md-field name="AssigneeId" kind="select" label="Zugewiesen an" value="@Model.AssigneeId" options="Model.AssigneeChoices" />
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <md-buttons save="Speichern" back="@Model.BackUrl" delete-handler="Delete" delete-label="Aufgabe löschen"
+                delete-confirm="@($"„{t.Content}“ mit allen Unteraufgaben und Kommentaren löschen?")">
+        @if (!t.IsCompleted)
+        {
+            <button type="submit" class="mat-btn mat-btn--secondary" formnovalidate formaction="?handler=Complete&id=@t.Id">@Ui.Icon("check")<span>@(t.Recurrence is null ? "Erledigen" : "Erledigen (nächster Termin)")</span></button>
+        }
+    </md-buttons>
+</form>
+
+<section class="md-block" aria-labelledby="h-sub">
+    <h2 class="md-block__title" id="h-sub">@Ui.Icon("list-tree")Unteraufgaben @if (Model.SubTasks.Rows.Count > 0) { <span class="md-group__count">@Model.SubTasks.Rows.Count(r => r.IsCompleted)/@Model.SubTasks.Rows.Count</span> }</h2>
+    <partial name="_TaskList" model="Model.SubTasks" />
+    <partial name="_QuickAdd" model="Model.SubEditor" />
+</section>
+
+<section class="md-block" id="comments" aria-labelledby="h-comments">
+    <h2 class="md-block__title" id="h-comments">@Ui.Icon("message-square")Kommentare @if (Model.Comments.Count > 0) { <span class="md-group__count">@Model.Comments.Count</span> }</h2>
+    @if (Model.Comments.Count > 0)
+    {
+        <ul class="md-comments">
+            @foreach (var c in Model.Comments)
+            {
+                <li class="md-comment">
+                    <span class="mat-avatar mat-avatar--sm" aria-hidden="true">@Ui.Initials(c.Author)</span>
+                    <div class="md-comment__body">
+                        <div class="md-comment__head"><strong>@c.Author</strong><small class="mat-muted">@Dates.Stamp(c.Date, Me.TimeZone)</small>
+                            @if (c.Mine)
+                            {
+                                <form method="post" asp-page-handler="DeleteComment" asp-route-id="@t.Id" asp-route-commentId="@c.Id" class="md-comment__delete">
+                                    <button type="submit" class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" aria-label="Kommentar löschen" data-tip="Löschen" data-confirm="Diesen Kommentar löschen?" data-confirm-ok="Löschen">@Ui.Icon("trash")</button>
+                                </form>
+                            }
+                        </div>
+                        <p class="md-comment__text">@c.Text</p>
+                    </div>
+                </li>
+            }
+        </ul>
+    }
+    <form class="mat-form md-comment-form" method="post" asp-page-handler="Comment" asp-route-id="@t.Id" novalidate>
+        <md-field name="CommentText" id="CommentText" kind="textarea" label="Neuer Kommentar" rows="2" maxlength="5000" />
+        <div class="mat-btn-row mat-btn-row--plain">
+            <button type="submit" class="mat-btn mat-btn--secondary mat-btn--sm">@Ui.Icon("message-square")<span>Kommentieren</span></button>
+        </div>
+    </form>
+</section>

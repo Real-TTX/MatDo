@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32">
+  <title>MatDo</title>
+  <!-- Favicon: the simplest form of the mark, one bold check on the red square (readable at 16 px) -->
+  <rect width="32" height="32" rx="7.5" fill="#d03d33"/>
+  <path d="M8.6 16.6l4.9 4.9L23.6 11.4" fill="none" stroke="#fff" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

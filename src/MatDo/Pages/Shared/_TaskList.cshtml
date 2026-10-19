@@ -1,0 +1,83 @@
+@model TaskListModel
+@*
+    A list of tasks (LIST-15: a list of rows that are ticked off one by one). A row: the round check in the colour of the priority (a form: it works without the script;
+    tasks.js sends it in the background and lets the row go), the task as a link to its page (title, the first line of the description, date, repeating, deadline,
+    sub-tasks, comments, labels, the person it is given to), the project at the right, and the handle for drag and drop when the list is in manual order.
+*@
+@if (Model.Rows.Count == 0)
+{
+    if (Model.Empty is not null)
+    {
+        <p class="md-empty-line">@Model.Empty</p>
+    }
+}
+else
+{
+    <ul class="mat-itemlist mat-itemlist--lines-inset md-tasks" id="@Model.Id" data-itemlist @(Model.Reorder ? "data-reorder" : "") aria-label="Aufgaben">
+        @foreach (var t in Model.Rows)
+        {
+            var desc = t.Description?.Split('\n', 2)[0].Trim();
+            <li class="mat-item mat-item--top md-task @(t.IsCompleted ? "is-done" : "")" data-item-key="@t.Id" data-task="@t.Id">
+                <form class="md-task__check" method="post" action="@(t.IsCompleted ? "/Tasks/Add?handler=Reopen" : "/Tasks/Add?handler=Complete")" data-task-toggle>
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="id" value="@t.Id" />
+                    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+                    <button type="submit" class="md-check @Ui.PriorityClass(t.Priority) @(t.IsCompleted ? "is-checked" : "")"
+                            aria-label="@(t.IsCompleted ? "Wieder öffnen" : "Erledigen"): @t.Content" title="@(t.IsCompleted ? "Wieder öffnen" : "Erledigen")">
+                        @Ui.Icon("check")
+                    </button>
+                </form>
+                <a class="mat-item__main md-task__main" href="/Tasks/Edit?id=@t.Id">
+                    <span class="mat-item__body">
+                        <span class="md-task__title">@t.Content</span>
+                        @if (!string.IsNullOrEmpty(desc))
+                        {
+                            <span class="md-task__desc">@desc</span>
+                        }
+                        <span class="md-task__meta">
+                            @if (t.DueDate is { } due && (Model.ShowDate || t.DueTime is not null || t.Recurrence is not null))
+                            {
+                                var (text, cls) = Ui.Due(due, t.DueTime, Model.Today);
+                                <span class="md-due @cls" data-due-text>@Ui.Icon(t.Recurrence is null ? "calendar" : "repeat")@(Model.ShowDate ? text : t.DueTime is { } tm ? Dates.Time(tm) : "")</span>
+                            }
+                            @if (t.Deadline is { } dl)
+                            {
+                                <span class="md-meta @(dl < Model.Today ? "md-due--overdue" : "")">@Ui.Icon("target")Frist @Dates.Relative(dl, Model.Today)</span>
+                            }
+                            @if (t.SubTasks > 0)
+                            {
+                                <span class="md-meta">@Ui.Icon("list-tree")@t.SubTasksDone/@t.SubTasks</span>
+                            }
+                            @if (t.Comments > 0)
+                            {
+                                <span class="md-meta">@Ui.Icon("message-square")@t.Comments</span>
+                            }
+                            @foreach (var l in t.Labels)
+                            {
+                                <span class="md-label">@Ui.Icon("tag", null, l.Color)@l.Name</span>
+                            }
+                            @if (t.AssigneeName is not null)
+                            {
+                                <span class="md-meta">@Ui.Icon("user")@t.AssigneeName</span>
+                            }
+                            @if (t.IsCompleted && t.CompletedDate is not null)
+                            {
+                                <span class="md-meta">@Ui.Icon("check")Erledigt</span>
+                            }
+                        </span>
+                    </span>
+                    @if (Model.ShowProject)
+                    {
+                        <span class="md-task__project">@(t.ProjectIsInbox ? "Eingang" : t.ProjectName)@Ui.Icon(t.ProjectIsInbox ? "inbox" : "hash", null, t.ProjectIsInbox ? null : t.ProjectColor)</span>
+                    }
+                </a>
+                @if (Model.Reorder)
+                {
+                    <div class="mat-item__aside md-task__aside">
+                        <button type="button" class="mat-item__handle" aria-label="„@t.Content“ verschieben">@Ui.Icon("grip")</button>
+                    </div>
+                }
+            </li>
+        }
+    </ul>
+}

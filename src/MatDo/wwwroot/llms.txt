@@ -1,0 +1,26 @@
+# MatDo
+
+> MatDo is a self-hosted task manager with the features of Todoist (projects, sections, sub-tasks, labels, priorities p1–p4, due dates, repeating tasks, deadlines, comments) plus teams that share projects. Tasks are typed in natural language (German and English) and can be created by a webhook, for example from an Apple Shortcut that dictates the text.
+
+The user interface is German. Everything except the start page needs an account. The only public API is the webhook below; it needs the secret token of a webhook that a signed-in person creates under Einstellungen → Webhooks.
+
+## Webhook: create a task
+
+- `POST /api/v1/webhook/{token}` with JSON `{"text": "...", "description": "..."}`, a form (`text=...`) or plain text. Alternatively `POST /api/v1/webhook` with the header `Authorization: Bearer {token}`.
+- Answer `201` with JSON: `id`, `content`, `description`, `project`, `due` (yyyy-MM-dd), `time` (HH:mm), `dueText`, `recurrence`, `deadline`, `priority` (1 highest … 4 none), `labels`, `url`, `message` (one sentence for a notification).
+- `400` when the text has no title, `404` for an unknown or switched-off token, `429` after 60 calls a minute.
+
+## How the text is read
+
+- Dates: heute, morgen, übermorgen, am Freitag, nächsten Montag, in 3 Tagen, nächste Woche, am Wochenende, Monatsende, 24.12., 24.12.2026, 24. Dezember, 2026-12-24; English: today, tomorrow, next friday, in 5 days, Dec 24.
+- Times: um 15 Uhr, 15:30, 9.30 Uhr, um halb 4, um 7 abends, morgen früh, heute Abend, 3pm.
+- Repeating: täglich, jeden Tag, werktags, jeden Montag, jede Woche, alle 2 Wochen, jeden Monat, jeden 15., jährlich; every day, every monday.
+- `#Projekt` (also names with spaces), `@label`, `p1`–`p4`, `/Abschnitt`, `{Freitag}` = deadline.
+- Keywords of the person (default: „Projekt EIMER“, „Label Einkauf“, „Priorität 1“, „Abschnitt Planung“, „Frist Freitag“, „Beschreibung …“ = the rest becomes the description). Each person can change them under Einstellungen → Schlüsselwörter.
+- Example: „Projekt EIMER Angebot schreiben übermorgen um 9 Uhr Priorität 1“ → task „Angebot schreiben“ in project EIMER, due the day after tomorrow at 09:00, priority 1.
+
+## Links
+
+- [Start page](/)
+- [Sign in](/Account/Login)
+- [Register](/Account/Register)

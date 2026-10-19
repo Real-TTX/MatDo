@@ -1,0 +1,60 @@
+# MatDo – Development (Branch dev, Image :nightly) mit pgAdmin
+#   docker compose -f docker-compose.dev.yml up -d
+#   App:     http://localhost:6006
+#   pgAdmin: http://localhost:6007   (ohne Anmeldung; Datenbank-Passwort: matdo)
+name: matdo-dev
+
+services:
+  web:
+    image: ghcr.io/real-ttx/matdo:nightly
+    restart: unless-stopped
+    ports:
+      - "6006:6006"
+    volumes:
+      - web-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: matdo
+      POSTGRES_USER: matdo
+      POSTGRES_PASSWORD: matdo
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matdo -d matdo"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    restart: unless-stopped
+    ports:
+      - "6007:80"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@matdo.example.com
+      PGADMIN_DEFAULT_PASSWORD: matdo
+      PGADMIN_CONFIG_SERVER_MODE: "False"
+      PGADMIN_CONFIG_MASTER_PASSWORD_REQUIRED: "False"
+    configs:
+      - source: servers
+        target: /pgadmin4/servers.json
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db
+
+configs:
+  servers:
+    content: |
+      {"Servers": {"1": {"Name": "MatDo", "Group": "Servers", "Host": "db", "Port": 5432, "MaintenanceDB": "matdo", "Username": "matdo", "SSLMode": "prefer"}}}
+
+volumes:
+  web-data:
+  db-data:
+  pgadmin-data:

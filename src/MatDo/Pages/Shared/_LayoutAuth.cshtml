@@ -1,0 +1,42 @@
+@inject Assets Toolkit
+@{
+    // A page without a menu: sign-in, registration, errors, the start page. A centred card on the plain page background (SHELL-11).
+    var title = ViewData["Title"] as string ?? Ui.AppName;
+    var description = ViewData["Description"] as string ?? "MatDo – Aufgaben, Projekte und Teams. Schnelleingabe wie bei Todoist, Webhooks für Sprachbefehle.";
+    var index = ViewData["Index"] is true;
+}
+<!DOCTYPE html>
+<html lang="de" data-app="@Ui.AppId">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="@Ui.Accent" />
+    <meta name="description" content="@description" />
+    <meta name="robots" content="@(index ? "index,follow" : "noindex")" />
+    <title>@(title == Ui.AppName ? Ui.AppName : $"{title} · {Ui.AppName}")</title>
+    <link rel="icon" type="image/svg+xml" href="~/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="~/img/favicon-32.png" />
+    <link rel="manifest" href="~/manifest.webmanifest" />
+    <link rel="apple-touch-icon" href="~/img/apple-touch-icon.png" />
+    <script src="~/matui/matui.boot.js" asp-append-version="true"></script>
+    <link rel="stylesheet" href="~/matui/matui.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+</head>
+<body>
+    <a class="mat-skip" href="#main">Zum Inhalt springen</a>
+    @Html.Raw(Toolkit.Sprite)
+    <main class="mat-auth @(ViewData["AuthClass"])" id="main">
+        @RenderBody()
+        <footer class="mat-footer mat-footer--plain">
+            <p class="mat-footer__text">@Ui.AppName · @AppInfo.Version</p>
+        </footer>
+    </main>
+    @if (TempData["Flash"] is string flash)
+    {
+        <div data-toast="@flash" data-tone="success" hidden></div>
+    }
+    <script src="~/matui/matui.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

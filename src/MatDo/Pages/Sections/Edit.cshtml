@@ -1,0 +1,19 @@
+@page "/Sections/Edit"
+@model MatDo.Pages.Sections.EditModel
+@{
+    ViewData["Title"] = "Abschnitt bearbeiten";
+    ViewData["Crumbs"] = new List<(string, string?)> { (Model.Project.IsInbox ? "Eingang" : Model.Project.Name, $"/Projects/View?id={Model.Project.Id}"), (Model.Name, null) };
+    ViewData["Width"] = "narrow";
+}
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-card">
+        <div class="mat-card__body mat-form">
+            <md-field name="Name" label="Name" required value="@Model.Name" maxlength="120" autofocus msg-required="Bitte einen Namen eingeben." />
+            <md-field name="SortOrder" kind="number" label="Reihenfolge" value="@Model.SortOrder" min="0" max="10000" hint="Kleinere Zahlen stehen weiter oben." />
+        </div>
+    </div>
+    <md-buttons save="Speichern" back="@($"/Projects/View?id={Model.Project.Id}")" delete-handler="Delete" delete-label="Abschnitt löschen"
+                delete-confirm="Abschnitt löschen? Seine Aufgaben bleiben erhalten und stehen danach ohne Abschnitt im Projekt." />
+</form>

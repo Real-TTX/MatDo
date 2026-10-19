@@ -1,0 +1,30 @@
+@page "/Teams/Edit"
+@model MatDo.Pages.Teams.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Neues Team" : "Team bearbeiten";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Teams", "/Teams"), (Model.IsNew ? "Neu" : Model.Name, null) };
+    ViewData["Width"] = "narrow";
+    var swatches = string.Join(",", ProjectService.Colors.Select(c => $"{c.Value}:{c.Name}"));
+}
+
+@if (!Model.IsNew)
+{
+    <md-tabs label="Team">
+        <md-tab href="/Teams/Edit?id=@Model.Id" active>Einstellungen</md-tab>
+        <md-tab href="/Teams/Members?id=@Model.Id">Mitglieder</md-tab>
+    </md-tabs>
+}
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-card">
+        <div class="mat-card__body mat-form">
+            <md-field name="Name" label="Name" required value="@Model.Name" maxlength="120" autofocus msg-required="Bitte einen Namen eingeben." />
+            <md-field name="Description" kind="textarea" label="Beschreibung" value="@Model.Description" rows="3" maxlength="1000" optional />
+            <md-field name="Color" kind="colour" label="Farbe" value="@Model.Color" picker="swatches=@swatches" />
+        </div>
+    </div>
+    <md-buttons save="@(Model.IsNew ? "Team anlegen" : "Speichern")" back="@(Model.IsNew ? "/Teams" : $"/Teams/Members?id={Model.Id}")"
+                delete-handler="@(Model.IsNew ? null : "Delete")" delete-label="Team löschen"
+                delete-confirm="Team löschen? Alle Mitglieder verlieren den Zugriff; die Projekte des Teams werden deine persönlichen Projekte." />
+</form>

@@ -1,0 +1,53 @@
+@page "/Projects"
+@model MatDo.Pages.Projects.IndexModel
+@{
+    ViewData["Title"] = "Projekte";
+    ViewData["PageSub"] = "Deine persönlichen Projekte und die Projekte deiner Teams.";
+}
+
+<div class="mat-list">
+    <partial name="_Toolbar" model="Model.Toolbar" />
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="mat-empty">
+            <span class="mat-empty__icon">@Ui.Icon("hash")</span>
+            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch keine Projekte" : "Kein Projekt passt")</div>
+            <p>@(Model.Toolbar.Total == 0 ? "Projekte bündeln Aufgaben, z. B. „Haushalt“ oder „Kunde EIMER“." : "Ändere die Suche oder die Filter.")</p>
+            @if (Model.Toolbar.Total > 0)
+            {
+                <a class="mat-btn mat-btn--secondary" href="@Model.Toolbar.UrlReset()">@Ui.Icon("refresh")<span>Zurücksetzen</span></a>
+            }
+        </div>
+    }
+    else
+    {
+        <md-table caption="Projekte">
+            <thead>
+                <tr><th scope="col">Projekt</th><th scope="col">Team</th><th scope="col" class="mat-num">Offen</th><th scope="col" class="mat-hide-sm">Status</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var p in Model.Items)
+                {
+                    <tr>
+                        <td data-label="Projekt"><a class="md-name" href="/Projects/View?id=@p.Id">@Ui.Icon("hash", null, p.Color)<span>@p.Name</span></a></td>
+                        <td data-label="Team">@(p.TeamName ?? "Persönlich")</td>
+                        <td data-label="Offen" class="mat-num mat-mono">@p.Open</td>
+                        <td data-label="Status" class="mat-hide-sm">
+                            @if (p.IsArchived) { <span class="mat-pill mat-pill--plain">Archiviert</span> }
+                            else if (p.IsFavorite) { <span class="mat-pill mat-pill--accent">@Ui.Icon("star")Favorit</span> }
+                            else { <span class="mat-pill mat-pill--ok">Aktiv</span> }
+                        </td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Projects/Edit?id=@p.Id" aria-label="@p.Name bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                    </tr>
+                }
+            </tbody>
+        </md-table>
+    }
+
+    <partial name="_Pager" model="Model.Pager" />
+
+    <div class="mat-actions">
+        <a class="mat-btn mat-btn--primary" href="/Projects/Edit">@Ui.Icon("plus")<span>Neues Projekt</span></a>
+    </div>
+</div>

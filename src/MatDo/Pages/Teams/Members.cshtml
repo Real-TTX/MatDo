@@ -1,0 +1,90 @@
+@page "/Teams/Members"
+@model MatDo.Pages.Teams.MembersModel
+@{
+    ViewData["Title"] = Model.Team.Name;
+    ViewData["PageSub"] = Model.Team.Description ?? $"{Model.Members.Count} Mitglieder · {Model.Projects.Count} Projekte";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Teams", "/Teams"), (Model.Team.Name, null) };
+}
+
+@if (Model.IsOwner)
+{
+    <md-tabs label="Team">
+        <md-tab href="/Teams/Edit?id=@Model.Id">Einstellungen</md-tab>
+        <md-tab href="/Teams/Members?id=@Model.Id" active>Mitglieder</md-tab>
+    </md-tabs>
+}
+
+<div class="mat-cols">
+    <div class="mat-col-12 mat-col-lg-8">
+        <div class="mat-list">
+            <md-table caption="Mitglieder">
+                <thead>
+                    <tr><th scope="col">Mitglied</th><th scope="col">Rolle</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var m in Model.Members)
+                    {
+                        var me = m.UserId == Model.MeId;
+                        <tr>
+                            <td data-label="Mitglied"><div class="mat-table__name"><span class="mat-avatar mat-avatar--sm" aria-hidden="true">@Ui.Initials(m.DisplayName)</span><span>@m.DisplayName@(me ? " (du)" : "")<small class="mat-mono">@m.Email</small></span></div></td>
+                            <td data-label="Rolle"><span class="mat-pill @(m.Role == TeamRole.Owner ? "mat-pill--accent" : "mat-pill--plain")">@(m.Role == TeamRole.Owner ? "Eigentümer" : "Mitglied")</span></td>
+                            <td class="mat-table__cell-actions">
+                                <div class="mat-table__actions">
+                                    @if (Model.IsOwner)
+                                    {
+                                        var next = m.Role == TeamRole.Owner ? TeamRole.Member : TeamRole.Owner;
+                                        <form method="post" asp-page-handler="Role" asp-route-id="@Model.Id" asp-route-memberId="@m.Id" asp-route-role="@next">
+                                            <button type="submit" class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" aria-label="@(next == TeamRole.Owner ? "Zum Eigentümer machen" : "Zum Mitglied machen"): @m.DisplayName" data-tip="@(next == TeamRole.Owner ? "Zum Eigentümer machen" : "Zum Mitglied machen")">@Ui.Icon(next == TeamRole.Owner ? "shield" : "user")</button>
+                                        </form>
+                                    }
+                                    @if (Model.IsOwner || me)
+                                    {
+                                        <form method="post" asp-page-handler="Remove" asp-route-id="@Model.Id" asp-route-memberId="@m.Id" class="md-sep">
+                                            <button type="submit" class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm md-danger" aria-label="@(me ? "Team verlassen" : $"{m.DisplayName} entfernen")" data-tip="@(me ? "Team verlassen" : "Entfernen")"
+                                                    data-confirm="@(me ? $"Team „{Model.Team.Name}“ verlassen? Du siehst seine Projekte dann nicht mehr." : $"{m.DisplayName} aus dem Team entfernen?")" data-confirm-ok="@(me ? "Verlassen" : "Entfernen")">@Ui.Icon(me ? "logout" : "x")</button>
+                                        </form>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </md-table>
+
+            @if (Model.IsOwner)
+            {
+                <form class="mat-form md-inline-form" method="post" asp-page-handler="Add" asp-route-id="@Model.Id" novalidate>
+                    <partial name="_FormSummary" model="ViewData.ModelState" />
+                    <md-field name="Email" kind="email" label="Mitglied hinzufügen" value="@Model.Email" placeholder="name@@beispiel.de" autocomplete="off" required
+                              hint="Die Person braucht ein MatDo-Konto mit genau dieser Adresse." msg-required="Bitte eine E-Mail-Adresse eingeben." />
+                    <div class="mat-btn-row mat-btn-row--plain">
+                        <button type="submit" class="mat-btn mat-btn--primary">@Ui.Icon("plus")<span>Hinzufügen</span></button>
+                    </div>
+                </form>
+            }
+        </div>
+    </div>
+    <div class="mat-col-12 mat-col-lg-4">
+        <div class="mat-card">
+            <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("hash")Projekte des Teams</h2></div>
+            <div class="mat-card__body">
+                @if (Model.Projects.Count == 0)
+                {
+                    <p class="mat-muted">Noch keine Projekte.</p>
+                }
+                else
+                {
+                    <ul class="md-plainlist">
+                        @foreach (var p in Model.Projects)
+                        {
+                            <li><a class="md-name" href="/Projects/View?id=@p.Id">@Ui.Icon("hash", null, p.Color)<span>@p.Name</span></a> <span class="mat-muted">@p.Open offen</span></li>
+                        }
+                    </ul>
+                }
+                <div class="mat-btn-row mat-btn-row--plain">
+                    <a class="mat-btn mat-btn--secondary mat-btn--sm" href="/Projects/Edit?team=@Model.Id">@Ui.Icon("plus")<span>Teamprojekt anlegen</span></a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

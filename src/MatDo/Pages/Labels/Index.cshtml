@@ -1,0 +1,44 @@
+@page "/Labels"
+@model MatDo.Pages.Labels.IndexModel
+@{
+    ViewData["Title"] = "Labels";
+    ViewData["PageSub"] = "Labels ordnen Aufgaben quer über alle Projekte. In der Schnelleingabe: @name.";
+}
+
+<div class="mat-list">
+    <partial name="_Toolbar" model="Model.Toolbar" />
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="mat-empty">
+            <span class="mat-empty__icon">@Ui.Icon("tag")</span>
+            <div class="mat-empty__title">@(Model.Toolbar.Total == 0 ? "Noch keine Labels" : "Kein Label passt")</div>
+            <p>@(Model.Toolbar.Total == 0 ? "Tippe @einkauf in die Schnelleingabe, dann entsteht das Label von selbst." : "Ändere die Suche oder die Filter.")</p>
+        </div>
+    }
+    else
+    {
+        <md-table caption="Labels">
+            <thead>
+                <tr><th scope="col">Label</th><th scope="col" class="mat-num">Offene Aufgaben</th><th scope="col" class="mat-hide-sm">Favorit</th><th scope="col"><span class="mat-sr-only">Aktionen</span></th></tr>
+            </thead>
+            <tbody>
+                @foreach (var l in Model.Items)
+                {
+                    <tr>
+                        <td data-label="Label"><a class="md-name" href="/Labels/View?id=@l.Id">@Ui.Icon("tag", null, l.Color)<span>@l.Name</span></a></td>
+                        <td data-label="Offen" class="mat-num mat-mono">@l.Open</td>
+                        <td data-label="Favorit" class="mat-hide-sm">@if (l.IsFavorite) { <span class="mat-pill mat-pill--accent">@Ui.Icon("star")Favorit</span> } else { <span class="mat-muted">–</span> }</td>
+                        <td class="mat-table__cell-actions"><div class="mat-table__actions"><a class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm" href="/Labels/Edit?id=@l.Id" aria-label="@l.Name bearbeiten" data-tip="Bearbeiten">@Ui.Icon("edit")</a></div></td>
+                    </tr>
+                }
+            </tbody>
+        </md-table>
+    }
+
+    <partial name="_Pager" model="Model.Pager" />
+
+    <div class="mat-actions">
+        <a class="mat-btn mat-btn--primary" href="/Labels/Edit">@Ui.Icon("plus")<span>Neues Label</span></a>
+    </div>
+</div>

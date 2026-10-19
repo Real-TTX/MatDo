@@ -1,0 +1,30 @@
+@page "/Projects/Edit"
+@model MatDo.Pages.Projects.EditModel
+@{
+    ViewData["Title"] = Model.IsNew ? "Neues Projekt" : "Projekt bearbeiten";
+    ViewData["Crumbs"] = new List<(string, string?)> { ("Projekte", "/Projects"), (Model.IsNew ? "Neu" : Model.Name, null) };
+    ViewData["Width"] = "narrow";
+    var swatches = string.Join(",", ProjectService.Colors.Select(c => $"{c.Value}:{c.Name}"));
+}
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-card">
+        <div class="mat-card__body mat-form">
+            <md-field name="Name" label="Name" required value="@Model.Name" maxlength="120" autofocus msg-required="Bitte einen Namen eingeben." />
+            <md-field name="Color" kind="colour" label="Farbe" value="@Model.Color" picker="swatches=@swatches" hint="Die Farbe des Projekts im Menü und an den Aufgaben." />
+            <md-field name="Team" kind="select" label="Gehört zu" value="@Model.Team" options="Model.TeamChoices"
+                      hint="Ein Teamprojekt sehen und ändern alle Mitglieder des Teams. Ein persönliches Projekt siehst nur du." />
+            <md-field name="IsFavorite" kind="switch" label="Favorit (oben im Menü)" value="@Model.IsFavorite.ToString()" />
+            @if (!Model.IsNew)
+            {
+                <md-field name="IsArchived" kind="switch" label="Archiviert (aus dem Menü und den Ansichten ausgeblendet)" value="@Model.IsArchived.ToString()" />
+            }
+        </div>
+    </div>
+
+    <md-buttons save="@(Model.IsNew ? "Projekt anlegen" : "Speichern")" back="@(Model.IsNew ? "/Projects" : $"/Projects/View?id={Model.Id}")"
+                delete-handler="@(Model.IsNew ? null : "Delete")"
+                delete-label="Projekt löschen"
+                delete-confirm="@($"Projekt „{Model.Name}“ mit {Model.OpenTasks} offenen Aufgaben löschen? Das kann nicht rückgängig gemacht werden.")" />
+</form>

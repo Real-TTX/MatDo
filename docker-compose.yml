@@ -1,0 +1,35 @@
+# MatDo – Release (Branch main, Image :latest)
+#   docker compose up -d        →  http://localhost:6006
+# Das erste Konto, das sich registriert, ist der Administrator.
+name: matdo
+
+services:
+  web:
+    image: ghcr.io/real-ttx/matdo:latest
+    restart: unless-stopped
+    ports:
+      - "6006:6006"
+    volumes:
+      - web-data:/data
+    depends_on:
+      db:
+        condition: service_healthy
+
+  db:
+    image: postgres:17
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: matdo
+      POSTGRES_USER: matdo
+      POSTGRES_PASSWORD: matdo
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U matdo -d matdo"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  web-data:
+  db-data:
