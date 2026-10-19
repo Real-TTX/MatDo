@@ -1,7 +1,6 @@
 {
   "Shell.SkipToContent": { "en": "Skip to the content", "de": "Zum Inhalt springen" },
   "Shell.HomeLabel": { "en": "MatDo, today", "de": "MatDo, Heute" },
-  "Shell.Tagline": { "en": "Tasks, projects, teams", "de": "Aufgaben, Projekte, Teams" },
   "Shell.CloseMenu": { "en": "Close the menu", "de": "Menü schließen" },
   "Shell.OpenMenu": { "en": "Open the menu", "de": "Menü öffnen" },
   "Shell.Breadcrumb": { "en": "Breadcrumb", "de": "Brotkrumen" },

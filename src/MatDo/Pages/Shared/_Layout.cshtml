@@ -44,11 +44,9 @@
         <aside class="mat-nav" id="mat-nav">
             <div class="mat-nav__brand">
                 <a href="/Today" aria-label="@L["Shell.HomeLabel"]">
-                    @Ui.Logo()
-                    <span>
-                        <span class="mat-nav__name">@Ui.AppName</span>
-                        <span class="mat-nav__tagline">@L["Shell.Tagline"]</span>
-                    </span>
+                    @* the word mark: one image for light and one for dark surfaces, app.css shows the one of the theme *@
+                    <img class="md-brandmark md-brandmark--light" src="~/img/logo/matdo-logo.svg" alt="@Ui.AppName" width="152" height="40" />
+                    <img class="md-brandmark md-brandmark--dark" src="~/img/logo/matdo-logo-dark.svg" alt="@Ui.AppName" width="152" height="40" />
                 </a>
                 <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-nav__close" data-nav-close aria-label="@L["Shell.CloseMenu"]">@Ui.Icon("x")</button>
             </div>

@@ -179,3 +179,13 @@
 .md-auth-foot { display: flex; flex-direction: column; align-items: center; gap: var(--mat-space-2); }
 .md-lang { margin: 0; }
 .md-lang .mat-seg__btn { min-width: 44px; }
+
+/* the word mark at the top of the menu: the light one on light surfaces, the dark one in dark mode (explicit, or the system's while the theme is "system") */
+.md-brandmark { display: block; height: 40px; width: auto; }
+.md-brandmark--dark { display: none; }
+:root[data-theme="dark"] .md-brandmark--light { display: none; }
+:root[data-theme="dark"] .md-brandmark--dark { display: block; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .md-brandmark--light { display: none; }
+  :root:not([data-theme="light"]):not([data-theme="dark"]) .md-brandmark--dark { display: block; }
+}
