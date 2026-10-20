@@ -1,4 +1,4 @@
-/* MatUi 0.3.0 (a24879cc9a) - build local-20261020 - bundled from matui.tokens.css, matui.base.css, matui.shell.css, matui.controls.css, matui.forms.css, matui.pickers.css, matui.lists.css, matui.dialogs.css, matui.layout.css, matui.apps.css */
+/* MatUi 0.3.0 (2caf3655e7) - build local-20261020 - bundled from matui.tokens.css, matui.base.css, matui.shell.css, matui.controls.css, matui.forms.css, matui.pickers.css, matui.lists.css, matui.dialogs.css, matui.layout.css, matui.apps.css */
 /* ==========================================================================
    MatUi · tokens
    The single source of the look of every Mat app. Components use only these custom properties, never a raw colour.
@@ -1310,8 +1310,9 @@ a.mat-card:hover, .mat-card--link:hover { border-color: var(--mat-text-faint); b
   width: min(var(--mat-toast-width, 380px), calc(100vw - 2 * var(--mat-space-4)));
   pointer-events: none;
 }
+/* A toast only tells: a tap on it goes to what lies under it (the next Delete of a list is never blocked); only its X takes the tap. */
 .mat-toast {
-  pointer-events: auto;
+  pointer-events: none;
   display: flex; align-items: flex-start; gap: var(--mat-toast-gap, var(--mat-space-3));
   padding: var(--mat-toast-pad-y, var(--mat-space-3)) var(--mat-toast-pad-x, var(--mat-space-4));
   background: var(--mat-surface); color: var(--mat-text);
@@ -1324,8 +1325,16 @@ a.mat-card:hover, .mat-card--link:hover { border-color: var(--mat-text-faint); b
 .mat-toast--success > .mat-icon { color: var(--mat-success-text); }
 .mat-toast--warning > .mat-icon { color: var(--mat-warning-text); }
 .mat-toast--danger > .mat-icon { color: var(--mat-danger-text); }
+.mat-toast .mat-alert__close { pointer-events: auto; }
 @keyframes mat-toast-in { from { opacity: 0; transform: translateY(10px); } }
-@media (max-width: 600px) { .mat-toasts { left: var(--mat-space-4); right: var(--mat-space-4); width: auto; } }
+@keyframes mat-toast-in-top { from { opacity: 0; transform: translateY(-10px); } }
+/* On a phone the bottom is where the thumb works (the actions of a list, the sheets, the main button): the toasts stand at the top, under the header bar. */
+@media (max-width: 600px) {
+  .mat-toasts { left: calc(var(--mat-space-4) + var(--mat-safe-left)); right: calc(var(--mat-space-4) + var(--mat-safe-right)); width: auto; top: calc(var(--mat-topbar-h) + var(--mat-space-2) + var(--mat-safe-top)); bottom: auto; }
+  .mat-toast { animation-name: mat-toast-in-top; }
+  /* one at a time, like a snackbar: the newest takes the place of the one before */
+  .mat-toasts > .mat-toast:not(:last-child) { display: none; }
+}
 
 /* ---- Small blocks -------------------------------------------------------------------------------------------------- */
 .mat-empty { display: flex; flex-direction: column; align-items: center; gap: var(--mat-space-3); padding: var(--mat-space-12) var(--mat-space-6); text-align: center; color: var(--mat-text-muted); }
