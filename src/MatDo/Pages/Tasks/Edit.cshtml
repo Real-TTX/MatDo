@@ -55,7 +55,7 @@
                     <md-field name="DueTime" kind="time" label="@L["QuickAdd.Time"]" value="@Model.DueTime" optional show-if="#DueDate" />
                     <md-field name="Recurrence" kind="select" label="@L["Tasks.Recurrence"]" value="@Model.Recurrence" options="Model.RecurrenceChoices" />
                     <md-field name="DueText" label="@L["Tasks.DueText"]" placeholder="@L["Tasks.DueText.Placeholder"]" optional hint="@L["Tasks.DueText.Hint"]" />
-                    <md-field name="Deadline" kind="date" label="@L["Tasks.Deadline"]" value="@Model.Deadline" optional hint="@L["Tasks.Deadline.Hint"]" />
+                    <md-field name="Deadline" kind="date" label="@L["Tasks.Deadline"]" value="@Model.Deadline" optional />
                     <md-field name="Priority" kind="radios" label="@L["QuickAdd.Priority"]" value="@Model.Priority" options="Model.PriorityChoices" />
                     <md-field name="LabelIds" kind="picker" label="@L["Labels.Title"]" value="@Model.LabelIds" options="Model.LabelChoices" picker="multiple search clearable" placeholder="@L["Tasks.NoLabels"]" optional />
                     @if (Model.AssigneeChoices.Count > 0)

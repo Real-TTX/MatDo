@@ -13,7 +13,6 @@
   "Tasks.DueText.Hint": { "en": "Read like the quick add; replaces date, time and repeat.", "de": "Wird wie die Schnelleingabe gelesen und ersetzt Datum, Uhrzeit und Wiederholung." },
   "Tasks.DueText.NotUnderstood": { "en": "I did not understand this date, e.g. “tomorrow 9am” or “every monday”.", "de": "Dieses Datum habe ich nicht verstanden, z. B. „morgen 9 Uhr“ oder „jeden Montag“." },
   "Tasks.Deadline": { "en": "Deadline", "de": "Frist" },
-  "Tasks.Deadline.Hint": { "en": "When it has to be done at the latest.", "de": "Bis wann es spätestens fertig sein muss." },
   "Tasks.DeadlineShort": { "en": "Deadline {0}", "de": "Frist {0}" },
   "Tasks.NoLabels": { "en": "No labels", "de": "Keine Labels" },
   "Tasks.Assignee": { "en": "Assigned to", "de": "Zugewiesen an" },
@@ -61,7 +60,7 @@
   "Priority.4": { "en": "Priority 4", "de": "Priorität 4" },
 
   "QuickAdd.Add": { "en": "Add task", "de": "Aufgabe hinzufügen" },
-  "QuickAdd.AddShortcut": { "en": "Add task (Q)", "de": "Aufgabe hinzufügen (Q)" },
+  "QuickAdd.AddShortcut": { "en": "Add task", "de": "Aufgabe hinzufügen" },
   "QuickAdd.DialogTitle": { "en": "Quick add", "de": "Schnell hinzufügen" },
   "QuickAdd.Placeholder": { "en": "e.g. Write offer tomorrow 9am #Project @label p1", "de": "z. B. Angebot schreiben morgen 9 Uhr #Projekt @label p1" },
   "QuickAdd.SubPlaceholder": { "en": "Sub-task, e.g. Collect documents tomorrow", "de": "Unteraufgabe, z. B. Unterlagen sammeln morgen" },
@@ -77,7 +76,6 @@
   "QuickAdd.NoDate": { "en": "No date", "de": "Kein Datum" },
   "QuickAdd.Apply": { "en": "Apply", "de": "Übernehmen" },
   "QuickAdd.NoLabels": { "en": "No labels yet. Type <kbd>@name</kbd> in the text and the label is created.", "de": "Noch keine Labels. Tippe <kbd>@name</kbd> in den Text, dann wird das Label angelegt." },
-  "QuickAdd.Keys": { "en": "<kbd>Enter</kbd> adds · <kbd>Esc</kbd> closes · <kbd>Q</kbd> opens the quick add everywhere", "de": "<kbd>Enter</kbd> hinzufügen · <kbd>Esc</kbd> schließen · <kbd>Q</kbd> öffnet die Schnelleingabe überall" },
 
   "Today.Title": { "en": "Today", "de": "Heute" },
   "Today.Overdue": { "en": "Overdue", "de": "Überfällig" },
@@ -85,7 +83,7 @@
   "Today.MovedOne": { "en": "1 task moved to today.", "de": "1 Aufgabe auf heute verschoben." },
   "Today.Moved": { "en": "{0} tasks moved to today.", "de": "{0} Aufgaben auf heute verschoben." },
   "Today.Empty.Title": { "en": "All done for today", "de": "Alles erledigt für heute" },
-  "Today.Empty.Text": { "en": "Enjoy the day – or plan something for tomorrow: <kbd>Q</kbd> opens the quick add.", "de": "Genieß den Tag – oder plane etwas für morgen: <kbd>Q</kbd> öffnet die Schnelleingabe." },
+  "Today.Empty.Text": { "en": "Enjoy the day – or plan something for tomorrow.", "de": "Genieß den Tag – oder plane etwas für morgen." },
 
   "Upcoming.Title": { "en": "Upcoming", "de": "Demnächst" },
   "Upcoming.Range": { "en": "{0} to {1}", "de": "{0} bis {1}" },
@@ -94,13 +92,11 @@
   "Upcoming.Later": { "en": "Later", "de": "Später" },
 
   "Filter.Title": { "en": "Filters & search", "de": "Filter & Suche" },
-  "Filter.Sub": { "en": "Every open task of your projects and teams.", "de": "Alle offenen Aufgaben aus deinen Projekten und Teams." },
   "Filter.Assigned": { "en": "Assigned", "de": "Zugewiesen" },
   "Filter.ToMe": { "en": "To me", "de": "An mich" },
   "Filter.ToOthers": { "en": "To others", "de": "An andere" },
 
   "Completed.Title": { "en": "Completed", "de": "Erledigt" },
-  "Completed.Sub": { "en": "What is done. A click on the check reopens a task.", "de": "Was geschafft ist. Ein Klick auf den Haken öffnet eine Aufgabe wieder." },
   "Completed.Empty": { "en": "Nothing completed yet", "de": "Noch nichts erledigt" },
   "Completed.Sort.CompletedAt": { "en": "Completed on", "de": "Erledigt am" },
 

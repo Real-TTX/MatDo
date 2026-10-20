@@ -1,0 +1,45 @@
+@page "/Account/Hotkeys"
+@model MatDo.Pages.Account.HotkeysModel
+@{
+    ViewData["Title"] = L["Hotkeys.Title"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, "/Account"), (L["Hotkeys.Title"].Value, null) };
+    ViewData["Width"] = "narrow";
+    var groups = new (string Icon, string Title, Hotkey[] Keys)[]
+    {
+        ("keyboard", L["Hotkeys.Everywhere"].Value,
+        [
+            new(["Q"], L["Hotkeys.QuickAdd"].Value),
+            new(["/"], L["Hotkeys.Search"].Value),
+        ]),
+        ("plus", L["Hotkeys.InQuickAdd"].Value,
+        [
+            new(["Enter"], L["Hotkeys.Add"].Value),
+            new(["Ctrl", "Enter"], L["Hotkeys.AddFromDescription"].Value),
+            new(["Esc"], L["Hotkeys.Close"].Value),
+        ]),
+        ("check", L["Hotkeys.InLists"].Value,
+        [
+            new([L["Hotkeys.MenuKey"].Value], L["Hotkeys.TaskMenu"].Value),
+            new(["Shift", "F10"], L["Hotkeys.TaskMenu"].Value),
+            new(["Esc"], L["Hotkeys.CloseMenu"].Value),
+        ]),
+    };
+}
+
+@foreach (var g in groups)
+{
+    <div class="mat-card">
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon(g.Icon)@g.Title</h2></div>
+        <ul class="mat-itemlist" aria-label="@g.Title">
+            @foreach (var k in g.Keys)
+            {
+                <li class="mat-item">
+                    <div class="mat-item__main">
+                        <span class="mat-item__body"><span class="mat-item__title md-hotkey__what">@k.What</span></span>
+                        <span class="mat-item__end">@for (var i = 0; i < k.Keys.Length; i++) { if (i > 0) { <span aria-hidden="true">+</span> }<kbd>@k.Keys[i]</kbd> }</span>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}

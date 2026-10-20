@@ -11,7 +11,7 @@
             <partial name="_FormSummary" model="ViewData.ModelState" />
             <div class="mat-card">
                 <div class="mat-card__body mat-form">
-                    <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="120" hint="@L["Webhooks.Name.Hint"]" msg-required="@L["Common.NameRequired"]" />
+                    <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="120" msg-required="@L["Common.NameRequired"]" />
                     <md-field name="ProjectId" kind="picker" label="@L["Webhooks.Target"]" value="@Model.ProjectId" options="Model.Projects" picker="search" hint="@L["Webhooks.Target.Hint"]" />
                     <md-field name="IsActive" kind="switch" label="@L["Common.Active"]" value="@Model.IsActive.ToString()" />
                 </div>

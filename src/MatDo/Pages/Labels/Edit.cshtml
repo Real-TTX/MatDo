@@ -11,7 +11,7 @@
     <partial name="_FormSummary" model="ViewData.ModelState" />
     <div class="mat-card">
         <div class="mat-card__body mat-form">
-            <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="60" autofocus hint="@L["Labels.Name.Hint"]" msg-required="@L["Common.NameRequired"]" />
+            <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="60" autofocus msg-required="@L["Common.NameRequired"]" />
             <md-field name="Color" kind="colour" label="@L["Common.Color"]" value="@Model.Color" picker="swatches=@swatches" />
             <md-field name="IsFavorite" kind="switch" label="@L["Common.Favorite"]" value="@Model.IsFavorite.ToString()" />
         </div>

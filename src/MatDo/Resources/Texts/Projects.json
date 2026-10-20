@@ -4,7 +4,6 @@
 
   "Projects.Title": { "en": "Projects", "de": "Projekte" },
   "Projects.One": { "en": "project", "de": "Projekt" },
-  "Projects.Sub": { "en": "Your personal projects and the projects of your teams.", "de": "Deine persönlichen Projekte und die Projekte deiner Teams." },
   "Projects.Search": { "en": "Search projects", "de": "Projekte durchsuchen" },
   "Projects.New": { "en": "New project", "de": "Neues Projekt" },
   "Projects.Create": { "en": "Create project", "de": "Projekt anlegen" },
@@ -23,7 +22,6 @@
   "Projects.TeamNamed": { "en": "Team {0}", "de": "Team {0}" },
   "Projects.Archived": { "en": "Archived", "de": "Archiviert" },
   "Projects.AllWithArchived": { "en": "All, archived too", "de": "Alle inkl. archivierte" },
-  "Projects.Color.Hint": { "en": "The colour of the project in the menu and at its tasks.", "de": "Die Farbe des Projekts im Menü und an den Aufgaben." },
   "Projects.BelongsTo": { "en": "Belongs to", "de": "Gehört zu" },
   "Projects.BelongsTo.Hint": { "en": "Every member of the team sees and changes a team project. Only you see a personal project.", "de": "Ein Teamprojekt sehen und ändern alle Mitglieder des Teams. Ein persönliches Projekt siehst nur du." },
   "Projects.FavoriteSwitch": { "en": "Favourite (at the top of the menu)", "de": "Favorit (oben im Menü)" },
@@ -44,7 +42,6 @@
   "Sections.Edit": { "en": "Edit section", "de": "Abschnitt bearbeiten" },
   "Sections.EditNamed": { "en": "Edit the section {0}", "de": "Abschnitt {0} bearbeiten" },
   "Sections.Order": { "en": "Order", "de": "Reihenfolge" },
-  "Sections.Order.Hint": { "en": "Smaller numbers come first.", "de": "Kleinere Zahlen stehen weiter oben." },
   "Sections.Delete": { "en": "Delete section", "de": "Abschnitt löschen" },
   "Sections.DeleteConfirm": { "en": "Delete the section? Its tasks stay and are in the project without a section afterwards.", "de": "Abschnitt löschen? Seine Aufgaben bleiben erhalten und stehen danach ohne Abschnitt im Projekt." },
   "Sections.Deleted": { "en": "Section “{0}” deleted; its tasks have no section now.", "de": "Abschnitt „{0}“ gelöscht; seine Aufgaben sind jetzt ohne Abschnitt." },

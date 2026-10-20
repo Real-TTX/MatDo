@@ -24,7 +24,6 @@
   "Settings.TimeZone.Hint": { "en": "“Today”, “tomorrow” and every time of day are in this zone.", "de": "„Heute“, „morgen“ und jede Uhrzeit gelten in dieser Zone." },
   "Settings.TimeZone.Invalid": { "en": "Please choose a time zone from the list.", "de": "Bitte eine Zeitzone aus der Liste wählen." },
   "Settings.Scheme": { "en": "Colour scheme", "de": "Farbschema" },
-  "Settings.Scheme.Hint": { "en": "Light, dark or automatic: the button at the bottom left of the menu.", "de": "Hell, dunkel oder automatisch stellst du unten links im Menü um." },
   "Settings.Scheme.Standard": { "en": "Standard", "de": "Standard" },
   "Settings.Scheme.Paper": { "en": "Paper (warm)", "de": "Papier (warm)" },
   "Settings.Scheme.Contrast": { "en": "High contrast", "de": "Hoher Kontrast" },

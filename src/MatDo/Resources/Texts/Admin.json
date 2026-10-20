@@ -2,7 +2,6 @@
   "Users.Many": { "en": "users", "de": "Benutzer" },
   "Users.Title": { "en": "Users", "de": "Benutzer" },
   "Users.One": { "en": "user", "de": "Benutzer" },
-  "Users.Sub": { "en": "Who can sign in. Tasks stay private: you only see how many someone has.", "de": "Wer sich anmelden kann. Aufgaben bleiben privat: du siehst nur, wie viele jemand hat." },
   "Users.Search": { "en": "Name or email", "de": "Name oder E-Mail" },
   "Users.New": { "en": "New user", "de": "Neuer Benutzer" },
   "Users.Create": { "en": "Create account", "de": "Konto anlegen" },
@@ -23,7 +22,6 @@
   "Users.CannotDelete": { "en": "You cannot delete your own account or the last administrator here.", "de": "Das eigene Konto und den letzten Administrator kannst du hier nicht löschen." },
 
   "System.Title": { "en": "System", "de": "System" },
-  "System.Sub": { "en": "The settings of this installation.", "de": "Einstellungen dieser Installation." },
   "System.Settings": { "en": "Settings", "de": "Einstellungen" },
   "System.RegistrationOpen": { "en": "Registration open", "de": "Registrierung offen" },
   "System.RegistrationOpen.Hint": { "en": "Off: only administrators create new accounts.", "de": "Aus: nur Administratoren legen neue Konten an." },

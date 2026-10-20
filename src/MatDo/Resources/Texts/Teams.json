@@ -1,7 +1,6 @@
 {
   "Teams.Many": { "en": "teams", "de": "Teams" },
   "Teams.Title": { "en": "Teams", "de": "Teams" },
-  "Teams.Sub": { "en": "Teams share projects: every member sees and changes the projects of the team.", "de": "Teams teilen Projekte: jedes Mitglied sieht und ändert die Projekte des Teams." },
   "Teams.Search": { "en": "Search teams", "de": "Teams durchsuchen" },
   "Teams.New": { "en": "New team", "de": "Neues Team" },
   "Teams.Create": { "en": "Create team", "de": "Team anlegen" },

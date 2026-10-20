@@ -1,0 +1,14 @@
+{
+  "Hotkeys.Title": { "en": "Hotkeys", "de": "Hotkeys" },
+  "Hotkeys.Everywhere": { "en": "Everywhere", "de": "Überall" },
+  "Hotkeys.InQuickAdd": { "en": "In the quick add", "de": "In der Schnelleingabe" },
+  "Hotkeys.InLists": { "en": "In task lists", "de": "In Aufgabenlisten" },
+  "Hotkeys.QuickAdd": { "en": "Open the quick add", "de": "Schnelleingabe öffnen" },
+  "Hotkeys.Search": { "en": "Search the list", "de": "Liste durchsuchen" },
+  "Hotkeys.Add": { "en": "Add the task", "de": "Aufgabe hinzufügen" },
+  "Hotkeys.AddFromDescription": { "en": "Add the task from the description", "de": "Aufgabe aus der Beschreibung heraus hinzufügen" },
+  "Hotkeys.Close": { "en": "Close the open panel, then the quick add", "de": "Offenes Auswahlfeld schließen, dann die Schnelleingabe" },
+  "Hotkeys.MenuKey": { "en": "Menu key", "de": "Menütaste" },
+  "Hotkeys.TaskMenu": { "en": "Menu of the focused task", "de": "Menü der markierten Aufgabe" },
+  "Hotkeys.CloseMenu": { "en": "Close the menu", "de": "Menü schließen" }
+}

@@ -126,6 +126,7 @@
 .md-qa__tool { position: relative; }
 .md-qa__tool .mat-btn.is-set { border-color: var(--mat-accent); color: var(--mat-accent-text); }
 .md-qa__project { width: auto; max-width: 220px; }
+.md-qa__project .mat-picker__trigger { min-height: var(--mat-control-h-sm); height: var(--mat-control-h-sm); font-size: var(--mat-fs-sm); }
 /* the panels of the editor are popovers (top layer, above the dialog): quickadd.js puts them under their button */
 .md-qa__pop {
   position: fixed; inset: auto; margin: 0; z-index: 30; min-width: 240px; max-height: min(520px, calc(100vh - 16px)); overflow-y: auto;
@@ -144,7 +145,6 @@
 .md-qa__calendar { border: 0; box-shadow: none; padding: 0; }
 .md-qa__check .mat-check__text { display: inline-flex; align-items: center; gap: var(--mat-space-1); }
 .md-qa__foot { justify-content: flex-start; align-items: center; }
-.md-qa__keys { margin: 0; color: var(--mat-text-muted); font-size: var(--mat-fs-xs); }
 @media (max-width: 599px) { .md-qa__pop, .md-qa__pop--date { left: var(--mat-space-3); right: var(--mat-space-3); top: auto; bottom: var(--mat-space-3); width: auto; max-height: 80vh; } }
 
 /* the dialog of the shortcut Q: a little wider than a small dialog, the editor without its own frame */
@@ -250,6 +250,8 @@
 .md-topbtn__dot { position: absolute; top: 7px; right: 7px; width: 8px; height: 8px; border-radius: 50%; background: var(--mat-accent); box-shadow: 0 0 0 2px var(--mat-surface); }
 /* the chips of the tools in effect stand above the list, without the frame of a toolbar */
 .md-view > .mat-chips { margin: 0; }
+/* the groups of a view (overdue, a day, a section, new section) have the place of the list in the order of the list block (LIST-05): after the chips */
+.md-view > .md-group, .md-view > .md-newsection { order: 2; }
 
 /* Phones: a popover of the browser is fit-content by default; the menu of a row and the panels of the editor are sheets over the whole width.
    The top bar holds the menu button and the tools: the breadcrumb is left out there (the title of the page stands right under it). */
@@ -285,3 +287,6 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
   input, textarea, select, .mat-input, .mat-select, .mat-textarea, .md-qa__title, .md-qa__desc, .md-qa__mirror { font-size: max(16px, 1em); }
   .md-qa__mirror, .md-qa__title { font-size: 16px; }
 }
+
+/* the hotkeys page: what a key does may take two lines, the keys stand at the end */
+.md-hotkey__what { font-weight: 500; white-space: normal; }

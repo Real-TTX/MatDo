@@ -11,7 +11,7 @@
     <div class="mat-card">
         <div class="mat-card__body mat-form">
             <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="120" autofocus msg-required="@L["Common.NameRequired"]" />
-            <md-field name="SortOrder" kind="number" label="@L["Sections.Order"]" value="@Model.SortOrder" min="0" max="10000" hint="@L["Sections.Order.Hint"]" />
+            <md-field name="SortOrder" kind="number" label="@L["Sections.Order"]" value="@Model.SortOrder" min="0" max="10000" />
         </div>
     </div>
     <md-buttons save="@L["Common.Save"]" back="@($"/Projects/View?id={Model.Project.Id}")" delete-handler="Delete" delete-label="@L["Sections.Delete"]"

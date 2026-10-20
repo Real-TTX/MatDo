@@ -12,7 +12,7 @@
     <div class="mat-card">
         <div class="mat-card__body mat-form">
             <md-field name="Name" label="@L["Common.Name"]" required value="@Model.Name" maxlength="120" autofocus msg-required="@L["Common.NameRequired"]" />
-            <md-field name="Color" kind="colour" label="@L["Common.Color"]" value="@Model.Color" picker="swatches=@swatches" hint="@L["Projects.Color.Hint"]" />
+            <md-field name="Color" kind="colour" label="@L["Common.Color"]" value="@Model.Color" picker="swatches=@swatches" />
             <md-field name="Team" kind="select" label="@L["Projects.BelongsTo"]" value="@Model.Team" options="Model.TeamChoices" hint="@L["Projects.BelongsTo.Hint"]" />
             <md-field name="IsFavorite" kind="switch" label="@L["Projects.FavoriteSwitch"]" value="@Model.IsFavorite.ToString()" />
             @if (!Model.IsNew)

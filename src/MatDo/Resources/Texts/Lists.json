@@ -6,7 +6,6 @@
   "Lists.SearchFor": { "en": "Search for", "de": "Suchen nach" },
   "Lists.SearchIn": { "en": "{0}: search", "de": "{0}: suchen" },
   "Lists.SearchChip": { "en": "Search", "de": "Suche" },
-  "Lists.SearchShortcut": { "en": "Press <kbd>/</kbd> on the page to open this dialog.", "de": "Mit <kbd>/</kbd> öffnet sich dieser Dialog." },
   "Lists.ClearSearch": { "en": "Clear search", "de": "Suche leeren" },
   "Lists.RemoveSearch": { "en": "Remove the search", "de": "Suche entfernen" },
   "Lists.Filter": { "en": "Filter", "de": "Filter" },
