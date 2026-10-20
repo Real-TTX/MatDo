@@ -44,6 +44,7 @@ builder.Services.AddScoped<TeamService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<QuickAddEditor>();
 builder.Services.AddHostedService<MaintenanceService>();
+builder.Services.AddSingleton<LiveService>();
 builder.Services.AddScoped<MatDo.Services.Notifications.PushService>();
 builder.Services.AddHostedService<MatDo.Services.Notifications.NotificationService>();
 builder.Services.AddHttpClient("push", c => c.Timeout = TimeSpan.FromSeconds(15));

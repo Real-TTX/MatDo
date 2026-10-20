@@ -80,9 +80,55 @@ public static class AppApi
             });
         });
 
-        var changes = group.MapGroup(string.Empty).AddEndpointFilter(GuardAsync);
+        // the open windows of the person (live.js): a stream of Server-Sent Events, a comment every 25 s keeps proxies from closing it
+        group.MapGet("/events", async (HttpContext http, CurrentUser me, LiveService live, string? tab) =>
+        {
+            var ct = http.RequestAborted;
+            http.Response.Headers.ContentType = "text/event-stream";
+            http.Response.Headers.CacheControl = "no-cache, no-transform";
+            http.Response.Headers["X-Accel-Buffering"] = "no";
+            http.Features.Get<Microsoft.AspNetCore.Http.Features.IHttpResponseBodyFeature>()?.DisableBuffering();
+            var (id, reader) = live.Open(me.RequiredId, tab is { Length: <= 64 } ? tab : string.Empty);
+            try
+            {
+                await http.Response.WriteAsync("retry: 5000\n: open\n\n", ct);
+                await http.Response.Body.FlushAsync(ct);
+                while (!ct.IsCancellationRequested)
+                {
+                    var wait = reader.WaitToReadAsync(ct).AsTask();
+                    if (await Task.WhenAny(wait, Task.Delay(TimeSpan.FromSeconds(25), ct)) == wait)
+                    {
+                        if (!await wait)
+                        {
+                            break;
+                        }
 
-        changes.MapPost("/tasks", async (CreateBody body, CurrentUser me, AppDbContext db, QuickAddService quick) =>
+                        while (reader.TryRead(out var message))
+                        {
+                            await http.Response.WriteAsync(message, ct);
+                        }
+                    }
+                    else
+                    {
+                        await http.Response.WriteAsync(": ping\n\n", ct);
+                    }
+
+                    await http.Response.Body.FlushAsync(ct);
+                }
+            }
+            catch (OperationCanceledException)
+            {
+                // the window went away
+            }
+            finally
+            {
+                live.Close(me.RequiredId, id);
+            }
+        });
+
+        var changes = group.MapGroup(string.Empty).AddEndpointFilter(GuardAsync).AddEndpointFilter(LiveAsync);
+
+        changes.MapPost("/tasks", async (CreateBody body, HttpContext http, CurrentUser me, AppDbContext db, QuickAddService quick) =>
         {
             var user = await db.Users.FirstAsync(u => u.Id == me.RequiredId);
             var (task, error) = await quick.CreateAsync(user, new QuickAddInput
@@ -106,6 +152,7 @@ public static class AppApi
                 return Results.Json(new { error }, statusCode: StatusCodes.Status400BadRequest);
             }
 
+            http.Items[LiveTaskKey] = task.Id;
             var today = Dates.Today(user.TimeZone);
             var where = task.Project is { IsInbox: true } ? Localization.Text.T("Project.Inbox") : task.Project?.Name ?? string.Empty;
             var answer = new
@@ -153,16 +200,49 @@ public static class AppApi
         changes.MapPost("/tasks/{id:long}/delete", async (long id, CurrentUser me, TaskService tasks)
             => await tasks.DeleteAsync(me.RequiredId, id) ? Results.Json(new { deleted = true }) : Results.NotFound());
 
-        changes.MapPost("/tasks/reorder", async (ReorderBody body, CurrentUser me, TaskService tasks) =>
+        changes.MapPost("/tasks/reorder", async (ReorderBody body, HttpContext http, CurrentUser me, TaskService tasks) =>
         {
             if (body.Ids is null || body.Ids.Length > 2000)
             {
                 return Results.BadRequest();
             }
 
+            if (body.Ids.Length > 0)
+            {
+                http.Items[LiveTaskKey] = body.Ids[0];
+            }
+
             await tasks.ReorderAsync(me.RequiredId, body.Ids);
             return Results.Json(new { ok = true });
         });
+    }
+
+    private const string LiveTaskKey = "MatDo.LiveTask";
+
+    /// <summary>After a change that went through, the other open windows of the people who see the project reload their lists (LiveService); the window that made it is not told.</summary>
+    private static async ValueTask<object?> LiveAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    {
+        var result = await next(context);
+        if (result is IStatusCodeHttpResult { StatusCode: >= 300 })
+        {
+            return result;
+        }
+
+        var http = context.HttpContext;
+        long? taskId = http.Items[LiveTaskKey] as long?
+            ?? (http.Request.RouteValues.TryGetValue("id", out var v) && long.TryParse(v?.ToString(), out var n) ? n : null);
+        if (taskId is { } id)
+        {
+            var db = http.RequestServices.GetRequiredService<AppDbContext>();
+            var task = await db.Tasks.IgnoreQueryFilters().AsNoTracking().Where(t => t.Id == id).Select(t => new { t.ProjectId, t.Content }).FirstOrDefaultAsync();
+            if (task is not null)
+            {
+                await http.RequestServices.GetRequiredService<LiveService>()
+                    .TasksChangedAsync(task.ProjectId, new LiveEvent("tasks", Task: id, Title: task.Content), http.Request.Headers[LiveService.TabHeader].ToString());
+            }
+        }
+
+        return result;
     }
 
     internal static IReadOnlySet<TokenKind> Off(string? off)

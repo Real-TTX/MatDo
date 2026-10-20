@@ -332,3 +332,8 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 .md-pick__btn > .mat-icon[class*="md-p"] { color: var(--md-prio); }
 .md-pick__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .md-pick__value.is-placeholder { color: var(--mat-text-muted); }
+
+/* a task that came in while the window was open (live.js): a short glow of the accent */
+@keyframes md-new { from { background: var(--mat-accent-soft-strong); } to { background: transparent; } }
+.md-task--new { animation: md-new 2.4s var(--mat-ease) both; }
+@media (prefers-reduced-motion: reduce) { .md-task--new { animation: none; background: var(--mat-accent-soft); } }

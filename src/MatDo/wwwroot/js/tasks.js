@@ -26,7 +26,7 @@
     }
     return fetch(url, {
       method: 'POST', credentials: 'same-origin',
-      headers: { 'X-MatDo-Request': '1', 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      headers: { 'X-MatDo-Request': '1', 'X-MatDo-Tab': window.MatDoTab || '', 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : null
     }).then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); });
   }

@@ -41,8 +41,15 @@
   function add(entry) { return tx('readwrite', function (s) { return s.add(entry); }); }
   function drop(key) { return tx('readwrite', function (s) { return s.delete(key); }); }
 
+  // this window (a tab keeps it over reloads): a change it makes does not make it reload (live.js; LiveService skips the window that made the change)
+  var tab = (function () {
+    try { var v = sessionStorage.getItem('md-tab'); if (!v) { v = String(Date.now()) + String(Math.random()).slice(2, 10); sessionStorage.setItem('md-tab', v); } return v; }
+    catch (e) { return String(Date.now()); }
+  })();
+  window.MatDoTab = tab;
+
   function headers() {
-    return { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': user };
+    return { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': user, 'X-MatDo-Tab': tab };
   }
 
   function newId() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + String(Math.random()).slice(2); }

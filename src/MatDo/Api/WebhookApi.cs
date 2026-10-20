@@ -72,6 +72,9 @@ public static class WebhookApi
         hook.UseCount++;
         await db.SaveChangesAsync();
 
+        // the open windows show it at once (the inbox, the project)
+        await services.GetRequiredService<LiveService>().TasksChangedAsync(task.ProjectId, new LiveEvent("tasks", Task: task.Id, Title: task.Content, Source: "webhook"));
+
         var labels = await db.TaskLabels.Where(l => l.TaskId == task.Id && l.Label != null).Select(l => l.Label!.Name).ToListAsync();
         var today = Dates.Today(user.TimeZone);
         return Results.Json(new

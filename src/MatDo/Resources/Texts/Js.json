@@ -48,5 +48,6 @@
   "Js.Push.Unsupported": { "en": "This browser cannot receive notifications.", "de": "Dieser Browser kann keine Benachrichtigungen empfangen." },
   "Js.Push.Ios": { "en": "On an iPhone or iPad: tap Share → Add to Home Screen, open MatDo from the home screen and turn notifications on there.", "de": "Auf iPhone und iPad: Teilen → Zum Home-Bildschirm, MatDo vom Home-Bildschirm öffnen und dort Benachrichtigungen einschalten." },
   "Js.Push.Failed": { "en": "That did not work. Try again.", "de": "Das hat nicht geklappt. Versuch es noch einmal." },
-  "Js.Push.Sent": { "en": "Test sent to {0} device(s).", "de": "Test an {0} Gerät(e) gesendet." }
+  "Js.Push.Sent": { "en": "Test sent to {0} device(s).", "de": "Test an {0} Gerät(e) gesendet." },
+  "Js.Live.Webhook": { "en": "“{0}” came in", "de": "„{0}“ ist angekommen" }
 }
