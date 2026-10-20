@@ -245,6 +245,10 @@ public static partial class QuickAddParser
     [GeneratedRegex(@"\s{2,}")]
     private static partial Regex Spaces();
 
+    // the words that only say "remind me" at the start of a dictation, with the word that joins them to the task
+    [GeneratedRegex(@"^(?:erinnerung|erinnere\s+mich|erinner\s+mich|erinnere|reminder|remind\s+me)(?:\s*[:,]\s*|\s+)(?:(?:daran|an|dass|ans|to|about|that|of)(?:\s*,\s*|\s+))?", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ReminderLead();
+
     [GeneratedRegex(@"\s+([,.;:!?])")]
     private static partial Regex SpaceBeforePunctuation();
 
@@ -273,6 +277,11 @@ public static partial class QuickAddParser
         title = DoublePunctuation().Replace(title, "$2");
         title = DoubleStop().Replace(title, ".");
         title = title.Trim().Trim(',', ';', ':', '-', '–').Trim();
+        var reminder = ReminderLead().Match(title);
+        if (reminder.Success && reminder.Length < title.Length)
+        {
+            title = title[reminder.Length..].Trim();
+        }
 
         // the full stop that a dictation puts at the end of the sentence (but not the one of an abbreviation such as "Dr.")
         if (title.EndsWith('.') && !title.EndsWith("..", StringComparison.Ordinal))
@@ -632,12 +641,26 @@ public static partial class QuickAddParser
 
     private static readonly Regex InSpan = new($"{B}(?:in|innerhalb\\s+von)\\s+{Number}\\s+(?<unit>tage?n?|wochen?|monate?n?|jahre?n?|days?|weeks?|months?|years?){E}", Opt);
 
-    private static readonly Regex WeekdayRegex = new($"{B}{Lead}(?<next>nächste[nrs]?|naechste[nrs]?|kommende[nrs]?|diese[nrs]?|next|this|coming)?\\s*(?<dow>{Weekdays}){E}", Opt);
+    private static readonly Regex WeekdayRegex = new($"{B}{Lead}(?<next>übernächste[nrs]?|uebernaechste[nrs]?|nächste[nrs]?|naechste[nrs]?|kommende[nrs]?|diese[nrs]?|next|this|coming)?\\s*(?<dow>{Weekdays}){E}", Opt);
+
+    // a week that is named: next week, the week after next ("nächste Woche", "nächster Woche", "übernächste Woche", "next week", "week after next")
+    private const string WeekWords = "(?<after>übernächste[nrs]?|uebernaechste[nrs]?)\\s+woche|(?:nächste[nrs]?|naechste[nrs]?|kommende[nrs]?)\\s+woche|next\\s+week|(?<after2>week\\s+after\\s+next)";
+
+    // a weekday in that week, in either order: "nächste Woche Mittwoch", "Mittwoch nächste Woche", "am Mittwoch der nächsten Woche", "next week friday", "friday next week"
+    private static readonly Regex WeekThenDay = new($"{B}{Lead}(?:{WeekWords})\\s+(?:am\\s+|on\\s+)?(?<dow>{Weekdays}){E}", Opt);
+
+    private static readonly Regex DayThenWeek = new($"{B}{Lead}(?<dow>{Weekdays})\\s+(?:in\\s+der\\s+|der\\s+|in\\s+)?(?:{WeekWords}){E}", Opt);
+
+    // a moment from now: "in 10 min", "in 10min", "in 2 Stunden", "in einer halben Stunde", "in 15 minutes", "in an hour"
+    private static readonly Regex InTime = new(
+        $"{B}(?:in|innerhalb\\s+von)\\s+(?:(?<half>einer\\s+halben\\s+stunde|half\\s+an\\s+hour|a\\s+half\\s+hour)|{Number}\\s*(?<unit>minuten|minute|minutes|mins?|stunden|stunde|std|hours?|hrs?|h)){E}",
+        Opt);
 
     private static readonly Regex Named = new(
         $"{B}{Lead}(?:(?<nextweek>nächste\\s+woche|naechste\\s+woche|kommende\\s+woche|next\\s+week)"
         + "|(?<nextmonth>nächsten\\s+monat|naechsten\\s+monat|kommenden\\s+monat|next\\s+month)"
         + "|(?<nextyear>nächstes\\s+jahr|naechstes\\s+jahr|next\\s+year)"
+        + "|(?<weekafter>übernächste[nrs]?\\s+woche|uebernaechste[nrs]?\\s+woche|week\\s+after\\s+next)"
         + "|(?<weekend>(?:am\\s+|this\\s+|dieses\\s+)?wochenende|(?:this\\s+)?weekend)"
         + "|(?<endweek>ende\\s+der\\s+woche|end\\s+of\\s+(?:the\\s+)?week)"
         + $"|(?<endmonth>monatsende|ende\\s+des\\s+monats|end\\s+of\\s+(?:the\\s+)?month)){E}",
@@ -734,7 +757,48 @@ public static partial class QuickAddParser
             var dow = Weekday(m.Groups["dow"].Value);
             var word = m.Groups["next"].Value.ToLowerInvariant();
             var strictly = word.Length > 0 && !word.StartsWith("dies", StringComparison.Ordinal) && word != "this";
-            AddDate(list, m, NextWeekday(today, dow, strictly));
+            var date = NextWeekday(today, dow, strictly);
+            // "übernächsten Freitag": the one after the next one
+            AddDate(list, m, word.StartsWith("über", StringComparison.Ordinal) || word.StartsWith("ueber", StringComparison.Ordinal) ? date.AddDays(7) : date);
+        }
+
+        // a weekday of a named week (the weeks start on Monday): longer than the week or the weekday alone, so it wins over both
+        foreach (var regex in new[] { WeekThenDay, DayThenWeek })
+        {
+            foreach (Match m in regex.Matches(text))
+            {
+                var weeks = m.Groups["after"].Success || m.Groups["after2"].Success ? 2 : 1;
+                var dow = Weekday(m.Groups["dow"].Value);
+                AddDate(list, m, MondayOf(today).AddDays(7 * weeks + ((int)dow + 6) % 7));
+            }
+        }
+
+        // a moment from now: a day and a time (over midnight too)
+        foreach (Match m in InTime.Matches(text))
+        {
+            int minutes;
+            if (m.Groups["half"].Success)
+            {
+                minutes = 30;
+            }
+            else
+            {
+                var n = NumberValue(m.Groups["n"].Value);
+                var unit = m.Groups["unit"].Value.ToLowerInvariant();
+                var hours = unit.StartsWith('s') || unit.StartsWith('h');
+                if (n is null or 0 || (hours ? n > 72 : n > 600))
+                {
+                    continue;
+                }
+
+                minutes = hours ? n.Value * 60 : n.Value;
+            }
+
+            var at = today.ToDateTime(ctx.Now).AddMinutes(minutes);
+            var c = new Candidate { Kind = TokenKind.Date, Start = m.Index, Length = m.Length, Date = DateOnly.FromDateTime(at), Time = new TimeOnly(at.Hour, at.Minute) };
+            c.Slots.Add(Slot.Date);
+            c.Slots.Add(Slot.Time);
+            list.Add(c);
         }
 
         foreach (Match m in Named.Matches(text))
@@ -751,6 +815,10 @@ public static partial class QuickAddParser
             else if (m.Groups["nextyear"].Success)
             {
                 date = new DateOnly(today.Year + 1, 1, 1);
+            }
+            else if (m.Groups["weekafter"].Success)
+            {
+                date = MondayOf(today).AddDays(14);
             }
             else if (m.Groups["weekend"].Success)
             {
@@ -997,6 +1065,9 @@ public static partial class QuickAddParser
     }
 
     internal static int Iso(DayOfWeek dow) => dow == DayOfWeek.Sunday ? 7 : (int)dow;
+
+    /// <summary>The Monday of the week a day is in (a week starts on Monday, ISO 8601).</summary>
+    private static DateOnly MondayOf(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
     private static DayOfWeek Weekday(string word) => word.ToLowerInvariant() switch
     {
