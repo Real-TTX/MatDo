@@ -36,6 +36,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
 
     public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
 
+    public DbSet<PushDevice> PushDevices => Set<PushDevice>();
+
     protected override void OnModelCreating(ModelBuilder b)
     {
         b.Entity<User>(e =>
@@ -172,6 +174,21 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
         {
             e.ToTable("SystemSetting");
             e.Property(x => x.PublicUrl).HasMaxLength(300);
+            e.Property(x => x.VapidPublicKey).HasMaxLength(100);
+            e.Property(x => x.VapidPrivateKey).HasMaxLength(100);
+        });
+
+        b.Entity<PushDevice>(e =>
+        {
+            e.ToTable("PushDevice");
+            e.HasIndex(x => x.Endpoint).IsUnique();
+            e.HasIndex(x => x.UserId);
+            e.HasOne<User>().WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
+            e.Property(x => x.Endpoint).HasMaxLength(1000);
+            e.Property(x => x.P256dh).HasMaxLength(200);
+            e.Property(x => x.Auth).HasMaxLength(100);
+            e.Property(x => x.Name).HasMaxLength(120);
+            e.Property(x => x.Language).HasMaxLength(10);
         });
     }
 

@@ -138,6 +138,67 @@ namespace MatDo.Data.Migrations
                     b.ToTable("Project", (string)null);
                 });
 
+            modelBuilder.Entity("MatDo.Data.PushDevice", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<string>("Auth")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("CreateUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<string>("Endpoint")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("character varying(1000)");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
+
+                    b.Property<DateTime?>("LastSentDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("character varying(120)");
+
+                    b.Property<string>("P256dh")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("UpdateUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Endpoint")
+                        .IsUnique();
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("PushDevice", (string)null);
+                });
+
             modelBuilder.Entity("MatDo.Data.Section", b =>
                 {
                     b.Property<long>("Id")
@@ -205,6 +266,14 @@ namespace MatDo.Data.Migrations
 
                     b.Property<long?>("UpdateUserId")
                         .HasColumnType("bigint");
+
+                    b.Property<string>("VapidPrivateKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
+
+                    b.Property<string>("VapidPublicKey")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)");
 
                     b.HasKey("Id");
 
@@ -311,6 +380,9 @@ namespace MatDo.Data.Migrations
                     b.Property<string>("RecurrenceText")
                         .HasMaxLength(120)
                         .HasColumnType("character varying(120)");
+
+                    b.Property<DateTime?>("RemindedFor")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<long?>("SectionId")
                         .HasColumnType("bigint");
@@ -482,6 +554,9 @@ namespace MatDo.Data.Migrations
                     b.Property<long?>("CreateUserId")
                         .HasColumnType("bigint");
 
+                    b.Property<TimeOnly?>("DigestTime")
+                        .HasColumnType("time without time zone");
+
                     b.Property<string>("DisplayName")
                         .IsRequired()
                         .HasMaxLength(120)
@@ -503,6 +578,9 @@ namespace MatDo.Data.Migrations
                         .HasMaxLength(5)
                         .HasColumnType("character varying(5)");
 
+                    b.Property<DateOnly?>("LastDigestDate")
+                        .HasColumnType("date");
+
                     b.Property<DateTime?>("LastLoginDate")
                         .HasColumnType("timestamp with time zone");
 
@@ -512,6 +590,9 @@ namespace MatDo.Data.Migrations
                     b.Property<string>("PasswordHash")
                         .IsRequired()
                         .HasColumnType("text");
+
+                    b.Property<int?>("ReminderMinutes")
+                        .HasColumnType("integer");
 
                     b.Property<int>("Role")
                         .HasColumnType("integer");
@@ -730,6 +811,15 @@ namespace MatDo.Data.Migrations
                     b.Navigation("Owner");
 
                     b.Navigation("Team");
+                });
+
+            modelBuilder.Entity("MatDo.Data.PushDevice", b =>
+                {
+                    b.HasOne("MatDo.Data.User", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("MatDo.Data.Section", b =>

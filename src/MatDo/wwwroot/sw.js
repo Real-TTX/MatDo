@@ -102,3 +102,86 @@ async function flushOutbox() {
 self.addEventListener('sync', event => {
   if (event.tag === 'md-outbox') { event.waitUntil(flushOutbox()); }
 });
+
+// ---- notifications (Web Push: NotificationService on the server, push.js subscribes) -------------------------------------
+// A message is JSON: title, body, url (opened by a click), tag (a new one of the same task replaces the old), task, user, badge (the number on the app
+// icon: open tasks of today and overdue), actions ([{action, title}]: "complete" and "tomorrow" are done here, without opening the app).
+function setBadge(count) {
+  if (!('setAppBadge' in self.navigator)) { return Promise.resolve(); }
+  return (count ? self.navigator.setAppBadge(count) : self.navigator.clearAppBadge()).catch(() => {});
+}
+
+self.addEventListener('push', event => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch (e) { data = { title: 'MatDo', body: event.data ? event.data.text() : '' }; }
+  const options = {
+    body: data.body || '',
+    icon: '/img/icon-192.png',
+    badge: '/img/badge-96.png',
+    tag: data.tag || undefined,
+    renotify: !!data.tag,
+    timestamp: Date.now(),
+    data: { url: data.url || '/Today', task: data.task || null, user: data.user || null },
+    actions: (data.actions || []).slice(0, 2),
+  };
+  event.waitUntil(Promise.all([
+    self.registration.showNotification(data.title || 'MatDo', options),
+    typeof data.badge === 'number' ? setBadge(data.badge) : Promise.resolve(),
+  ]));
+});
+
+// tomorrow, in the calendar of the device: the person's day
+function tomorrowIso() {
+  const d = new Date(); d.setDate(d.getDate() + 1);
+  return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+}
+
+// an action of a notification: sent now; without a network it waits in the queue of the offline mode like any change
+async function act(url, body, user) {
+  const id = (self.crypto && self.crypto.randomUUID) ? self.crypto.randomUUID() : String(Date.now()) + Math.random();
+  try {
+    const response = await fetch(url, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': user || '', 'X-MatDo-Request-Id': id },
+      body: JSON.stringify(body),
+    });
+    if (response.ok) { return; }
+    if (response.status !== 401) { return; } // gone, or another account: nothing to wait for
+  } catch (e) { /* no network: queue it */ }
+  const db = await openDb();
+  await run(db, 'readwrite', s => s.add({ url, body, user: user || '', id, at: Date.now() }));
+  if (self.registration.sync) { await self.registration.sync.register('md-outbox').catch(() => {}); }
+}
+
+self.addEventListener('notificationclick', event => {
+  const n = event.notification;
+  const data = n.data || {};
+  n.close();
+  if (data.task && (event.action === 'complete' || event.action === 'tomorrow')) {
+    const url = '/api/app/tasks/' + data.task + (event.action === 'complete' ? '/complete' : '/due');
+    const body = event.action === 'complete' ? {} : { date: tomorrowIso() };
+    event.waitUntil(act(url, body, data.user ? String(data.user) : ''));
+    return;
+  }
+  // open the page: in a window of the app that is open already, else in a new one
+  const target = new URL(data.url || '/Today', self.location.origin).href;
+  event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then(windows => {
+    const open = windows.find(w => new URL(w.url).origin === self.location.origin);
+    if (open) { return open.focus().then(w => (w || open).navigate ? (w || open).navigate(target) : null).catch(() => self.clients.openWindow(target)); }
+    return self.clients.openWindow(target);
+  }));
+});
+
+// the browser renewed the subscription by itself: tell the server the new one (the page sends it the next time otherwise)
+self.addEventListener('pushsubscriptionchange', event => {
+  const next = event.newSubscription;
+  if (!next) { return; }
+  const json = next.toJSON();
+  event.waitUntil(fetch('/api/app/push/subscribe', {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Content-Type': 'application/json', 'X-MatDo-Request': '1' },
+    body: JSON.stringify({ endpoint: json.endpoint, p256dh: json.keys && json.keys.p256dh, auth: json.keys && json.keys.auth }),
+  }).catch(() => {}));
+});

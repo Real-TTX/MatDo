@@ -1,0 +1,63 @@
+@page "/Account/Notifications"
+@model MatDo.Pages.Account.NotificationsModel
+@{
+    ViewData["Title"] = L["Notifications.Title"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, "/Account"), (L["Notifications.Title"].Value, null) };
+    ViewData["Width"] = "narrow";
+}
+
+@* this device: push.js shows the state that applies and the buttons for it (all hidden without the script) *@
+<div class="mat-card" id="md-push" data-push>
+    <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("bell")@L["Notifications.Device"]</h2></div>
+    <div class="mat-card__body">
+        <p class="md-push__state" data-push-state aria-live="polite">@L["Notifications.State.Checking"]</p>
+        <div class="mat-btn-row mat-btn-row--plain">
+            <button type="button" class="mat-btn mat-btn--primary" data-push-on hidden>@Ui.Icon("bell")<span>@L["Notifications.TurnOn"]</span></button>
+            <button type="button" class="mat-btn mat-btn--secondary" data-push-test hidden>@Ui.Icon("play")<span>@L["Notifications.Test"]</span></button>
+            <button type="button" class="mat-btn mat-btn--secondary" data-push-off hidden>@Ui.Icon("x-circle")<span>@L["Notifications.TurnOff"]</span></button>
+        </div>
+    </div>
+</div>
+
+<form class="mat-form" method="post" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-card">
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("clock")@L["Notifications.When"]</h2></div>
+        <div class="mat-card__body mat-form">
+            <md-field name="Reminder" kind="radios" label="@L["Notifications.Reminder"]" value="@Model.Reminder" options="Model.ReminderChoices" hint="@L["Notifications.Reminder.Hint"]" />
+            <md-field name="Digest" kind="check" label="@L["Notifications.Digest"]" value="@Model.Digest.ToString()" hint="@L["Notifications.Digest.Hint"]" />
+            <md-field name="DigestTime" kind="time" label="@L["Notifications.Digest.Time"]" value="@Model.DigestTime" show-if="#Digest" show-value="true" />
+        </div>
+    </div>
+    <md-buttons save="@L["Common.Save"]" back="/Account" />
+</form>
+
+@if (Model.Devices.Count > 0)
+{
+    <div class="mat-card">
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("smartphone")@L["Notifications.Devices"]</h2></div>
+        <ul class="mat-itemlist" aria-label="@L["Notifications.Devices"]">
+            @foreach (var d in Model.Devices)
+            {
+                <li class="mat-item">
+                    <div class="mat-item__main">
+                        <span class="mat-item__body">
+                            <span class="mat-item__title">@d.Name</span>
+                            <span class="mat-item__text">@(d.LastSent is { } s ? L["Notifications.Device.LastSent", Dates.Stamp(s, Model.Zone)] : L["Notifications.Device.Added", Dates.Stamp(d.Added, Model.Zone)])</span>
+                        </span>
+                    </div>
+                    <div class="mat-item__aside">
+                        <form method="post" asp-page-handler="Remove" asp-route-id="@d.Id">
+                            <button type="submit" class="mat-btn mat-btn--ghost mat-btn--icon" aria-label="@L["Notifications.Device.Remove", d.Name]" data-tip="@L["Notifications.Device.RemoveShort"]"
+                                    data-confirm="@L["Notifications.Device.RemoveConfirm", d.Name]" data-confirm-ok="@L["Notifications.Device.RemoveShort"]">@Ui.Icon("trash")</button>
+                        </form>
+                    </div>
+                </li>
+            }
+        </ul>
+    </div>
+}
+
+@section Scripts {
+    <script src="~/js/push.js" asp-append-version="true"></script>
+}

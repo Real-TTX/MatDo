@@ -90,6 +90,37 @@ public sealed class User : SoftEntity
 
     /// <summary>standard, paper, contrast or oled.</summary>
     public string Scheme { get; set; } = "standard";
+
+    /// <summary>Minutes before the time of a task its reminder is sent (0 = at the time); null = no reminders.</summary>
+    public int? ReminderMinutes { get; set; } = 0;
+
+    /// <summary>The time of the daily overview (the tasks of today and the overdue ones); null = none.</summary>
+    public TimeOnly? DigestTime { get; set; } = new(8, 0);
+
+    /// <summary>The day the last overview was sent (in the zone of the person), so it goes once a day.</summary>
+    public DateOnly? LastDigestDate { get; set; }
+}
+
+/// <summary>A browser or an installed app that receives notifications (Web Push): the subscription the browser handed out. Deleted when the push service says it is gone.</summary>
+public sealed class PushDevice : Entity
+{
+    public long UserId { get; set; }
+
+    /// <summary>The address of the push service for this browser; unique.</summary>
+    public string Endpoint { get; set; } = string.Empty;
+
+    /// <summary>The public key (P-256) and the secret of the browser, both base64url: the message is encrypted for them.</summary>
+    public string P256dh { get; set; } = string.Empty;
+
+    public string Auth { get; set; } = string.Empty;
+
+    /// <summary>What the device is, for the list in the settings ("iPhone · Safari").</summary>
+    public string Name { get; set; } = string.Empty;
+
+    /// <summary>The language of the browser when it subscribed (for a person whose language is "automatic").</summary>
+    public string Language { get; set; } = string.Empty;
+
+    public DateTime? LastSentDate { get; set; }
 }
 
 /// <summary>A signed-in browser. The cookie carries the <see cref="Token"/>; the session lives in the database.</summary>
@@ -234,6 +265,9 @@ public sealed class TaskItem : SoftEntity
 
     public TaskSource Source { get; set; } = TaskSource.App;
 
+    /// <summary>The moment (UTC) of the due date and time the reminder was sent for; a new date or time is a new moment and so a new reminder.</summary>
+    public DateTime? RemindedFor { get; set; }
+
     public List<TaskLabel> Labels { get; set; } = [];
 }
 
@@ -298,4 +332,9 @@ public sealed class SystemSetting : Entity
 
     /// <summary>The address the app is reached at from outside (for the webhook addresses shown to a person); empty = the address of the request.</summary>
     public string? PublicUrl { get; set; }
+
+    /// <summary>The key pair (P-256, base64url) the app signs its notifications with (VAPID); made at the first need, kept for good: a new pair ends every subscription.</summary>
+    public string? VapidPublicKey { get; set; }
+
+    public string? VapidPrivateKey { get; set; }
 }

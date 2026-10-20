@@ -40,5 +40,12 @@
   "Js.Task.Failed": { "en": "That did not work. Please try again.", "de": "Das hat nicht geklappt. Bitte noch einmal versuchen." },
   "Js.Task.DeleteConfirm": { "en": "Delete this task?", "de": "Diese Aufgabe löschen?" },
   "Js.Delete": { "en": "Delete", "de": "Löschen" },
-  "Js.Task.OrderFailed": { "en": "The order could not be saved.", "de": "Die Reihenfolge konnte nicht gespeichert werden." }
+  "Js.Task.OrderFailed": { "en": "The order could not be saved.", "de": "Die Reihenfolge konnte nicht gespeichert werden." },
+  "Js.Push.On": { "en": "Notifications are on for this device.", "de": "Benachrichtigungen sind für dieses Gerät an." },
+  "Js.Push.Off": { "en": "Notifications are off for this device.", "de": "Benachrichtigungen sind für dieses Gerät aus." },
+  "Js.Push.Denied": { "en": "Notifications are blocked in this browser. Allow them in the settings of the browser (site settings of MatDo).", "de": "Benachrichtigungen sind in diesem Browser blockiert. Erlaube sie in den Einstellungen des Browsers (Website-Einstellungen von MatDo)." },
+  "Js.Push.Unsupported": { "en": "This browser cannot receive notifications.", "de": "Dieser Browser kann keine Benachrichtigungen empfangen." },
+  "Js.Push.Ios": { "en": "On an iPhone or iPad: tap Share → Add to Home Screen, open MatDo from the home screen and turn notifications on there.", "de": "Auf iPhone und iPad: Teilen → Zum Home-Bildschirm, MatDo vom Home-Bildschirm öffnen und dort Benachrichtigungen einschalten." },
+  "Js.Push.Failed": { "en": "That did not work. Try again.", "de": "Das hat nicht geklappt. Versuch es noch einmal." },
+  "Js.Push.Sent": { "en": "Test sent to {0} device(s).", "de": "Test an {0} Gerät(e) gesendet." }
 }

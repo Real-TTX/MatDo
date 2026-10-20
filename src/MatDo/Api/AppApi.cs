@@ -185,7 +185,7 @@ public static class AppApi
     }
 
     /// <summary>A change needs the header of the scripts or the anti-forgery token; a change made in another account (the queue of the offline mode) answers 409.</summary>
-    private static async ValueTask<object?> GuardAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
+    internal static async ValueTask<object?> GuardAsync(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         var http = context.HttpContext;
         if (http.Request.Headers[RequestHeader] != "1")

@@ -30,7 +30,7 @@
         </li>
         <li>
             @{ var today = nav == "today"; }
-            <a class="@Cls(today)" href="/Today" aria-current="@Cur(today)">@Ui.Icon("calendar-today")<span>@L["Today.Title"]</span>@if (m.Today > 0) { <span class="mat-nav__badge @(m.Overdue > 0 ? "" : "mat-nav__badge--plain")">@Badge(m.Today)@if (m.Overdue > 0) { <span class="mat-sr-only"> @L["Menu.OverdueCount", m.Overdue]</span> }</span> }</a>
+            <a class="@Cls(today)" href="/Today" aria-current="@Cur(today)" data-due-count="@m.Today">@Ui.Icon("calendar-today")<span>@L["Today.Title"]</span>@if (m.Today > 0) { <span class="mat-nav__badge @(m.Overdue > 0 ? "" : "mat-nav__badge--plain")">@Badge(m.Today)@if (m.Overdue > 0) { <span class="mat-sr-only"> @L["Menu.OverdueCount", m.Overdue]</span> }</span> }</a>
         </li>
         <li>
             @{ var upcoming = nav == "upcoming"; }
@@ -97,6 +97,7 @@
         <li><a class="@Cls(path.Equals("/Account", StringComparison.OrdinalIgnoreCase))" href="/Account" aria-current="@Cur(path.Equals("/Account", StringComparison.OrdinalIgnoreCase))">@Ui.Icon("user")<span>@L["Settings.Profile"]</span></a></li>
         <li><a class="@Cls(Under("/Account/Keywords"))" href="/Account/Keywords" aria-current="@Cur(Under("/Account/Keywords"))">@Ui.Icon("type")<span>@L["Keywords.Title"]</span></a></li>
         <li><a class="@Cls(Under("/Account/Webhooks"))" href="/Account/Webhooks" aria-current="@Cur(Under("/Account/Webhooks"))">@Ui.Icon("webhook")<span>@L["Webhooks.Title"]</span></a></li>
+        <li><a class="@Cls(Under("/Account/Notifications"))" href="/Account/Notifications" aria-current="@Cur(Under("/Account/Notifications"))">@Ui.Icon("bell")<span>@L["Notifications.Title"]</span></a></li>
         <li><a class="@Cls(Under("/Account/Hotkeys"))" href="/Account/Hotkeys" aria-current="@Cur(Under("/Account/Hotkeys"))">@Ui.Icon("keyboard")<span>@L["Hotkeys.Title"]</span></a></li>
         <li><a class="@Cls(Under("/Account/Password"))" href="/Account/Password" aria-current="@Cur(Under("/Account/Password"))">@Ui.Icon("lock")<span>@L["Password.Title"]</span></a></li>
     </ul>

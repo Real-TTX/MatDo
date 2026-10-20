@@ -44,6 +44,9 @@ builder.Services.AddScoped<TeamService>();
 builder.Services.AddScoped<MenuService>();
 builder.Services.AddScoped<QuickAddEditor>();
 builder.Services.AddHostedService<MaintenanceService>();
+builder.Services.AddScoped<MatDo.Services.Notifications.PushService>();
+builder.Services.AddHostedService<MatDo.Services.Notifications.NotificationService>();
+builder.Services.AddHttpClient("push", c => c.Timeout = TimeSpan.FromSeconds(15));
 
 // The interface speaks English and German (MatDo.Localization); every localizer reads the one catalog of JSON texts.
 builder.Services.AddSingleton<Microsoft.Extensions.Localization.IStringLocalizerFactory, CatalogLocalizerFactory>();
@@ -177,6 +180,7 @@ app.MapPost("/language", async (HttpContext http, CurrentUser me, AppDbContext d
 app.MapGet("/health", async (AppDbContext db) => await db.Database.CanConnectAsync() ? Results.Ok("ok") : Results.StatusCode(503)).AllowAnonymous();
 app.MapWebhookApi();
 app.MapAppApi();
+app.MapPushApi();
 app.MapRazorPages();
 
 app.Run();

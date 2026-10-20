@@ -1,4 +1,5 @@
-/* MatDo as an app (PWA): the service worker, the shortcuts of the app icon and the share target.
+/* MatDo as an app (PWA): the service worker, the number on the app icon, the shortcuts of the app icon and the share target.
+   - The number on the app icon (Badging API) is the count of the menu: the open tasks of today and the overdue ones (data-due-count); a notification sets it too (sw.js).
    - /Today?quick=1 (the shortcut "Add task" of the app icon) opens the quick add.
    - Text shared from another app (manifest share_target: /Today?share_title=&share_text=&share_url=) opens the quick add with that text. */
 (function () {
@@ -6,6 +7,12 @@
 
   if ('serviceWorker' in navigator && window.isSecureContext) {
     window.addEventListener('load', function () { navigator.serviceWorker.register('/sw.js').catch(function () { /* the app works without it */ }); });
+  }
+
+  var due = document.querySelector('[data-due-count]');
+  if (due && 'setAppBadge' in navigator) {
+    var count = parseInt(due.getAttribute('data-due-count'), 10) || 0;
+    (count ? navigator.setAppBadge(count) : navigator.clearAppBadge()).catch(function () { /* not allowed here */ });
   }
 
   var params = new URLSearchParams(location.search);
