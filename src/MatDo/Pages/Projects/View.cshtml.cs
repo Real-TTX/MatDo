@@ -45,12 +45,17 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
         var q = TaskTools.Read(Request);
         Filtered = TaskTools.Active(q);
 
-        var all = tasks.Visible(UserId).Where(t => t.ProjectId == id && t.ParentId == null);
+        // the sub-tasks too: without a tool in effect they stand under their task (a tree, like Todoist), with one they are rows like the others
+        var all = tasks.Visible(UserId).Where(t => t.ProjectId == id);
         var rows = await tasks.RowsAsync(all.Where(t => !t.IsCompleted), q, Today);
+        if (!Filtered)
+        {
+            rows = TaskService.Tree(rows);
+        }
         var keep = new Dictionary<string, string?> { ["id"] = id.ToString(System.Globalization.CultureInfo.InvariantCulture) };
         // the completed tasks are a filter like the others (a chip, reset with them)
         FilterField[] showDone = [new("done", Text.T("Projects.View.Done"), [new("true", Text.T("Projects.View.ShowDone"))], done ? "true" : null)];
-        Toolbar = TaskTools.Toolbar("project", "/Projects/View", q, await tasks.LabelChipsAsync(UserId), await all.CountAsync(t => !t.IsCompleted), rows.Count, keep, extra: showDone);
+        Toolbar = TaskTools.Toolbar("project", "/Projects/View", q, await tasks.LabelChipsAsync(UserId), await all.CountAsync(t => !t.IsCompleted && t.ParentId == null), Filtered ? rows.Count : rows.Count(r => r.Depth == 0), keep, extra: showDone);
 
         var reorder = !Filtered;
         var sections = await db.Sections.Where(s => s.ProjectId == id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).AsNoTracking().ToListAsync();
@@ -58,7 +63,7 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
         Loose = new TaskListModel
         {
             Id = "list-loose",
-            Rows = Filtered ? rows : rows.Where(r => r.SectionId is null || sections.All(s => s.Id != r.SectionId)).ToList(),
+            Rows = Filtered ? rows : InSection(rows, null, sections),
             Today = Today,
             ReturnUrl = Here,
             ShowProject = false,
@@ -72,7 +77,7 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
             {
                 var editorId = $"qa-s{s.Id}";
                 Sections.Add((s,
-                    new TaskListModel { Id = $"list-s{s.Id}", Rows = rows.Where(r => r.SectionId == s.Id).ToList(), Today = Today, ReturnUrl = Here, ShowProject = false, Reorder = reorder },
+                    new TaskListModel { Id = $"list-s{s.Id}", Rows = InSection(rows, s.Id, sections), Today = Today, ReturnUrl = Here, ShowProject = false, Reorder = reorder },
                     await editors.CreateAsync(editorId, Here, projectId: id, sectionId: s.Id, open: qa == editorId)));
             }
         }
@@ -109,5 +114,27 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
         }
 
         return LocalRedirect($"/Projects/View?id={id}");
+    }
+
+    /// <summary>The rows of the tree whose top task stands in a section (null: in none, or in one that is gone); a sub-task goes with its task.</summary>
+    private static List<TaskRow> InSection(List<TaskRow> tree, long? section, List<Section> sections)
+    {
+        var result = new List<TaskRow>();
+        var take = false;
+        foreach (var r in tree)
+        {
+            if (r.Depth == 0)
+            {
+                var own = r.SectionId is { } sid && sections.Any(s => s.Id == sid) ? r.SectionId : null;
+                take = own == section;
+            }
+
+            if (take)
+            {
+                result.Add(r);
+            }
+        }
+
+        return result;
     }
 }

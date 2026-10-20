@@ -29,7 +29,14 @@ public sealed record TaskRow(
     IReadOnlyList<LabelChip> Labels,
     int SubTasks,
     int SubTasksDone,
-    int Comments);
+    int Comments)
+{
+    /// <summary>The level in a list that shows the sub-tasks under their task (0 = a task of its own; see <see cref="TaskService.Tree"/>).</summary>
+    public int Depth { get; init; }
+
+    /// <summary>How many rows of the list stand under this one (its open sub-tasks in the tree).</summary>
+    public int Children { get; init; }
+}
 
 /// <summary>The search, filters and sort of a task list (the toolbar).</summary>
 public sealed record TaskQuery(string? Search = null, int? Priority = null, long? LabelId = null, string? Due = null, string Sort = "manual", bool Descending = false);
@@ -104,6 +111,33 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         return Sort(list, tools.Sort, tools.Descending);
     }
 
+    /// <summary>
+    /// The rows as a tree, like Todoist: each task, then its sub-tasks (and theirs) under it, in the order the rows came in; a row whose task is not in the list
+    /// (another project, done) stands on its own. Each row gets its <see cref="TaskRow.Depth"/> and the number of rows under it.
+    /// </summary>
+    public static List<TaskRow> Tree(IReadOnlyList<TaskRow> rows)
+    {
+        var ids = rows.Select(r => r.Id).ToHashSet();
+        var children = rows.Where(r => r.ParentId is { } p && ids.Contains(p)).GroupBy(r => r.ParentId!.Value).ToDictionary(g => g.Key, g => g.ToList());
+        var result = new List<TaskRow>(rows.Count);
+        void Add(TaskRow row, int depth)
+        {
+            var below = children.TryGetValue(row.Id, out var list) ? list : [];
+            result.Add(row with { Depth = depth, Children = below.Count });
+            foreach (var child in below)
+            {
+                Add(child, depth + 1);
+            }
+        }
+
+        foreach (var root in rows.Where(r => r.ParentId is not { } p || !ids.Contains(p)))
+        {
+            Add(root, 0);
+        }
+
+        return result;
+    }
+
     public static List<TaskRow> Sort(List<TaskRow> rows, string sort, bool descending)
     {
         IOrderedEnumerable<TaskRow> ordered = sort switch
@@ -142,8 +176,7 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
 
         task.IsCompleted = true;
         task.CompletedDate = DateTime.UtcNow;
-        var children = await db.Tasks.Where(t => t.ParentId == id && !t.IsCompleted).ToListAsync();
-        foreach (var c in children)
+        foreach (var c in await DescendantsAsync(id, openOnly: true))
         {
             c.IsCompleted = true;
             c.CompletedDate = task.CompletedDate;
@@ -151,6 +184,23 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
 
         await db.SaveChangesAsync();
         return (true, null);
+    }
+
+    /// <summary>The sub-tasks of a task, and theirs, to any depth.</summary>
+    public async Task<List<TaskItem>> DescendantsAsync(long id, bool openOnly = false)
+    {
+        var all = new List<TaskItem>();
+        var seen = new HashSet<long> { id }; // a loop in the data never runs forever
+        var level = new List<long> { id };
+        while (level.Count > 0)
+        {
+            var next = (await db.Tasks.Where(t => t.ParentId != null && level.Contains(t.ParentId.Value) && (!openOnly || !t.IsCompleted)).ToListAsync())
+                .Where(t => seen.Add(t.Id)).ToList();
+            all.AddRange(next);
+            level = next.Select(t => t.Id).ToList();
+        }
+
+        return all;
     }
 
     public async Task<bool> ReopenAsync(long userId, long id)
@@ -209,8 +259,7 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
             return false;
         }
 
-        var children = await db.Tasks.Where(t => t.ParentId == id).ToListAsync();
-        db.Tasks.RemoveRange(children);
+        db.Tasks.RemoveRange(await DescendantsAsync(id, openOnly: false));
         db.Tasks.Remove(task);
         await db.SaveChangesAsync();
         return true;

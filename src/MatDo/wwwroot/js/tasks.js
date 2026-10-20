@@ -2,7 +2,8 @@
 
    - The round check sends its form in the background (POST /api/app/tasks/{id}/complete or /reopen): the row goes away, a repeating task shows its next date.
      Without the script the form is sent as a page (/Tasks/Add?handler=Complete).
-   - A list with data-reorder (the toolkit's drag and drop, mat:reorder) saves the new order.
+   - A list with data-reorder (the toolkit's drag and drop, mat:reorder) saves the new order; in a tree a task moves with its sub-tasks.
+   - A tree (data-depth): a task with sub-tasks folds them (data-subtoggle, remembered in localStorage md-folded); checking off or deleting takes them along.
    - Swipes (the toolkit's sliding rows, mat:item-action): to the right = complete, to the left = tomorrow / delete.
    - A long press on a phone, a right click or the menu key on a computer opens the menu of the row (_TaskMenu.cshtml): complete, a date, a priority, edit, delete.
      The menu is a popover (above a dialog, closed by a tap outside or Escape); on a phone it is a sheet at the bottom. */
@@ -34,9 +35,52 @@
   function titleOf(row) { var el = row.querySelector('.md-task__title'); return el ? el.textContent.trim() : ''; }
 
   function leave(row) {
-    row.classList.add('is-leaving');
-    setTimeout(function () { row.remove(); }, 280);
+    // a task takes its sub-tasks along (they are done or deleted with it on the server)
+    below(row).concat([row]).forEach(function (r) {
+      r.classList.add('is-leaving');
+      setTimeout(function () { r.remove(); }, 280);
+    });
   }
+
+  // ---- the tree: a sub-task stands under its task (data-depth); the rows under a row are the next ones that are deeper ----
+  function depthOf(row) { return parseInt(row.getAttribute('data-depth'), 10) || 0; }
+  function below(row) {
+    var out = [], d = depthOf(row), next = row.nextElementSibling;
+    while (next && next.matches('[data-task]') && depthOf(next) > d) { out.push(next); next = next.nextElementSibling; }
+    return out;
+  }
+  var FOLD_KEY = 'md-folded';
+  function folded() { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '[]'); } catch (e) { return []; } }
+  function setFold(btn, open, remember) {
+    var row = btn.closest('[data-task]');
+    btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    btn.setAttribute('aria-label', btn.getAttribute(open ? 'data-label-open' : 'data-label-closed'));
+    // showing a task shows the rows under it, except those under a sub-task that is folded itself
+    var hideFrom = null;
+    below(row).forEach(function (r) {
+      if (hideFrom !== null && depthOf(r) <= hideFrom) { hideFrom = null; }
+      r.hidden = !open || hideFrom !== null;
+      var inner = r.querySelector('[data-subtoggle]');
+      if (open && hideFrom === null && inner && inner.getAttribute('aria-expanded') === 'false') { hideFrom = depthOf(r); }
+    });
+    if (remember) {
+      var id = row.getAttribute('data-task');
+      var list = folded().filter(function (x) { return x !== id; });
+      if (!open) { list.push(id); }
+      try { localStorage.setItem(FOLD_KEY, JSON.stringify(list.slice(-500))); } catch (e) { /* private mode */ }
+    }
+  }
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest('[data-subtoggle]');
+    if (btn) { setFold(btn, btn.getAttribute('aria-expanded') === 'false', true); }
+  });
+  (function () {
+    var list = folded();
+    if (!list.length) { return; }
+    Array.prototype.forEach.call(document.querySelectorAll('[data-subtoggle]'), function (btn) {
+      if (list.indexOf(btn.closest('[data-task]').getAttribute('data-task')) >= 0) { setFold(btn, false, false); }
+    });
+  })();
 
   function pad(n) { return (n < 10 ? '0' : '') + n; }
   function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
@@ -118,8 +162,25 @@
   });
 
   // ---- drag and drop ---------------------------------------------------------------------------------------------------
+  // In a tree a task moves with its sub-tasks: after the drop each task gets the rows under it back, in their new order (a row dropped into
+  // another task's block goes back after it); the order that is saved is the order of the page then.
+  function keepTree(list) {
+    var rows = Array.prototype.slice.call(list.querySelectorAll(':scope > [data-task]'));
+    if (!rows.some(function (r) { return depthOf(r) > 0; })) { return null; }
+    var byParent = {};
+    rows.forEach(function (r) { var p = r.getAttribute('data-parent') || ''; (byParent[p] = byParent[p] || []).push(r); });
+    var ids = rows.map(function (r) { return r.getAttribute('data-task'); });
+    var ordered = [];
+    function add(r) { ordered.push(r); (byParent[r.getAttribute('data-task')] || []).forEach(add); }
+    rows.filter(function (r) { var p = r.getAttribute('data-parent'); return !p || ids.indexOf(p) < 0; }).forEach(add);
+    ordered.forEach(function (r) { list.appendChild(r); });
+    return ordered.map(function (r) { return parseInt(r.getAttribute('data-task'), 10); });
+  }
+
   document.addEventListener('mat:reorder', function (e) {
-    var order = (e.detail && e.detail.order || []).map(function (k) { return parseInt(k, 10); }).filter(function (n) { return n > 0; });
+    var list = e.target && e.target.closest ? e.target.closest('.md-tasks') : null;
+    var tree = list ? keepTree(list) : null;
+    var order = (tree || (e.detail && e.detail.order) || []).map(function (k) { return parseInt(k, 10); }).filter(function (n) { return n > 0; });
     if (order.length === 0) { return; }
     post('/api/app/tasks/reorder', { ids: order }).catch(function () { toast(t('Js.Task.OrderFailed'), 'danger'); });
   });

@@ -53,9 +53,28 @@
 .md-task__project .mat-icon { width: 14px; height: 14px; }
 .md-task.is-done .md-task__title { color: var(--mat-text-muted); text-decoration: line-through; }
 .md-task.is-leaving { opacity: 0; transform: translateX(8px); transition: opacity var(--mat-dur-slow) var(--mat-ease), transform var(--mat-dur-slow) var(--mat-ease); }
-.md-task__aside { align-self: center; opacity: .0; transition: opacity var(--mat-dur-fast) var(--mat-ease); }
-.md-task:hover .md-task__aside, .md-task:focus-within .md-task__aside, .mat-itemlist.is-reordering .md-task__aside { opacity: 1; }
-@media (pointer: coarse) { .md-task__aside { opacity: 1; } }
+.md-task__aside { align-self: center; gap: 0; }
+/* the handle shows on hover (always on a touch screen); the button that folds the sub-tasks always */
+.md-task__aside .mat-item__handle { opacity: 0; transition: opacity var(--mat-dur-fast) var(--mat-ease); }
+.md-task:hover .md-task__aside .mat-item__handle, .md-task:focus-within .md-task__aside .mat-item__handle, .mat-itemlist.is-reordering .md-task__aside .mat-item__handle { opacity: 1; }
+@media (pointer: coarse) { .md-task__aside .mat-item__handle { opacity: 1; } }
+.md-task__fold { color: var(--mat-text-muted); }
+.md-task__fold .mat-icon { transition: transform var(--mat-dur-fast) var(--mat-ease); }
+.md-task__fold[aria-expanded="false"] .mat-icon { transform: rotate(-90deg); }
+
+/* the sub-tasks in a tree: indented under their task, the line under a row starts at its check; a folded one is gone */
+.md-task[hidden] { display: none; }
+.md-task[data-depth="1"] { --md-indent: 28px; }
+.md-task[data-depth="2"] { --md-indent: 56px; }
+.md-task[data-depth="3"] { --md-indent: 84px; }
+.md-task[data-depth="4"], .md-task[data-depth="5"], .md-task[data-depth="6"] { --md-indent: 112px; }
+.md-task[data-depth]:not([data-depth="0"]) { --mat-item-inset: calc(36px + var(--md-indent)); }
+.md-task[data-depth]:not([data-depth="0"]) .md-task__check { margin-left: var(--md-indent); }
+@media (max-width: 599px) {
+  .md-task[data-depth="1"] { --md-indent: 20px; }
+  .md-task[data-depth="2"] { --md-indent: 40px; }
+  .md-task[data-depth="3"], .md-task[data-depth="4"], .md-task[data-depth="5"], .md-task[data-depth="6"] { --md-indent: 56px; }
+}
 .md-label { display: inline-flex; align-items: center; }
 .md-meta { display: inline-flex; align-items: center; }
 

@@ -158,8 +158,8 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
             Item.ProjectId = project.Id;
             Item.SectionId = null;
             Item.SortOrder = await tasks.NextSortOrderAsync(project.Id);
-            var children = await db.Tasks.Where(t => t.ParentId == Item.Id).ToListAsync();
-            children.ForEach(c => { c.ProjectId = project.Id; c.SectionId = null; });
+            // the sub-tasks go along, to any depth
+            (await tasks.DescendantsAsync(Item.Id)).ForEach(c => { c.ProjectId = project.Id; c.SectionId = null; });
         }
 
         if (long.TryParse(SectionId, out var section) && await db.Sections.AnyAsync(s => s.Id == section && s.ProjectId == Item.ProjectId))

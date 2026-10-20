@@ -133,5 +133,7 @@
   "Token.Label": { "en": "Label", "de": "Label" },
   "Token.Priority": { "en": "Priority", "de": "Priorität" },
   "Token.Deadline": { "en": "Deadline", "de": "Frist" },
-  "Token.Description": { "en": "Description", "de": "Beschreibung" }
+  "Token.Description": { "en": "Description", "de": "Beschreibung" },
+  "Tasks.Sub.Fold": { "en": "Hide the sub-tasks of {0}", "de": "Unteraufgaben von {0} ausblenden" },
+  "Tasks.Sub.Unfold": { "en": "Show the sub-tasks of {0}", "de": "Unteraufgaben von {0} einblenden" }
 }

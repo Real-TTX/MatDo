@@ -3,6 +3,7 @@
     A list of tasks (LIST-15: a list of rows that are ticked off one by one). A row: the round check in the colour of the priority (a form: it works without the script;
     tasks.js sends it in the background and lets the row go), the task as a link to its page (title, the first line of the description, date, repeating, deadline,
     sub-tasks, comments, labels, the person it is given to), the project at the right, and the handle for drag and drop when the list is in manual order.
+    In a tree (TaskService.Tree) a sub-task stands indented under its task (data-depth, data-parent) and a task with sub-tasks has the button that folds them.
 *@
 @if (Model.Rows.Count == 0)
 {
@@ -17,7 +18,7 @@ else
         @foreach (var t in Model.Rows)
         {
             var desc = t.Description?.Split('\n', 2)[0].Trim();
-            <li class="mat-item mat-item--top md-task @(t.IsCompleted ? "is-done" : "mat-item--sliding")" data-item-key="@t.Id" data-task="@t.Id" data-priority="@t.Priority">
+            <li class="mat-item mat-item--top md-task @(t.IsCompleted ? "is-done" : "mat-item--sliding")" data-item-key="@t.Id" data-task="@t.Id" data-priority="@t.Priority" data-depth="@t.Depth" data-parent="@(t.Depth > 0 ? t.ParentId : null)">
                 <div class="mat-item__row">
                 @if (!t.IsCompleted)
                 {
@@ -79,10 +80,19 @@ else
                         <span class="md-task__project">@(t.ProjectIsInbox ? L["Project.Inbox"].Value : t.ProjectName)@Ui.Icon(t.ProjectIsInbox ? "inbox" : "hash", null, t.ProjectIsInbox ? null : t.ProjectColor)</span>
                     }
                 </a>
-                @if (Model.Reorder)
+                @if (Model.Reorder || t.Children > 0)
                 {
                     <div class="mat-item__aside md-task__aside">
-                        <button type="button" class="mat-item__handle" aria-label="@L["Tasks.Move", t.Content]">@Ui.Icon("grip")</button>
+                        @if (t.Children > 0)
+                        {
+                            @* the sub-tasks under it: shown or folded (tasks.js, remembered on the device) *@
+                            <button type="button" class="mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm md-task__fold" data-subtoggle aria-expanded="true"
+                                    aria-label="@L["Tasks.Sub.Fold", t.Content]" data-label-open="@L["Tasks.Sub.Fold", t.Content]" data-label-closed="@L["Tasks.Sub.Unfold", t.Content]">@Ui.Icon("chevron-down")</button>
+                        }
+                        @if (Model.Reorder)
+                        {
+                            <button type="button" class="mat-item__handle" aria-label="@L["Tasks.Move", t.Content]">@Ui.Icon("grip")</button>
+                        }
                     </div>
                 }
                 @if (!t.IsCompleted)
