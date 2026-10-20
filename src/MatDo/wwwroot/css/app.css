@@ -45,6 +45,12 @@
 .md-task { align-items: flex-start; }
 .md-task__check { flex: none; display: flex; padding: 10px 0 0 var(--mat-space-1); }
 .md-task__main.mat-item__main { align-items: flex-start; padding-left: var(--mat-space-2); padding-block: var(--mat-space-2); min-height: 0; }
+/* on a touch screen a row is higher (56 px for one line, like a phone app): easier to hit, and the options that slide in have room for their icon and their word */
+@media (pointer: coarse) {
+  .md-tasks { --mat-item-h: 56px; }
+  .md-task__main.mat-item__main { padding-block: 14px; min-height: var(--mat-item-h); }
+  .md-task__check { padding-top: 16px; }
+}
 .md-task__title { color: var(--mat-text); overflow-wrap: anywhere; line-height: 1.4; }
 .md-task__desc { color: var(--mat-text-muted); font-size: var(--mat-fs-sm); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .md-task__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--mat-space-3); font-size: var(--mat-fs-xs); color: var(--mat-text-muted); }
