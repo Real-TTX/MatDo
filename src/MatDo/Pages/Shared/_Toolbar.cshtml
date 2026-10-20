@@ -144,19 +144,36 @@
             <div class="mat-dialog__body mat-form">
                 @foreach (var f in Model.Filters)
                 {
-                    <div class="mat-field">
-                        <label class="mat-label" for="@id-f-@f.Name">@f.Label</label>
-                        <div class="mat-picker" data-picker="select">
-                            <input class="mat-picker__input" id="@id-f-@f.Name" name="@f.Name" form="@form" value="@f.Selected" />
-                            <div class="mat-picker__options" hidden>
-                                <button type="button" class="mat-picker__option" data-value=""><span class="mat-picker__text"><span class="mat-picker__name">@L["Lists.All"]</span></span></button>
+                    // up to five choices with "All" are options to tap (FORM-12, like the sort), more are a select picker
+                    if (f.Options.Count <= 4)
+                    {
+                        <fieldset class="mat-field mat-fieldset">
+                            <legend class="mat-label">@f.Label</legend>
+                            <div class="mat-options">
+                                <label class="mat-option"><input type="radio" id="@id-f-@f.Name-all" name="@f.Name" value="" form="@form" checked="@string.IsNullOrEmpty(f.Selected)" /><span>@L["Lists.All"]</span></label>
                                 @foreach (var o in f.Options)
                                 {
-                                    <button type="button" class="mat-picker__option" data-value="@o.Value"><span class="mat-picker__text"><span class="mat-picker__name">@o.Label</span></span></button>
+                                    <label class="mat-option"><input type="radio" id="@id-f-@f.Name-@o.Value" name="@f.Name" value="@o.Value" form="@form" checked="@(f.Selected == o.Value)" /><span>@o.Label</span></label>
                                 }
                             </div>
+                        </fieldset>
+                    }
+                    else
+                    {
+                        <div class="mat-field">
+                            <label class="mat-label" for="@id-f-@f.Name">@f.Label</label>
+                            <div class="mat-picker" data-picker="select" data-search data-placeholder="@L["Lists.All"]">
+                                <input class="mat-picker__input" id="@id-f-@f.Name" name="@f.Name" form="@form" value="@f.Selected" />
+                                <div class="mat-picker__options" hidden>
+                                    <button type="button" class="mat-picker__option" data-value=""><span class="mat-picker__text"><span class="mat-picker__name">@L["Lists.All"]</span></span></button>
+                                    @foreach (var o in f.Options)
+                                    {
+                                        <button type="button" class="mat-picker__option" data-value="@o.Value"><span class="mat-picker__text"><span class="mat-picker__name">@o.Label</span></span></button>
+                                    }
+                                </div>
+                            </div>
                         </div>
-                    </div>
+                    }
                 }
                 @if (Model.SearchActive || Model.SortActive)
                 {

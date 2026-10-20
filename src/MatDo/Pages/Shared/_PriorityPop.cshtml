@@ -1,0 +1,8 @@
+@model PriorityPopModel
+@* The panel of the priorities (the quick add and the page of a task): p1 to p4 with their flags; pick.js (MatDoPick.priority) tells the owner what was chosen. *@
+<div class="md-qa__pop" id="@Model.Id" role="dialog" aria-label="@Model.Label" popover="manual" data-pick-pop="priority">
+    @foreach (var (value, label) in Ui.Priorities)
+    {
+        <button type="button" class="md-qa__opt" data-priority-value="@value" aria-pressed="false">@Ui.Icon("flag", Ui.PriorityClass(value))<span>@label</span></button>
+    }
+</div>

@@ -29,11 +29,10 @@
   "Projects.InboxReserved": { "en": "“Inbox” is taken already.", "de": "„Eingang“ ist schon vergeben." },
 
   "Projects.View.Edit": { "en": "Edit project", "de": "Projekt bearbeiten" },
-  "Projects.View.ShowDone": { "en": "Show completed", "de": "Erledigte anzeigen" },
-  "Projects.View.HideDone": { "en": "Hide completed", "de": "Erledigte ausblenden" },
+  "Projects.View.ShowDone": { "en": "Show", "de": "Anzeigen" },
+  "Projects.View.Done": { "en": "Completed", "de": "Erledigte" },
   "Projects.View.Open": { "en": "{0} open", "de": "{0} offen" },
   "Projects.View.TeamOpen": { "en": "Team {0} · {1} open", "de": "Team {0} · {1} offen" },
-  "Projects.View.InboxOpen": { "en": "Everything without a project lands here, also what the webhook sends · {0} open", "de": "Hierhin kommt alles ohne Projekt, auch was der Webhook schickt · {0} offen" },
   "Projects.View.NoSection": { "en": "Tasks without a section", "de": "Aufgaben ohne Abschnitt" },
   "Projects.View.NothingDone": { "en": "Nothing completed yet.", "de": "Noch nichts erledigt." },
 

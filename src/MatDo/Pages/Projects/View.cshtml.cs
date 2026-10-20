@@ -47,8 +47,10 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
 
         var all = tasks.Visible(UserId).Where(t => t.ProjectId == id && t.ParentId == null);
         var rows = await tasks.RowsAsync(all.Where(t => !t.IsCompleted), q, Today);
-        var keep = new Dictionary<string, string?> { ["id"] = id.ToString(System.Globalization.CultureInfo.InvariantCulture), ["done"] = done ? "true" : null };
-        Toolbar = TaskTools.Toolbar("project", "/Projects/View", q, await tasks.LabelChipsAsync(UserId), await all.CountAsync(t => !t.IsCompleted), rows.Count, keep);
+        var keep = new Dictionary<string, string?> { ["id"] = id.ToString(System.Globalization.CultureInfo.InvariantCulture) };
+        // the completed tasks are a filter like the others (a chip, reset with them)
+        FilterField[] showDone = [new("done", Text.T("Projects.View.Done"), [new("true", Text.T("Projects.View.ShowDone"))], done ? "true" : null)];
+        Toolbar = TaskTools.Toolbar("project", "/Projects/View", q, await tasks.LabelChipsAsync(UserId), await all.CountAsync(t => !t.IsCompleted), rows.Count, keep, extra: showDone);
 
         var reorder = !Filtered;
         var sections = await db.Sections.Where(s => s.ProjectId == id).OrderBy(s => s.SortOrder).ThenBy(s => s.Id).AsNoTracking().ToListAsync();

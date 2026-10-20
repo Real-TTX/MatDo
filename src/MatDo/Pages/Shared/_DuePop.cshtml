@@ -1,0 +1,41 @@
+@model DuePopModel
+@*
+    The panel of a date, like Todoist's: the quick choices, then the time and the month that is always shown (a click on a day takes it); on the page of a task also
+    the date in words and the repeat. pick.js (MatDoPick.due) makes it work; the owner keeps the values (hidden fields) and is told what was chosen.
+*@
+<div class="md-qa__pop md-qa__pop--date @(Model.Repeats is { Count: > 0 } ? "md-qa__pop--repeat" : "")" id="@Model.Id" role="dialog" aria-label="@Model.Label" popover="manual" data-pick-pop="date">
+    @if (Model.TextName is not null)
+    {
+        <div class="md-qa__words">
+            <label class="mat-sr-only" for="@Model.Id-text">@L["Tasks.DueText"]</label>
+            <input class="mat-input" id="@Model.Id-text" name="@Model.TextName" placeholder="@L["Tasks.DueText.Placeholder"]" autocomplete="off" enterkeyhint="done" data-due-text />
+        </div>
+    }
+    <div class="md-qa__quick">
+        <button type="button" class="md-qa__opt" data-due-quick="today">@Ui.Icon("calendar-today")<span>@L["Common.Date.Today"]</span></button>
+        <button type="button" class="md-qa__opt" data-due-quick="tomorrow">@Ui.Icon("sun")<span>@L["Common.Date.Tomorrow"]</span></button>
+        <button type="button" class="md-qa__opt" data-due-quick="weekend">@Ui.Icon("sofa")<span>@L["QuickAdd.Weekend"]</span></button>
+        <button type="button" class="md-qa__opt" data-due-quick="nextweek">@Ui.Icon("calendar-days")<span>@L["QuickAdd.NextWeek"]</span></button>
+        <button type="button" class="md-qa__opt" data-due-quick="none">@Ui.Icon("x-circle")<span>@Model.NoneLabel</span></button>
+    </div>
+    @if (Model.Time)
+    {
+        <div class="md-qa__time">
+            <label class="mat-label" for="@Model.Id-time">@Ui.Icon("clock")@L["QuickAdd.Time"]</label>
+            <div class="mat-picker md-qa__timepicker" data-picker="time" data-step="15" data-clearable data-placeholder="--:--"><input class="mat-picker__input" id="@Model.Id-time" data-due-time /></div>
+        </div>
+    }
+    @if (Model.Repeats is { Count: > 0 } repeats)
+    {
+        <div class="md-qa__repeat" role="group" aria-label="@L["Tasks.Recurrence"]">
+            <span class="mat-label">@Ui.Icon("repeat")@L["Tasks.Recurrence"]</span>
+            @foreach (var r in repeats)
+            {
+                <button type="button" class="md-qa__opt" data-due-repeat="@r.Value" aria-pressed="false"><span>@r.Label</span>@Ui.Icon("check")</button>
+            }
+        </div>
+    }
+    <div class="mat-calendar md-qa__calendar" data-calendar>
+        <input class="mat-calendar__input" id="@Model.Id-date" aria-label="@Model.Label" data-due-calendar />
+    </div>
+</div>

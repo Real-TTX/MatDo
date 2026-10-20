@@ -15,18 +15,8 @@
   function $$(sel, scope) { return Array.prototype.slice.call((scope || document).querySelectorAll(sel)); }
   function esc(s) { return String(s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
   function icon(name) { return '<svg class="mat-icon" aria-hidden="true" focusable="false"><use href="#mat-i-' + name + '"></use></svg>'; }
-  function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function iso(d) { return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
-  // a date picked by hand, as the chips of the server write it: today, tomorrow, the day after, else "Mon 26 Oct" / "Mo., 26. Okt." in the language of the page
-  var DAY_FORMAT = new Intl.DateTimeFormat(document.documentElement.lang || 'en', { weekday: 'short', day: 'numeric', month: 'short' });
-  function label(isoDate, time) {
-    var p = isoDate.split('-');
-    var d = new Date(+p[0], +p[1] - 1, +p[2]);
-    var today = new Date(); today.setHours(0, 0, 0, 0);
-    var diff = Math.round((d - today) / 86400000);
-    var text = diff === 0 ? t('Js.Today') : diff === 1 ? t('Js.Tomorrow') : diff === 2 ? t('Js.DayAfterTomorrow') : DAY_FORMAT.format(d);
-    return time ? text + ' ' + time : text;
-  }
+  // a date picked by hand, as the server writes it (the shared label of pick.js)
+  function label(isoDate, time) { return MatDoPick.label(isoDate, time); }
 
   function init(root) {
     if (root.__qa) { return; }
@@ -117,34 +107,8 @@
       off.value = Object.keys(disabled).join(',');
     }
 
-    // The panels (date, priority, labels) are popovers: they lie in the top layer, above the dialog of the quick add, so nothing clips them.
-    // On a wide screen they open under their button (above it when there is no room below); on a phone the CSS makes them a sheet at the bottom.
-    function isOpen(p) { try { return p.matches(':popover-open'); } catch (e) { return !p.hidden; } }
-    function showPop(p, btn) {
-      if (p.showPopover) { if (!isOpen(p)) { p.showPopover(); } } else { p.hidden = false; }
-      place(p, btn);
-    }
-    function hidePop(p) {
-      if (p.hidePopover) { if (isOpen(p)) { p.hidePopover(); } } else { p.hidden = true; }
-    }
-    function place(p, btn) {
-      if (window.innerWidth < 600) { p.style.left = ''; p.style.top = ''; return; }
-      var r = btn.getBoundingClientRect();
-      var w = p.offsetWidth, h = p.offsetHeight;
-      var top = r.bottom + 4;
-      if (top + h > window.innerHeight - 8 && r.top - h - 4 >= 8) { top = r.top - h - 4; }
-      top = Math.max(8, Math.min(top, window.innerHeight - h - 8));
-      var left = Math.max(8, Math.min(r.left, window.innerWidth - w - 8));
-      p.style.top = top + 'px';
-      p.style.left = left + 'px';
-    }
-
-    function closePops(except) {
-      $$('[data-qa-pop]', root).forEach(function (p) {
-        if (p !== except) { hidePop(p); var b = $('[aria-controls="' + p.id + '"]', root); if (b) { b.setAttribute('aria-expanded', 'false'); } }
-      });
-    }
-    window.addEventListener('resize', function () { closePops(); });
+    // the panels (date, priority, labels) are the shared ones of pick.js (popovers above the dialog, a sheet on a phone)
+    function closePops() { MatDoPick.closeAll(); }
 
     function reset() {
       form.reset();
@@ -154,7 +118,6 @@
       disabled = {};
       tokens = []; parsed = null;
       $$('[data-qa-label]', root).forEach(function (c) { c.checked = false; });
-      if (calendar) { setCalendar(''); setTime(''); }
       // the pickers (project, time) show the values the reset put back
       if (window.MatUi && MatUi.picker) { MatUi.picker.init(root); }
       paint(); renderChips(); autosize(input); autosize(desc);
@@ -204,81 +167,29 @@
       input.focus();
     });
 
-    // the buttons and their small panels
-    $$('[data-qa-open]', root).forEach(function (btn) {
-      btn.addEventListener('click', function () {
-        var pop = $('#' + btn.getAttribute('aria-controls'));
-        var open = !isOpen(pop);
-        closePops(pop);
-        if (open) {
-          if (pop.getAttribute('data-qa-pop') === 'date') { syncCalendar(); }
-          showPop(pop, btn);
-          var first = $('button, input', pop);
-          if (first) { first.focus(); }
-        } else {
-          hidePop(pop);
-        }
-        btn.setAttribute('aria-expanded', open ? 'true' : 'false');
-      });
-    });
-    root.addEventListener('keydown', function (e) {
-      if (e.key === 'Escape' && $$('[data-qa-pop]', root).some(isOpen)) { e.stopPropagation(); e.preventDefault(); closePops(); input.focus(); }
-    });
-    document.addEventListener('click', function (e) { if (!e.target.closest('.md-qa__tool')) { closePops(); } });
-
-    function pickDate(d, t) {
-      due.value = d ? iso(d) : '';
-      time.value = t || '';
-      noDate.value = d ? 'false' : 'true';
+    // the date: the shared panel (pick.js); what is picked by hand wins over the text
+    function pickDate(date, t) {
+      due.value = date || '';
+      time.value = date ? (t || '') : '';
+      noDate.value = date ? 'false' : 'true';
       setOff('date', true);
-      closePops(); parse(); input.focus();
+      parse(); input.focus();
     }
-    $$('[data-qa-date]', root).forEach(function (b) {
-      b.addEventListener('click', function () {
-        var d = new Date(); d.setHours(0, 0, 0, 0);
-        var which = b.getAttribute('data-qa-date');
-        if (which === 'none') { pickDate(null); return; }
-        if (which === 'tomorrow') { d.setDate(d.getDate() + 1); }
-        if (which === 'weekend') { var w = d.getDay(); if (w !== 6 && w !== 0) { d.setDate(d.getDate() + (6 - w)); } }
-        if (which === 'nextweek') { d.setDate(d.getDate() + ((8 - d.getDay()) % 7 || 7)); }
-        pickDate(d, timeField.value);
-      });
+    var datePop = $('[data-pick-pop="date"]', root);
+    MatDoPick.due(datePop, {
+      get: function () { return { date: due.value, time: time.value }; },
+      pick: function (s) { pickDate(s.date, s.time); },
+      // a time without a day: today (like the text "at 3pm"); with a day: that day at this time
+      time: function (value) {
+        if (!value) { time.value = ''; renderChips(); return; }
+        if (!due.value) { due.value = MatDoPick.iso(new Date()); noDate.value = 'false'; setOff('date', true); }
+        time.value = value;
+        parse();
+      },
     });
-    // the month that is always shown (MatUi data-calendar): a click on a day takes it at once, with the time of the field above it
-    var calendar = $('[data-qa-pick-date]', root);
-    var timeField = $('[data-qa-pick-time]', root);
-    var syncing = false;
-    function setCalendar(value) {
-      syncing = true;
-      calendar.value = value;
-      calendar.dispatchEvent(new Event('change', { bubbles: true }));
-      syncing = false;
-    }
-    function syncCalendar() {
-      setCalendar(due.value || '');
-      setTime(time.value || '');
-    }
-    // the time is a MatUi picker: set through it, so the field shows the value (its change is not taken as a choice)
-    function setTime(value) {
-      syncing = true;
-      if (!(window.MatUi && MatUi.picker && MatUi.picker.set(timeField, value))) { timeField.value = value; }
-      syncing = false;
-    }
-    calendar.addEventListener('change', function () {
-      if (syncing || !/^\d{4}-\d{2}-\d{2}$/.test(calendar.value)) { return; }
-      var p = calendar.value.split('-');
-      pickDate(new Date(+p[0], +p[1] - 1, +p[2]), timeField.value);
-    });
-    // a time without a day: today (like the text "um 15 Uhr"); with a day: that day at this time
-    timeField.addEventListener('change', function () {
-      if (syncing) { return; }
-      if (!timeField.value) { time.value = ''; renderChips(); return; }
-      if (!due.value) { due.value = iso(new Date()); noDate.value = 'false'; setOff('date', true); setCalendar(due.value); }
-      time.value = timeField.value;
-      parse();
-    });
-    $$('[data-qa-set-priority]', root).forEach(function (b) {
-      b.addEventListener('click', function () { prio.value = b.getAttribute('data-qa-set-priority'); setOff('priority', true); closePops(); parse(); input.focus(); });
+    MatDoPick.priority($('[data-pick-pop="priority"]', root), {
+      get: function () { return prio.value; },
+      pick: function (value) { prio.value = value; setOff('priority', true); parse(); input.focus(); },
     });
     $$('[data-qa-label]', root).forEach(function (c) {
       c.addEventListener('change', function () {

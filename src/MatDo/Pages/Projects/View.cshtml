@@ -7,9 +7,7 @@
     ViewData["Crumbs"] = Model.Project.IsInbox
         ? new List<(string, string?)> { (L["Project.Inbox"].Value, null) }
         : new List<(string, string?)> { (Model.Project.Team?.Name ?? L["Menu.MyProjects"].Value, Model.Project.TeamId is null ? "/Projects" : $"/Teams/Members?id={Model.Project.TeamId}"), (Model.Project.Name, null) };
-    var doneUrl = $"/Projects/View?id={Model.Project.Id}" + (Model.ShowDone ? "" : "&done=true");
     var sub = Model.Project.Team is { } team ? L["Projects.View.TeamOpen", team.Name, Model.Toolbar.Counted(Model.Toolbar.Total)].Value
-        : Model.Project.IsInbox ? L["Projects.View.InboxOpen", Model.Toolbar.Counted(Model.Toolbar.Total)].Value
         : L["Projects.View.Open", Model.Toolbar.Counted(Model.Toolbar.Total)].Value;
 }
 
@@ -23,8 +21,7 @@
         <p class="mat-page__sub">@sub</p>
     </div>
     <div class="mat-page__actions">
-        @{ var doneLabel = L[Model.ShowDone ? "Projects.View.HideDone" : "Projects.View.ShowDone"].Value; var editLabel = L["Projects.View.Edit"].Value; }
-        <a class="mat-btn mat-btn--ghost mat-btn--sm md-btn-collapse" href="@doneUrl" aria-label="@doneLabel" data-tip="@doneLabel">@Ui.Icon(Model.ShowDone ? "eye-off" : "circle-check")<span>@doneLabel</span></a>
+        @{ var editLabel = L["Projects.View.Edit"].Value; }
         @if (Model.CanManage && !Model.Project.IsInbox)
         {
             <a class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" href="/Projects/Edit?id=@Model.Project.Id" aria-label="@editLabel" data-tip="@editLabel">@Ui.Icon("edit")<span>@editLabel</span></a>

@@ -209,7 +209,9 @@ public sealed class FieldTagHelper : TagHelper
             case "tags":
             case "colour":
                 var data = Kind is "picker" or "select" ? "select" : Kind;
-                sb.Append($"<div class=\"mat-picker\" data-picker=\"{data}\"{Attr("data-placeholder", Placeholder)}");
+                // a choice with an empty value ("Nobody", "No section") is what the field shows while nothing else is chosen
+                var placeholder = Placeholder ?? Options?.FirstOrDefault(o => o.Value.Length == 0)?.Label;
+                sb.Append($"<div class=\"mat-picker\" data-picker=\"{data}\"{Attr("data-placeholder", placeholder)}");
                 foreach (var flag in (PickerOptions ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 {
                     var eq = flag.IndexOf('=');

@@ -12,6 +12,10 @@
     }
     crumbs.Add((t.Content, null));
     ViewData["Crumbs"] = crumbs;
+    var due = Dates.ParseIso(Model.DueDate);
+    var repeatName = Model.Recurrence.Length > 0 ? Model.RecurrenceChoices.FirstOrDefault(c => c.Value == Model.Recurrence)?.Label ?? string.Empty : string.Empty;
+    var dueText = string.Join(" · ", new[] { due is { } dd ? Dates.Relative(dd, Dates.ParseTime(Model.DueTime), Model.Today) : string.Empty, repeatName }.Where(x => x.Length > 0));
+    var deadlineText = Dates.ParseIso(Model.Deadline) is { } dl ? Dates.Relative(dl, Model.Today) : string.Empty;
 }
 
 <div class="mat-page__head">
@@ -51,12 +55,39 @@
                             <md-field name="SectionId" kind="select" label="@L["Tasks.Section"]" value="@Model.SectionId" options="Model.SectionChoices" hint="@L["Tasks.Section.Hint"]" />
                         }
                     }
-                    <md-field name="DueDate" kind="date" label="@L["QuickAdd.Date"]" value="@Model.DueDate" optional />
-                    <md-field name="DueTime" kind="time" label="@L["QuickAdd.Time"]" value="@Model.DueTime" optional show-if="#DueDate" />
-                    <md-field name="Recurrence" kind="select" label="@L["Tasks.Recurrence"]" value="@Model.Recurrence" options="Model.RecurrenceChoices" />
-                    <md-field name="DueText" label="@L["Tasks.DueText"]" placeholder="@L["Tasks.DueText.Placeholder"]" optional hint="@L["Tasks.DueText.Hint"]" />
-                    <md-field name="Deadline" kind="date" label="@L["Tasks.Deadline"]" value="@Model.Deadline" optional />
-                    <md-field name="Priority" kind="radios" label="@L["QuickAdd.Priority"]" value="@Model.Priority" options="Model.PriorityChoices" />
+                    @* when: date, time, repeat and the date in words are one field, with the panel of the quick add (_DuePop, pick.js) *@
+                    <div class="mat-field">
+                        <span class="mat-label" id="due-label">@L["QuickAdd.Date"]</span>
+                        <div class="md-pick">
+                            <button type="button" class="mat-input md-pick__btn" data-pick-open aria-controls="task-due" aria-expanded="false" aria-labelledby="due-label due-value">
+                                @Ui.Icon(Model.Recurrence.Length > 0 ? "repeat" : "calendar")<span class="md-pick__value @(dueText.Length == 0 ? "is-placeholder" : "")" id="due-value" data-due-value data-empty="@L["QuickAdd.ChooseDate"]" data-repeat-name="@repeatName">@(dueText.Length > 0 ? dueText : L["QuickAdd.ChooseDate"].Value)</span>
+                            </button>
+                            <partial name="_DuePop" model="@(new DuePopModel("task-due", L["QuickAdd.ChooseDate"].Value, L["QuickAdd.NoDate"].Value, true, Model.RecurrenceChoices, "DueText"))" />
+                        </div>
+                        <input type="hidden" name="DueDate" value="@Model.DueDate" />
+                        <input type="hidden" name="DueTime" value="@Model.DueTime" />
+                        <input type="hidden" name="Recurrence" value="@Model.Recurrence" />
+                    </div>
+                    <div class="mat-field">
+                        <span class="mat-label" id="deadline-label">@L["Tasks.Deadline"]</span>
+                        <div class="md-pick">
+                            <button type="button" class="mat-input md-pick__btn" data-pick-open aria-controls="task-deadline" aria-expanded="false" aria-labelledby="deadline-label deadline-value">
+                                @Ui.Icon("target")<span class="md-pick__value @(deadlineText.Length == 0 ? "is-placeholder" : "")" id="deadline-value" data-deadline-value data-empty="@L["Tasks.Deadline.Choose"]">@(deadlineText.Length > 0 ? deadlineText : L["Tasks.Deadline.Choose"].Value)</span>
+                            </button>
+                            <partial name="_DuePop" model="@(new DuePopModel("task-deadline", L["Tasks.Deadline.Choose"].Value, L["Tasks.Deadline.None"].Value, false))" />
+                        </div>
+                        <input type="hidden" name="Deadline" value="@Model.Deadline" />
+                    </div>
+                    <div class="mat-field">
+                        <span class="mat-label" id="priority-label">@L["QuickAdd.Priority"]</span>
+                        <div class="md-pick">
+                            <button type="button" class="mat-input md-pick__btn" data-pick-open aria-controls="task-priority" aria-expanded="false" aria-labelledby="priority-label priority-value">
+                                @Ui.Icon("flag", Ui.PriorityClass(Model.Priority))<span class="md-pick__value" id="priority-value" data-priority-value-out>@Ui.PriorityName(Model.Priority)</span>
+                            </button>
+                            <partial name="_PriorityPop" model="@(new PriorityPopModel("task-priority", L["QuickAdd.ChoosePriority"].Value))" />
+                        </div>
+                        <input type="hidden" name="Priority" value="@Model.Priority" />
+                    </div>
                     <md-field name="LabelIds" kind="picker" label="@L["Labels.Title"]" value="@Model.LabelIds" options="Model.LabelChoices" picker="multiple search clearable" placeholder="@L["Tasks.NoLabels"]" optional />
                     @if (Model.AssigneeChoices.Count > 0)
                     {
@@ -114,3 +145,7 @@
         </div>
     </form>
 </section>
+
+@section Scripts {
+    <script src="~/js/taskedit.js" asp-append-version="true"></script>
+}

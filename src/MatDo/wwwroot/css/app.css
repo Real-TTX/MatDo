@@ -129,7 +129,7 @@
 .md-qa__project .mat-picker__trigger { min-height: var(--mat-control-h-sm); height: var(--mat-control-h-sm); font-size: var(--mat-fs-sm); }
 /* the panels of the editor are popovers (top layer, above the dialog): quickadd.js puts them under their button */
 .md-qa__pop {
-  position: fixed; inset: auto; margin: 0; z-index: 30; min-width: 240px; max-height: min(520px, calc(100vh - 16px)); overflow-y: auto;
+  position: fixed; inset: auto; margin: 0; z-index: 30; min-width: 240px; max-height: min(640px, calc(100vh - 16px)); overflow-y: auto;
   flex-direction: column; gap: var(--mat-space-1); padding: var(--mat-space-2);
   background: var(--mat-surface); color: var(--mat-text); border: 1px solid var(--mat-border); border-radius: var(--mat-radius-lg); box-shadow: var(--mat-shadow-3);
 }
@@ -142,7 +142,18 @@
 .md-qa__time { display: flex; align-items: center; justify-content: space-between; gap: var(--mat-space-2); padding: var(--mat-space-1) var(--mat-space-1) var(--mat-space-2); border-bottom: 1px solid var(--mat-border); }
 .md-qa__time .mat-label { display: inline-flex; align-items: center; gap: var(--mat-space-1); margin: 0; }
 .md-qa__time .mat-input { width: auto; }
+/* the time field is wide enough for the time, its clear button and its clock: the clear button never covers the field */
+.md-qa__time .mat-picker { flex: none; width: 8.5rem; }
+.md-qa__time .mat-picker .mat-picker__trigger { width: 100%; }
 .md-qa__calendar { border: 0; box-shadow: none; padding: 0; }
+/* the date in words at the top of the panel of a task, the repeat under the time: a chosen rule carries a tick */
+.md-qa__words { padding-bottom: var(--mat-space-2); border-bottom: 1px solid var(--mat-border); }
+.md-qa__words .mat-input { width: 100%; }
+.md-qa__repeat { display: flex; flex-direction: column; gap: 2px; padding: var(--mat-space-2) 0; border-bottom: 1px solid var(--mat-border); }
+.md-qa__repeat > .mat-label { display: inline-flex; align-items: center; gap: var(--mat-space-1); margin: 0 var(--mat-space-1) var(--mat-space-1); }
+.md-qa__opt > .mat-icon:last-child:not(:first-child) { margin-left: auto; visibility: hidden; color: var(--mat-accent-text); }
+.md-qa__opt[aria-pressed="true"] { background: var(--mat-accent-soft); font-weight: 600; }
+.md-qa__opt[aria-pressed="true"] > .mat-icon:last-child:not(:first-child) { visibility: visible; }
 .md-qa__check .mat-check__text { display: inline-flex; align-items: center; gap: var(--mat-space-1); }
 .md-qa__foot { justify-content: flex-start; align-items: center; }
 @media (max-width: 599px) { .md-qa__pop, .md-qa__pop--date { left: var(--mat-space-3); right: var(--mat-space-3); top: auto; bottom: var(--mat-space-3); width: auto; max-height: 80vh; } }
@@ -197,10 +208,15 @@
 
 /* the date panel on a wide screen, like Todoist: the quick choices and the time at the left, the month at the right (short enough to fit under its button) */
 @media (min-width: 600px) {
-  .md-qa__pop--date:popover-open { display: grid; grid-template-columns: 210px 280px; grid-template-rows: auto 1fr; column-gap: var(--mat-space-3); width: auto; }
-  .md-qa__pop--date .md-qa__quick { grid-column: 1; grid-row: 1; border-bottom: 0; padding-bottom: 0; }
-  .md-qa__pop--date .md-qa__time { grid-column: 1; grid-row: 2; align-self: start; border-bottom: 0; border-top: 1px solid var(--mat-border); padding-top: var(--mat-space-2); }
-  .md-qa__pop--date .md-qa__calendar { grid-column: 2; grid-row: 1 / span 2; border-left: 1px solid var(--mat-border); padding-left: var(--mat-space-3); }
+  .md-qa__pop--date:popover-open {
+    display: grid; grid-template-columns: 230px 280px; grid-template-areas: "words words" "quick cal" "time cal" "repeat cal"; grid-template-rows: auto auto auto 1fr;
+    column-gap: var(--mat-space-3); width: auto;
+  }
+  .md-qa__pop--date .md-qa__words { grid-area: words; }
+  .md-qa__pop--date .md-qa__quick { grid-area: quick; border-bottom: 0; padding-bottom: 0; }
+  .md-qa__pop--date .md-qa__time { grid-area: time; align-self: start; border-bottom: 0; border-top: 1px solid var(--mat-border); padding-top: var(--mat-space-2); }
+  .md-qa__pop--date .md-qa__repeat { grid-area: repeat; align-self: start; border-bottom: 0; border-top: 1px solid var(--mat-border); padding-top: var(--mat-space-2); }
+  .md-qa__pop--date .md-qa__calendar { grid-area: cal; border-left: 1px solid var(--mat-border); padding-left: var(--mat-space-3); }
 }
 
 /* ---- Phones: buttons that show their icon only -------------------------------------------------------------------- */
@@ -290,3 +306,10 @@ html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
 
 /* the hotkeys page: what a key does may take two lines, the keys stand at the end */
 .md-hotkey__what { font-weight: 500; white-space: normal; }
+
+/* a field of the page of a task that opens a panel of the quick add (date, deadline, priority): looks like a field, shows the value in words */
+.md-pick__btn { display: flex; align-items: center; gap: var(--mat-space-2); width: 100%; text-align: left; cursor: pointer; }
+.md-pick__btn > .mat-icon { flex: none; color: var(--mat-text-muted); }
+.md-pick__btn > .mat-icon[class*="md-p"] { color: var(--md-prio); }
+.md-pick__value { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-pick__value.is-placeholder { color: var(--mat-text-muted); }
