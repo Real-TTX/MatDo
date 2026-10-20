@@ -12,10 +12,9 @@ namespace MatDo.Api;
 /// priority, delete, and the order after drag and drop. Every page also works without them (forms).
 /// <para>
 /// A change needs either the anti-forgery token of the page or the header <c>X-MatDo-Request: 1</c>. A page of another site cannot send such a header (it would need CORS,
-/// which this app never allows), so the header protects as well as the token does – and the queue of the offline mode (offline.js, sw.js) can send its changes later, also from
-/// the service worker, when the page and its token are long gone. A change of the queue also names the account it was made in (<c>X-MatDo-User</c>): when another person is
-/// signed in by now, it answers 409 and the queue drops it, so nothing lands in a wrong account. Every change carries the id the device gave it (<c>X-MatDo-Request-Id</c>): sending it twice
-/// does it once.
+/// which this app never allows), so the header protects as well as the token does – and the notes made without a network (offline.js, <c>POST /api/app/capture</c>) can be
+/// sent later from another page. A request may name the account it was made in (<c>X-MatDo-User</c>; another one signed in by now answers 409) and carry an id
+/// (<c>X-MatDo-Request-Id</c>): sending it twice does it once. <c>X-MatDo-Tab</c> names the window, which is not told about its own change (LiveService).
 /// </para>
 /// </summary>
 public static class AppApi
@@ -25,6 +24,8 @@ public static class AppApi
     public sealed record DueBody(string? Date);
 
     public sealed record PriorityBody(int Priority);
+
+    public sealed record CaptureBody(string? Text);
 
     /// <summary>The quick add as JSON: the fields of its form (Pages/Shared/_QuickAdd.cshtml).</summary>
     public sealed record CreateBody(
@@ -164,6 +165,19 @@ public static class AppApi
                     : Localization.Text.T("Tasks.Added", task.Content, where),
             };
             return Results.Json(answer, statusCode: StatusCodes.Status201Created);
+        });
+
+        // a note made without a network (offline.js): read like the webhook (keywords, #project), into the inbox
+        changes.MapPost("/capture", async (CaptureBody body, IServiceProvider services, CurrentUser me, AppDbContext db) =>
+        {
+            if (string.IsNullOrWhiteSpace(body.Text))
+            {
+                return Results.BadRequest();
+            }
+
+            var user = await db.Users.FirstAsync(u => u.Id == me.RequiredId);
+            var (task, error) = await WebhookApi.FromTextAsync(services, user, body.Text.Trim(), null, null, TaskSource.Offline);
+            return task is null ? Results.Json(new { error }, statusCode: StatusCodes.Status400BadRequest) : Results.Json(new { id = task.Id, content = task.Content }, statusCode: StatusCodes.Status201Created);
         });
 
         changes.MapPost("/tasks/{id:long}/complete", async (long id, CurrentUser me, TaskService tasks) =>

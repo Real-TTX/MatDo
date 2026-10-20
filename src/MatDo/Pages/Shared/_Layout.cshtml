@@ -112,7 +112,7 @@
                     </ol>
                 </nav>
                 <div class="mat-topbar__actions">
-                    @* offline: the state and the changes that wait for the network (offline.js); a click sends them *@
+                    @* offline: the state and the tasks noted without a network (offline.js); a click opens the offline page, or sends the notes *@
                     <button type="button" class="md-offline" id="md-offline" hidden>@Ui.Icon("cloud")<span data-offline-text></span></button>
                     @await RenderSectionAsync("TopActions", required: false)
                     <button type="button" class="mat-btn mat-btn--primary mat-btn--icon" data-dialog-open="md-quick" aria-haspopup="dialog" aria-label="@L["QuickAdd.AddShortcut"]" data-tip="@L["QuickAdd.AddShortcut"]">@Ui.Icon("plus")</button>

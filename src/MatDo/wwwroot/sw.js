@@ -1,34 +1,24 @@
-/* MatDo service worker: the app as a PWA, also without a network.
+/* MatDo service worker: the app as a PWA – small on purpose.
    - Static files (toolkit, styles, scripts, icons): from the cache first, refreshed in the background (their addresses carry ?v=<hash>).
-   - Pages: from the network; each page that was seen is kept (cache "matdo-pages"), so without a network the last copy is shown (the page says "offline"),
-     else the offline page. The copies are deleted at sign-out (message "clear-pages" from offline.js) and whenever the sign-in page is opened.
-   - Changes made without a network wait in IndexedDB (offline.js); "sync" (Background Sync, Android) sends them while the app is closed.
+   - Pages always come from the network; without one the offline page (offline.html), where new tasks can be noted (offline.js sends them later).
+   - Notifications (Web Push): shown here, with the number on the app icon and the actions Done and Tomorrow.
    - POST requests and the APIs are never cached. */
-const VERSION = 'matdo-v6';
-const PAGES = 'matdo-pages';
-const SHELL = ['/offline.html', '/matui/matui.css', '/css/app.css', '/favicon.svg', '/img/icon-192.png', '/img/icon-512.png', '/img/logo/matdo-logo.svg', '/img/logo/matdo-logo-dark.svg', '/manifest.webmanifest'];
+const VERSION = 'matdo-v7';
+const SHELL = ['/offline.html', '/js/offline.js', '/matui/matui.css', '/css/app.css', '/favicon.svg', '/img/icon-192.png', '/img/icon-512.png', '/img/badge-96.png', '/img/logo/matdo-logo.svg', '/img/logo/matdo-logo-dark.svg', '/manifest.webmanifest'];
 
 self.addEventListener('install', event => {
   event.waitUntil(caches.open(VERSION).then(cache => cache.addAll(SHELL)).then(() => self.skipWaiting()));
 });
 
+// an older version and the copies of pages an older version kept are gone
 self.addEventListener('activate', event => {
   event.waitUntil(caches.keys()
-    .then(keys => Promise.all(keys.filter(k => k !== VERSION && k !== PAGES).map(k => caches.delete(k))))
+    .then(keys => Promise.all(keys.filter(k => k !== VERSION).map(k => caches.delete(k))))
     .then(() => self.clients.claim()));
 });
 
-self.addEventListener('message', event => {
-  if (event.data === 'clear-pages') { event.waitUntil(caches.delete(PAGES)); }
-});
-
 function isStatic(url) {
-  return /^\/(matui|css|js|img)\//.test(url.pathname) || url.pathname === '/favicon.svg' || url.pathname === '/manifest.webmanifest';
-}
-
-// pages that belong to no one are not kept
-function keepPage(url) {
-  return !url.pathname.startsWith('/Account/Login') && !url.pathname.startsWith('/Account/Register') && !url.pathname.startsWith('/Account/Logout') && url.pathname !== '/Error';
+  return /^/(matui|css|js|img)//.test(url.pathname) || url.pathname === '/favicon.svg' || url.pathname === '/manifest.webmanifest' || url.pathname === '/offline.html';
 }
 
 self.addEventListener('fetch', event => {
@@ -37,70 +27,17 @@ self.addEventListener('fetch', event => {
   const url = new URL(request.url);
   if (url.origin !== self.location.origin || url.pathname.startsWith('/api/') || url.pathname === '/health' || url.pathname === '/sw.js') { return; }
 
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(() => caches.match('/offline.html')));
+    return;
+  }
+
   if (isStatic(url)) {
     event.respondWith(caches.open(VERSION).then(cache => cache.match(request).then(hit => {
       const fresh = fetch(request).then(response => { if (response.ok) { cache.put(request, response.clone()); } return response; }).catch(() => hit);
       return hit || fresh;
     })));
-    return;
   }
-
-  if (request.mode === 'navigate') {
-    if (url.pathname.startsWith('/Account/Login')) { event.waitUntil(caches.delete(PAGES)); }
-    event.respondWith(fetch(request).then(response => {
-      if (response.ok && !response.redirected && response.type === 'basic' && keepPage(url)) {
-        const copy = response.clone();
-        event.waitUntil(caches.open(PAGES).then(cache => cache.put(url.pathname + url.search, copy)));
-      }
-      return response;
-    }).catch(() => caches.open(PAGES)
-      .then(cache => cache.match(url.pathname + url.search).then(hit => hit || cache.match(url.pathname, { ignoreSearch: true })))
-      .then(hit => hit || caches.match('/offline.html'))));
-  }
-});
-
-// ---- the queue of changes made without a network (the same store as offline.js) ---------------------------------------
-function openDb() {
-  return new Promise((resolve, reject) => {
-    const open = indexedDB.open('matdo', 1);
-    open.onupgradeneeded = () => open.result.createObjectStore('outbox', { keyPath: 'key', autoIncrement: true });
-    open.onsuccess = () => resolve(open.result);
-    open.onerror = () => reject(open.error);
-  });
-}
-
-function run(db, mode, work) {
-  return new Promise((resolve, reject) => {
-    const store = db.transaction('outbox', mode).objectStore('outbox');
-    const req = work(store);
-    store.transaction.oncomplete = () => resolve(req ? req.result : undefined);
-    store.transaction.onerror = () => reject(store.transaction.error);
-  });
-}
-
-async function flushOutbox() {
-  const db = await openDb();
-  const entries = await run(db, 'readonly', s => s.getAll());
-  let sent = 0;
-  for (const entry of entries) {
-    // a network error rejects: the browser tries the sync again later
-    const response = await fetch(entry.url, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': entry.user || '', 'X-MatDo-Request-Id': entry.id || '' },
-      body: JSON.stringify(entry.body || {}),
-    });
-    if (response.status === 401) { break; } // signed out: the page sends it after the next sign-in of the same account
-    await run(db, 'readwrite', s => s.delete(entry.key));
-    if (response.ok) { sent++; }
-  }
-
-  const windows = await self.clients.matchAll({ type: 'window' });
-  windows.forEach(w => w.postMessage({ type: 'outbox-synced', count: sent }));
-}
-
-self.addEventListener('sync', event => {
-  if (event.tag === 'md-outbox') { event.waitUntil(flushOutbox()); }
 });
 
 // ---- notifications (Web Push: NotificationService on the server, push.js subscribes) -------------------------------------
@@ -136,22 +73,14 @@ function tomorrowIso() {
   return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 }
 
-// an action of a notification: sent now; without a network it waits in the queue of the offline mode like any change
-async function act(url, body, user) {
-  const id = (self.crypto && self.crypto.randomUUID) ? self.crypto.randomUUID() : String(Date.now()) + Math.random();
-  try {
-    const response = await fetch(url, {
-      method: 'POST',
-      credentials: 'same-origin',
-      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': user || '', 'X-MatDo-Request-Id': id },
-      body: JSON.stringify(body),
-    });
-    if (response.ok) { return; }
-    if (response.status !== 401) { return; } // gone, or another account: nothing to wait for
-  } catch (e) { /* no network: queue it */ }
-  const db = await openDb();
-  await run(db, 'readwrite', s => s.add({ url, body, user: user || '', id, at: Date.now() }));
-  if (self.registration.sync) { await self.registration.sync.register('md-outbox').catch(() => {}); }
+// an action of a notification (Done, Tomorrow): sent now; without a network it does not happen (the notification is gone, the task is unchanged)
+function act(url, body, user) {
+  return fetch(url, {
+    method: 'POST',
+    credentials: 'same-origin',
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': user || '' },
+    body: JSON.stringify(body),
+  }).catch(() => {});
 }
 
 self.addEventListener('notificationclick', event => {

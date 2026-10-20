@@ -19,18 +19,16 @@
   function toastAfterReload(message) { try { sessionStorage.setItem('md-toast', message); } catch (e) { /* private mode */ } location.reload(); }
   (function () { try { var m = sessionStorage.getItem('md-toast'); if (m) { sessionStorage.removeItem('md-toast'); setTimeout(function () { toast(m); }, 50); } } catch (e) { /* private mode */ } })();
 
-  // every change goes through the queue of the offline mode (offline.js): sent now, or later when the network is back; the page shows it at once either way
-  function post(url, body, label) {
-    if (window.MatDoOffline) {
-      return window.MatDoOffline.send(url, body, label).then(function (r) { var d = r.data || {}; d.queued = r.queued; return d; });
-    }
+  // a change is sent at once; without a network it does not happen (offline only new tasks can be noted, offline.js) – the error says so
+  function offline() { var e = new Error('offline'); e.offline = true; return e; }
+  function post(url, body) {
+    if (!navigator.onLine) { return Promise.reject(offline()); }
     return fetch(url, {
       method: 'POST', credentials: 'same-origin',
       headers: { 'X-MatDo-Request': '1', 'X-MatDo-Tab': window.MatDoTab || '', 'Accept': 'application/json', 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : null
-    }).then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); });
+    }).then(function (r) { if (!r.ok) { throw new Error(r.status); } return r.json(); }, function () { throw offline(); });
   }
-  function offlineNote(message, queued) { return queued ? message + ' ' + t('Js.Offline.Later') : message; }
 
   function titleOf(row) { var el = row.querySelector('.md-task__title'); return el ? el.textContent.trim() : ''; }
 
@@ -99,54 +97,49 @@
     var check = row.querySelector('.md-check');
     if (check) { check.classList.add('is-checked'); }
     if (navigator.vibrate) { navigator.vibrate(10); }
-    return post('/api/app/tasks/' + id + '/complete', null, title).then(function (data) {
-      if (data.completed || data.queued) {
+    return post('/api/app/tasks/' + id + '/complete').then(function (data) {
+      if (data.completed) {
         row.classList.add('is-done');
         leave(row);
-        toast(offlineNote(t('Js.Task.Completed', title), data.queued));
+        toast(t('Js.Task.Completed', title));
       } else {
         // a repeating task: its next date; the row stays (or belongs to another day: the page shows it there after a reload)
         if (check) { check.classList.remove('is-checked'); }
         toastAfterReload(t('Js.Task.NextDue', data.nextDueText || data.nextDue));
       }
-    });
+    }, function (err) { if (check) { check.classList.remove('is-checked'); } throw err; });
   }
 
   function reopen(row) {
     var id = row.getAttribute('data-task');
     var title = titleOf(row);
-    return post('/api/app/tasks/' + id + '/reopen', null, title).then(function (data) { leave(row); toast(offlineNote(t('Js.Task.Reopened', title), data.queued)); });
+    return post('/api/app/tasks/' + id + '/reopen').then(function () { leave(row); toast(t('Js.Task.Reopened', title)); });
   }
 
   function setDue(row, which) {
     var id = row.getAttribute('data-task');
-    return post('/api/app/tasks/' + id + '/due', { date: dayFor(which) }, titleOf(row)).then(function (data) {
-      if (data.queued) {
-        // without a network the page cannot move the row to its new day: it says what will happen
-        toast(offlineNote(which === 'none' ? t('Js.NoDate') : t('Js.Task.Due', t('Js.Due.' + which)), true));
-        return;
-      }
+    return post('/api/app/tasks/' + id + '/due', { date: dayFor(which) }).then(function (data) {
       toastAfterReload(data.dueText ? t('Js.Task.Due', data.dueText) : t('Js.NoDate'));
     });
   }
 
   function setPriority(row, p) {
     var id = row.getAttribute('data-task');
-    return post('/api/app/tasks/' + id + '/priority', { priority: +p }, titleOf(row)).then(function (data) {
+    return post('/api/app/tasks/' + id + '/priority', { priority: +p }).then(function () {
       row.setAttribute('data-priority', p);
       var check = row.querySelector('.md-check');
       if (check) { check.className = check.className.replace(/\bmd-p[1-4]\b/, 'md-p' + p); }
-      toast(offlineNote(t('Js.Task.Priority', p), data.queued));
+      toast(t('Js.Task.Priority', p));
     });
   }
 
   function remove(row) {
     var id = row.getAttribute('data-task');
     var title = titleOf(row);
-    return post('/api/app/tasks/' + id + '/delete', null, title).then(function (data) { leave(row); toast(offlineNote(t('Js.Task.Deleted', title), data.queued)); });
+    return post('/api/app/tasks/' + id + '/delete').then(function () { leave(row); toast(t('Js.Task.Deleted', title)); });
   }
 
-  function failed() { toast(t('Js.Task.Failed'), 'danger'); }
+  function failed(e) { var off = e && e.offline; toast(t(off ? 'Js.Offline.NoAction' : 'Js.Task.Failed'), off ? 'warning' : 'danger'); }
 
   // ---- the check of a row --------------------------------------------------------------------------------------------
   document.addEventListener('submit', function (e) {
@@ -157,7 +150,11 @@
     var check = form.querySelector('.md-check');
     check.disabled = true;
     (row.classList.contains('is-done') ? reopen(row) : complete(row))
-      .catch(function () { check.disabled = false; form.submit(); })
+      .catch(function (err) {
+        check.disabled = false;
+        if (err && err.offline) { check.classList.remove('is-checked'); failed(err); return; }
+        form.submit(); // the page does it without the script
+      })
       .then(function () { check.disabled = false; });
   });
 

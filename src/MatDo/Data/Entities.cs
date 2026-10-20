@@ -52,6 +52,9 @@ public enum TaskSource
 {
     App = 0,
     Webhook = 1,
+
+    /// <summary>Noted without a network and sent when it came back (offline.js).</summary>
+    Offline = 2,
 }
 
 public sealed class User : SoftEntity

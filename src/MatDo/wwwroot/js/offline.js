@@ -1,166 +1,124 @@
-/* MatDo offline: the queue of changes made without a network (window.MatDoOffline).
-
-   send(url, body)  posts JSON to the API (header X-MatDo-Request: 1, the account in X-MatDo-User). Without a network – or when the request fails on the way –
-                    the change goes into the queue (IndexedDB "matdo", store "outbox") and the answer is { queued: true }: the page shows it at once.
-   flush()          sends the queue in order: when the network comes back, when a page loads, every 30 s, and in the background (Background Sync, sw.js, Android).
-                    An entry that the server refuses (4xx) is dropped with a message; one of another account (409) silently; a network error keeps it for later.
-   clear()          empties the queue and the copies of the pages (sign-out: nothing of one person stays on the device for the next).
-
-   The indicator in the top bar (#md-offline) says "Offline" and how many changes wait. */
+/* MatDo without a network – small on purpose:
+   - The pages need the network. Without one the service worker shows the offline page (offline.html); an open page shows "Offline" in the top bar.
+   - New tasks can still be noted: on the offline page, or in the quick add while offline. The notes stay on this device (localStorage md-notes) and go into the
+     inbox when the network is back: POST /api/app/capture, read the same way as the webhook (keywords, dates, #project). Nothing else waits: checking off,
+     a date, delete need the network.
+   - window.MatDoTab: this window (live.js; the server does not tell the window that made a change). */
 (function () {
   'use strict';
 
-  var TEXTS = (function () { try { return JSON.parse(document.getElementById('md-texts').textContent); } catch (e) { return {}; } })();
-  function t(key, a) { return (TEXTS[key] || key).replace('{0}', a === undefined ? '' : a); }
-  function toast(message, tone) { if (window.MatUi && window.MatUi.toast) { window.MatUi.toast(message, { tone: tone || 'success', timeout: 5000 }); } }
-
+  var NOTES = 'md-notes', USER = 'md-user', LANG = 'md-lang';
   var root = document.documentElement;
   var user = root.getAttribute('data-user') || '';
-  var DB = 'matdo', STORE = 'outbox';
+  var TEXTS = (function () { try { return JSON.parse(document.getElementById('md-texts').textContent); } catch (e) { return {}; } })();
+  function t(key, a) { return (TEXTS[key] || key).replace('{0}', a === undefined ? '' : a); }
+  function newId() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + String(Math.random()).slice(2); }
+  function store(key, value) { try { localStorage.setItem(key, value); } catch (e) { /* private mode */ } }
+  function read(key) { try { return localStorage.getItem(key); } catch (e) { return null; } }
 
-  function db() {
-    return new Promise(function (resolve, reject) {
-      if (!window.indexedDB) { reject(new Error('no indexedDB')); return; }
-      var open = indexedDB.open(DB, 1);
-      open.onupgradeneeded = function () { open.result.createObjectStore(STORE, { keyPath: 'key', autoIncrement: true }); };
-      open.onsuccess = function () { resolve(open.result); };
-      open.onerror = function () { reject(open.error); };
-    });
-  }
-  function tx(mode, work) {
-    return db().then(function (d) {
-      return new Promise(function (resolve, reject) {
-        var store = d.transaction(STORE, mode).objectStore(STORE);
-        var result = work(store);
-        store.transaction.oncomplete = function () { resolve(result && result.result !== undefined ? result.result : result); };
-        store.transaction.onerror = function () { reject(store.transaction.error); };
-      });
-    });
-  }
-  function all() { return tx('readonly', function (s) { return s.getAll(); }); }
-  function add(entry) { return tx('readwrite', function (s) { return s.add(entry); }); }
-  function drop(key) { return tx('readwrite', function (s) { return s.delete(key); }); }
-
-  // this window (a tab keeps it over reloads): a change it makes does not make it reload (live.js; LiveService skips the window that made the change)
+  // this window, kept over reloads
   var tab = (function () {
-    try { var v = sessionStorage.getItem('md-tab'); if (!v) { v = String(Date.now()) + String(Math.random()).slice(2, 10); sessionStorage.setItem('md-tab', v); } return v; }
-    catch (e) { return String(Date.now()); }
+    try { var v = sessionStorage.getItem('md-tab'); if (!v) { v = newId(); sessionStorage.setItem('md-tab', v); } return v; } catch (e) { return newId(); }
   })();
   window.MatDoTab = tab;
 
-  function headers() {
-    return { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': user, 'X-MatDo-Tab': tab };
+  // the offline page does not know who uses the device: an app page writes it down (a note belongs to that account)
+  if (user) { store(USER, user); store(LANG, root.lang || 'en'); }
+  var owner = user || read(USER) || '';
+
+  // ---- the notes --------------------------------------------------------------------------------------------------------------
+  function notes() { try { return JSON.parse(read(NOTES) || '[]'); } catch (e) { return []; } }
+  function mine() { return notes().filter(function (n) { return !n.user || !owner || n.user === owner; }); }
+  function save(list) { store(NOTES, JSON.stringify(list)); render(); badge(); }
+  function note(text) {
+    text = String(text || '').trim();
+    if (!text) { return false; }
+    var list = notes();
+    list.push({ id: newId(), text: text.slice(0, 2000), user: owner, at: Date.now() });
+    save(list);
+    return true;
   }
+  function drop(id) { save(notes().filter(function (n) { return n.id !== id; })); }
 
-  function newId() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + String(Math.random()).slice(2); }
-
-  // every change has an id from its first try on: the server does it once, however often it is sent (the page and the service worker may send the same queue)
-  function request(url, body, account, id) {
-    var h = headers();
-    if (account) { h['X-MatDo-User'] = account; }
-    if (id) { h['X-MatDo-Request-Id'] = id; }
-    return fetch(url, { method: 'POST', credentials: 'same-origin', headers: h, body: JSON.stringify(body || {}) });
-  }
-
-  function enqueue(url, body, label, id) {
-    return add({ id: id || newId(), url: url, body: body || {}, label: label || '', user: user, at: Date.now() })
-      .then(function () {
-        refresh();
-        if ('serviceWorker' in navigator && window.SyncManager) {
-          navigator.serviceWorker.ready.then(function (r) { return r.sync.register('md-outbox'); }).catch(function () { /* flushed by the page */ });
-        }
-        return { ok: true, queued: true, data: null };
-      });
-  }
-
-  // send now, or keep it for later
-  function send(url, body, label) {
-    var id = newId();
-    if (!navigator.onLine) { return enqueue(url, body, label, id); }
-    return request(url, body, null, id).then(function (r) {
-      return r.json().catch(function () { return {}; }).then(function (data) {
-        if (!r.ok) { var e = new Error(r.status); e.status = r.status; e.data = data; throw e; }
-        return { ok: true, queued: false, data: data };
-      });
-    }, function () { return enqueue(url, body, label, id); });
-  }
-
-  var flushing = null;
+  // one after the other into the inbox; the id makes a note that is sent twice one task
+  var sending = false;
   function flush() {
-    if (flushing || !navigator.onLine) { return flushing || Promise.resolve(0); }
-    flushing = all().then(function (entries) {
-      var sent = 0;
-      return entries.reduce(function (chain, entry) {
-        return chain.then(function (stop) {
-          if (stop) { return true; }
-          return request(entry.url, entry.body, entry.user, entry.id).then(function (r) {
-            if (r.ok) { sent++; return drop(entry.key).then(function () { return false; }); }
-            if (r.status === 409) { return drop(entry.key).then(function () { return false; }); }
-            if (r.status === 401) { return true; } // signed out: try again after the sign-in (of the same account)
-            return r.json().catch(function () { return {}; }).then(function (data) {
-              toast(t('Js.Offline.Dropped', entry.label || (data && data.error) || r.status), 'danger');
-              return drop(entry.key).then(function () { return false; });
-            });
-          }, function () { return true; }); // still no network
+    var todo = mine();
+    if (!user || sending || !navigator.onLine || !todo.length) { return; }
+    sending = true;
+    var sent = 0;
+    todo.reduce(function (chain, n) {
+      return chain.then(function () {
+        return fetch('/api/app/capture', {
+          method: 'POST', credentials: 'same-origin',
+          headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-User': n.user || user, 'X-MatDo-Request-Id': n.id, 'X-MatDo-Tab': tab },
+          body: JSON.stringify({ text: n.text }),
+        }).then(function (r) {
+          if (r.ok) { sent++; drop(n.id); return; }
+          if (r.status === 400 || r.status === 409) { drop(n.id); return; } // nothing to read, or another account: it never goes
+          throw new Error(String(r.status));
         });
-      }, Promise.resolve(false)).then(function () { return sent; });
-    }).catch(function () { return 0; }).then(function (sent) {
-      flushing = null;
-      refresh();
-      if (sent > 0) { synced(sent); }
-      return sent;
-    });
-    return flushing;
-  }
-
-  // after a sync the page shows the server's state again (unless someone is typing)
-  function synced(count) {
-    var message = t('Js.Offline.Synced', count);
-    var typing = document.activeElement && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName) && document.activeElement.value;
-    if (typing) { toast(message); return; }
-    try { sessionStorage.setItem('md-toast', message); } catch (e) { /* private mode */ }
-    location.reload();
-  }
-
-  function clear() {
-    var jobs = [tx('readwrite', function (s) { return s.clear(); }).catch(function () { })];
-    if (window.caches) { jobs.push(caches.delete('matdo-pages')); }
-    if (navigator.serviceWorker && navigator.serviceWorker.controller) { navigator.serviceWorker.controller.postMessage('clear-pages'); }
-    return Promise.all(jobs);
-  }
-
-  // ---- the indicator in the top bar ------------------------------------------------------------------------------------
-  var badge = document.getElementById('md-offline');
-  function refresh() {
-    var offline = !navigator.onLine;
-    root.toggleAttribute('data-offline', offline);
-    all().then(function (entries) { return entries.filter(function (e) { return e.user === user; }).length; }, function () { return 0; }).then(function (n) {
-      if (!badge) { return; }
-      badge.hidden = !offline && n === 0;
-      badge.classList.toggle('is-offline', offline);
-      var text = badge.querySelector('[data-offline-text]');
-      text.textContent = offline ? (n > 0 ? t('Js.Offline.BadgePending', n) : t('Js.Offline.Badge')) : t('Js.Offline.Pending', n);
-      badge.setAttribute('aria-label', text.textContent);
+      });
+    }, Promise.resolve()).catch(function () { /* the network went again: the rest waits */ }).then(function () {
+      sending = false;
+      if (!sent) { return; }
+      var message = t('Js.Offline.Sent', sent);
+      if (document.querySelector('.md-tasks, .md-view')) {
+        try { sessionStorage.setItem('md-toast', message); } catch (e) { /* private mode */ }
+        location.reload();
+      } else if (window.MatUi && MatUi.toast) { MatUi.toast(message, { tone: 'success' }); }
     });
   }
 
-  window.addEventListener('online', function () { refresh(); flush(); });
-  window.addEventListener('offline', function () { refresh(); toast(t('Js.Offline.Now'), 'warning'); });
-  if (navigator.serviceWorker) {
-    navigator.serviceWorker.addEventListener('message', function (e) { if (e.data && e.data.type === 'outbox-synced') { refresh(); if (e.data.count > 0) { synced(e.data.count); } } });
+  // ---- the top bar of an app page: "Offline" and how many notes wait; a click opens the offline page (or sends them) ---------
+  var mark = document.getElementById('md-offline');
+  function badge() {
+    if (!mark) { return; }
+    var n = mine().length, off = !navigator.onLine;
+    mark.hidden = !off && !n;
+    mark.querySelector('[data-offline-text]').textContent = off ? t('Js.Offline.Badge') + (n ? ' · ' + t('Js.Offline.BadgeNotes', n) : '') : t('Js.Offline.BadgeNotes', n);
+    mark.title = off ? t('Js.Offline.Now') : '';
   }
-  if (badge) { badge.addEventListener('click', function () { flush(); }); }
-  setInterval(function () { if (navigator.onLine) { flush(); } }, 30000);
+  if (mark) { mark.addEventListener('click', function () { if (navigator.onLine) { flush(); } else { location.assign('/offline.html'); } }); }
 
-  // sign-out: send what waits (when there is a network), then nothing of this person stays on the device
-  document.addEventListener('submit', function (e) {
-    var form = e.target;
-    if (!form.matches || !form.matches('form[action="/Account/Logout"]') || form.__cleared) { return; }
-    e.preventDefault();
-    flush().then(clear, clear).then(function () { form.__cleared = true; form.submit(); });
-  });
+  // ---- the offline page: a field and the list of notes ------------------------------------------------------------------------
+  var page = document.getElementById('md-capture');
+  function render() {
+    var list = document.getElementById('md-notes');
+    if (!list) { return; }
+    list.textContent = '';
+    mine().forEach(function (n) {
+      var li = document.createElement('li');
+      li.className = 'md-note';
+      var text = document.createElement('span');
+      text.textContent = n.text;
+      var x = document.createElement('button');
+      x.type = 'button';
+      x.className = 'mat-btn mat-btn--ghost mat-btn--icon mat-btn--sm';
+      x.setAttribute('aria-label', list.getAttribute('data-remove-' + root.lang) || 'Remove');
+      x.textContent = '×';
+      x.addEventListener('click', function () { drop(n.id); });
+      li.appendChild(text);
+      li.appendChild(x);
+      list.appendChild(li);
+    });
+  }
+  if (page) {
+    root.lang = read(LANG) || ((navigator.language || 'en').slice(0, 2) === 'de' ? 'de' : 'en');
+    var field = document.getElementById('md-capture-text');
+    field.placeholder = field.getAttribute('data-placeholder-' + root.lang) || '';
+    page.addEventListener('submit', function (e) {
+      e.preventDefault();
+      if (note(field.value)) { field.value = ''; }
+      field.focus();
+    });
+    render();
+  }
 
-  window.MatDoOffline = { send: send, flush: flush, clear: clear, refresh: refresh };
-  refresh();
-  if (navigator.onLine) { flush(); }
+  // back online: an app page sends the notes, the offline page goes back to the app (which sends them)
+  window.addEventListener('online', function () { if (page) { location.assign('/Today'); return; } badge(); flush(); });
+  window.addEventListener('offline', badge);
+  window.MatDoOffline = { note: note, flush: flush };
+  badge();
+  flush();
 })();

@@ -11,19 +11,31 @@
   <link rel="stylesheet" href="/css/app.css" />
 </head>
 <body>
-  <main class="mat-auth">
+  <!-- Shown by the service worker when a page cannot be loaded. New tasks are noted here (offline.js) and go into the inbox when the network is back,
+       read like the webhook. The texts are in English and German; offline.js shows the language the app had. -->
+  <main class="mat-auth md-offline-page">
     <div class="mat-auth__card">
       <div class="mat-auth__brand">
         <img class="md-brandmark md-brandmark--light" src="/img/logo/matdo-logo.svg" alt="MatDo" width="152" height="40" />
         <img class="md-brandmark md-brandmark--dark" src="/img/logo/matdo-logo-dark.svg" alt="MatDo" width="152" height="40" />
         <h1>Offline</h1>
-        <p class="mat-muted" lang="en">No connection to MatDo. Your tasks are safe on the server – this page comes back as soon as the network does.</p>
-        <p class="mat-muted" lang="de">Keine Verbindung zu MatDo. Deine Aufgaben sind sicher auf dem Server – die Seite ist wieder da, sobald das Netz zurück ist.</p>
+        <p class="mat-muted" lang="en">No connection. Note new tasks here – they go into your inbox as soon as the network is back, read like the webhook (with your keywords).</p>
+        <p class="mat-muted" lang="de">Keine Verbindung. Notiere neue Aufgaben hier – sie kommen in deinen Eingang, sobald das Netz zurück ist, gelesen wie beim Webhook (mit deinen Schlüsselwörtern).</p>
       </div>
+      <form class="mat-form md-capture" id="md-capture" novalidate>
+        <label class="mat-label" for="md-capture-text"><span lang="en">New task</span><span lang="de">Neue Aufgabe</span></label>
+        <div class="md-capture__row">
+          <input class="mat-input" id="md-capture-text" autocomplete="off" enterkeyhint="done" maxlength="2000"
+                 data-placeholder-en="e.g. Call the dentist tomorrow 9am" data-placeholder-de="z. B. Zahnarzt anrufen morgen 9 Uhr" />
+          <button type="submit" class="mat-btn mat-btn--primary"><span lang="en">Note</span><span lang="de">Notieren</span></button>
+        </div>
+      </form>
+      <ul class="md-notes" id="md-notes" aria-live="polite" data-remove-en="Remove" data-remove-de="Entfernen"></ul>
       <div class="mat-btn-row mat-btn-row--plain md-center">
-        <a class="mat-btn mat-btn--primary" href="/Today">Retry · Erneut versuchen</a>
+        <a class="mat-btn mat-btn--secondary" href="/Today"><span lang="en">Try again</span><span lang="de">Erneut versuchen</span></a>
       </div>
     </div>
   </main>
+  <script src="/js/offline.js"></script>
 </body>
 </html>

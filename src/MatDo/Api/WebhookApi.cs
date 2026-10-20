@@ -55,14 +55,7 @@ public static class WebhookApi
         }
 
         services.GetRequiredService<CurrentUser>().ActingUserId = user.Id;
-        var quick = services.GetRequiredService<QuickAddService>();
-        var (task, error) = await quick.CreateAsync(user, new QuickAddInput
-        {
-            Text = text.Length > 2000 ? text[..2000] : text,
-            Description = description,
-            DefaultProjectId = hook.ProjectId,
-            Source = TaskSource.Webhook,
-        });
+        var (task, error) = await FromTextAsync(services, user, text, description, hook.ProjectId, TaskSource.Webhook);
         if (task is null)
         {
             return Results.Json(new { error }, statusCode: StatusCodes.Status400BadRequest);
@@ -71,9 +64,6 @@ public static class WebhookApi
         hook.LastUsedDate = DateTime.UtcNow;
         hook.UseCount++;
         await db.SaveChangesAsync();
-
-        // the open windows show it at once (the inbox, the project)
-        await services.GetRequiredService<LiveService>().TasksChangedAsync(task.ProjectId, new LiveEvent("tasks", Task: task.Id, Title: task.Content, Source: "webhook"));
 
         var labels = await db.TaskLabels.Where(l => l.TaskId == task.Id && l.Label != null).Select(l => l.Label!.Name).ToListAsync();
         var today = Dates.Today(user.TimeZone);
@@ -93,6 +83,29 @@ public static class WebhookApi
             url = $"/Tasks/Edit?id={task.Id}",
             message = Summary(task, labels, today),
         }, statusCode: StatusCodes.Status201Created);
+    }
+
+    /// <summary>
+    /// How a text from outside the page becomes a task: the webhook and the notes made without a network (offline.js, <c>POST /api/app/capture</c>) go the same way – the
+    /// text is read like the quick add (dates, #project, the keywords of the person), the task lands in the inbox unless the text names a project (or the webhook has one),
+    /// and the open windows show it at once (LiveService).
+    /// </summary>
+    internal static async Task<(TaskItem? Task, string? Error)> FromTextAsync(IServiceProvider services, User user, string text, string? description, long? projectId, TaskSource source)
+    {
+        var (task, error) = await services.GetRequiredService<QuickAddService>().CreateAsync(user, new QuickAddInput
+        {
+            Text = text.Length > 2000 ? text[..2000] : text,
+            Description = description,
+            DefaultProjectId = projectId,
+            Source = source,
+        });
+        if (task is not null)
+        {
+            await services.GetRequiredService<LiveService>().TasksChangedAsync(task.ProjectId,
+                new LiveEvent("tasks", Task: task.Id, Title: task.Content, Source: source == TaskSource.Webhook ? "webhook" : "offline"));
+        }
+
+        return (task, error);
     }
 
     /// <summary>One sentence for the notification of the shortcut: "„Milch kaufen“ – Morgen 17:00 – Einkauf".</summary>

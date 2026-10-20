@@ -198,15 +198,25 @@
       });
     });
 
-    // The task is sent as JSON through the queue of the offline mode (offline.js): with a network the page shows it at once (a reload with the editor open again),
-    // without one it waits on the device, stands in the list as "waits for the network" and goes out when the network is back. Without the script: the form.
+    // The task is sent as JSON (the page then shows it: a reload with the editor open again). Without a network it is noted on the device instead (offline.js)
+    // and goes into the inbox when the network is back, read like the webhook. Without the script: the form.
+    function sendOrNote(body, title) {
+      if (!navigator.onLine) { return Promise.reject({ offline: true }); }
+      return fetch('/api/app/tasks', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Accept': 'application/json', 'Content-Type': 'application/json', 'X-MatDo-Request': '1', 'X-MatDo-Tab': window.MatDoTab || '' },
+        body: JSON.stringify(body),
+      }).then(function (r) {
+        return r.json().catch(function () { return {}; }).then(function (data) { if (!r.ok) { throw { data: data }; } return data; });
+      }, function () { throw { offline: true }; });
+    }
     form.addEventListener('submit', function (e) {
       if (!input.value.trim()) { e.preventDefault(); input.focus(); return; }
       clearTimeout(timer);
-      if (!window.MatDoOffline || !window.fetch) { return; }
+      if (!window.fetch) { return; }
       e.preventDefault();
       var fields = new FormData(form);
-      var body = { clientId: (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now()) + Math.random() };
+      var body = {};
       ['Text', 'Description', 'DefaultProjectId', 'DefaultSectionId', 'DefaultDueDate', 'ParentId', 'Off', 'DueDate', 'DueTime', 'Priority', 'Labels'].forEach(function (k) {
         var v = fields.get(k);
         body[k.charAt(0).toLowerCase() + k.slice(1)] = v === null || v === '' ? null : String(v);
@@ -217,16 +227,9 @@
       var title = (parsed && parsed.title) || input.value.trim();
       var submit = form.querySelector('[data-qa-submit]');
       submit.disabled = true;
-      window.MatDoOffline.send('/api/app/tasks', body, title).then(function (r) {
+      sendOrNote(body, title).then(function (data) {
         submit.disabled = false;
-        if (r.queued) {
-          pending(title);
-          reset();
-          if (window.MatUi && window.MatUi.toast) { window.MatUi.toast(t('Js.Offline.Saved', title), { tone: 'warning', timeout: 5000 }); }
-          input.focus();
-          return;
-        }
-        try { sessionStorage.setItem('md-toast', r.data && r.data.message ? r.data.message : title); } catch (x) { /* private mode */ }
+        try { sessionStorage.setItem('md-toast', data && data.message ? data.message : title); } catch (x) { /* private mode */ }
         var dialog = root.closest('dialog');
         var url = new URL(location.href);
         if (!dialog) { url.searchParams.set('qa', root.id); url.hash = root.id; }
@@ -234,28 +237,18 @@
         if (url.pathname === location.pathname && url.search === location.search) { location.reload(); }
       }, function (err) {
         submit.disabled = false;
+        if (err && err.offline && window.MatDoOffline) {
+          // the text as typed: the server reads it later like the webhook (date, #project, keywords)
+          window.MatDoOffline.note(input.value);
+          reset();
+          if (window.MatUi && window.MatUi.toast) { window.MatUi.toast(t('Js.Offline.Noted', title), { tone: 'warning', timeout: 5000 }); }
+          input.focus();
+          return;
+        }
         var message = err && err.data && err.data.error ? err.data.error : t('Js.Task.Failed');
         if (window.MatUi && window.MatUi.toast) { window.MatUi.toast(message, { tone: 'danger' }); }
       });
     });
-
-    // a task that waits for the network: a row in the list above the editor, until the page shows the real one
-    function pending(title) {
-      var list = root.previousElementSibling;
-      if (!list || !list.classList || !list.classList.contains('md-tasks')) {
-        if (root.closest('dialog')) { return; }
-        list = document.createElement('ul');
-        list.className = 'mat-itemlist mat-itemlist--lines-inset md-tasks';
-        root.parentNode.insertBefore(list, root);
-      }
-      var li = document.createElement('li');
-      li.className = 'mat-item md-task is-pending';
-      li.innerHTML = '<div class="mat-item__row"><span class="md-task__check"><span class="md-check md-p4" aria-hidden="true"></span></span>' +
-        '<span class="mat-item__main md-task__main"><span class="mat-item__body"><span class="md-task__title"></span>' +
-        '<span class="md-task__meta"><span class="md-meta">' + icon('cloud') + esc(t('Js.Offline.Waiting')) + '</span></span></span></span></div>';
-      li.querySelector('.md-task__title').textContent = title;
-      list.appendChild(li);
-    }
 
     paint();
     if (root.open) { autosize(input); }
