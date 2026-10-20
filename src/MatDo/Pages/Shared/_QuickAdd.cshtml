@@ -53,7 +53,7 @@
                     </div>
                     <div class="md-qa__time">
                         <label class="mat-label" for="@id-pick-time">@Ui.Icon("clock")@L["QuickAdd.Time"]</label>
-                        <input class="mat-input mat-input--sm" type="time" id="@id-pick-time" data-qa-pick-time />
+                        <div class="mat-picker md-qa__timepicker" data-picker="time" data-step="15" data-clearable data-placeholder="--:--"><input class="mat-picker__input" id="@id-pick-time" data-qa-pick-time /></div>
                     </div>
                     <div class="mat-calendar md-qa__calendar" data-calendar>
                         <input class="mat-calendar__input" id="@id-pick-date" aria-label="@L["QuickAdd.ChooseDate"]" data-qa-pick-date />
@@ -83,21 +83,25 @@
                 </div>
             </div>
             <label class="mat-sr-only" for="@id-project">@L["Tasks.Project"]</label>
-            <select class="mat-select mat-select--sm md-qa__project" id="@id-project" name="DefaultProjectId" data-qa-project hidden="@(Model.ParentId is not null)">
-                @foreach (var p in personal)
-                {
-                    <option value="@p.Id" selected="@(p.Id == Model.DefaultProjectId)">@(p.IsInbox ? L["Project.Inbox"].Value : p.Name)</option>
-                }
-                @foreach (var g in teams)
-                {
-                    <optgroup label="@g.Key">
-                        @foreach (var p in g)
-                        {
-                            <option value="@p.Id" selected="@(p.Id == Model.DefaultProjectId)">@p.Name</option>
-                        }
-                    </optgroup>
-                }
-            </select>
+            <div class="mat-picker md-qa__project" data-picker="select" data-search hidden="@(Model.ParentId is not null)">
+                <input class="mat-picker__input" id="@id-project" name="DefaultProjectId" value="@Model.DefaultProjectId" data-qa-project />
+                <div class="mat-picker__options" hidden>
+                    @foreach (var p in personal)
+                    {
+                        <button type="button" class="mat-picker__option" data-value="@p.Id"><span class="mat-picker__text"><span class="mat-picker__name">@(p.IsInbox ? L["Project.Inbox"].Value : p.Name)</span></span></button>
+                    }
+                    @foreach (var g in teams)
+                    {
+                        <div class="mat-picker__group" role="group">
+                            <div class="mat-picker__group-head">@g.Key</div>
+                            @foreach (var p in g)
+                            {
+                                <button type="button" class="mat-picker__option" data-value="@p.Id"><span class="mat-picker__text"><span class="mat-picker__name">@p.Name</span></span></button>
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
         </div>
 
         <div class="mat-btn-row mat-btn-row--plain md-qa__foot">

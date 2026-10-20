@@ -154,7 +154,9 @@
       disabled = {};
       tokens = []; parsed = null;
       $$('[data-qa-label]', root).forEach(function (c) { c.checked = false; });
-      if (calendar) { setCalendar(''); timeField.value = ''; }
+      if (calendar) { setCalendar(''); setTime(''); }
+      // the pickers (project, time) show the values the reset put back
+      if (window.MatUi && MatUi.picker) { MatUi.picker.init(root); }
       paint(); renderChips(); autosize(input); autosize(desc);
     }
 
@@ -254,7 +256,13 @@
     }
     function syncCalendar() {
       setCalendar(due.value || '');
-      timeField.value = time.value || '';
+      setTime(time.value || '');
+    }
+    // the time is a MatUi picker: set through it, so the field shows the value (its change is not taken as a choice)
+    function setTime(value) {
+      syncing = true;
+      if (!(window.MatUi && MatUi.picker && MatUi.picker.set(timeField, value))) { timeField.value = value; }
+      syncing = false;
     }
     calendar.addEventListener('change', function () {
       if (syncing || !/^\d{4}-\d{2}-\d{2}$/.test(calendar.value)) { return; }
@@ -263,6 +271,7 @@
     });
     // a time without a day: today (like the text "um 15 Uhr"); with a day: that day at this time
     timeField.addEventListener('change', function () {
+      if (syncing) { return; }
       if (!timeField.value) { time.value = ''; renderChips(); return; }
       if (!due.value) { due.value = iso(new Date()); noDate.value = 'false'; setOff('date', true); setCalendar(due.value); }
       time.value = timeField.value;

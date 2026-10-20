@@ -11,8 +11,9 @@ public sealed record Choice(string Value, string Label, string? Hint = null, str
 
 /// <summary>
 /// The one code base of a form field (label above, hint below, the error at the field): <c>&lt;md-field name="Title" label="Title" required /&gt;</c>.
-/// The kinds: text, email, password, number, date, url, tel, search, textarea, select (the native one, for a short list), picker (the toolkit's select with a search),
-/// tags, colour, switch, check, otp (a code input). The message of the server (<c>ModelState</c>) is shown at the field, and the id of a field is its name, so the
+/// The kinds: text, email, password, number, url, tel, search, textarea, select (the native one, for six choices and more), radios (up to five exclusive choices, FORM-12),
+/// picker (the toolkit's select with a search), date and time (the toolkit's pickers, FORM-15: never a native or a text field for them), tags, colour, switch, check, otp (a code input).
+/// An optional date or time can be cleared. The message of the server (<c>ModelState</c>) is shown at the field, and the id of a field is its name, so the
 /// summary at the top of the form can link to it. A field can depend on another (<c>show-if="#Kind"</c> <c>show-value="Link"</c>): it is only shown when it is needed.
 /// </summary>
 [HtmlTargetElement("md-field", TagStructure = TagStructure.WithoutEndTag)]
@@ -90,6 +91,12 @@ public sealed class FieldTagHelper : TagHelper
         if (state?.AttemptedValue is { } attempted && Kind is not ("password" or "otp"))
         {
             value = attempted;
+        }
+
+        if (Kind == "radios")
+        {
+            output.Content.SetHtmlContent(Radios(id, value, error));
+            return;
         }
 
         var sb = new StringBuilder();
@@ -191,19 +198,17 @@ public sealed class FieldTagHelper : TagHelper
             case "textarea":
                 sb.Append($"<textarea class=\"mat-textarea{(Mono ? " mat-mono" : string.Empty)}\" id=\"{id}\" name=\"{name}\" rows=\"{Rows}\"{limits}{common}>{E(value)}</textarea>");
                 break;
-            case "select":
-                sb.Append($"<select class=\"mat-select\" id=\"{id}\" name=\"{name}\"{common}>");
-                foreach (var o in Options ?? [])
-                {
-                    sb.Append($"<option value=\"{E(o.Value)}\"{(o.Value == value ? " selected" : string.Empty)}>{E(o.Label)}</option>");
-                }
-
-                sb.Append("</select>");
+            case "date":
+            case "time":
+                // the toolkit's pickers post 2026-10-10 and 09:30, whatever the language of the page
+                sb.Append($"<div class=\"mat-picker\" data-picker=\"{Kind}\"{(Optional ? " data-clearable" : string.Empty)}{Attr("data-placeholder", Placeholder)}{(Kind == "time" ? " data-step=\"15\"" : string.Empty)}>");
+                sb.Append($"<input class=\"mat-picker__input\" id=\"{id}\" name=\"{name}\" value=\"{E(value)}\"{common} /></div>");
                 break;
+            case "select": // a choice from a list is the toolkit's select picker, the same as "picker"
             case "picker":
             case "tags":
             case "colour":
-                var data = Kind == "picker" ? "select" : Kind;
+                var data = Kind is "picker" or "select" ? "select" : Kind;
                 sb.Append($"<div class=\"mat-picker\" data-picker=\"{data}\"{Attr("data-placeholder", Placeholder)}");
                 foreach (var flag in (PickerOptions ?? string.Empty).Split(' ', StringSplitOptions.RemoveEmptyEntries))
                 {
@@ -236,10 +241,43 @@ public sealed class FieldTagHelper : TagHelper
                 sb.Append($"<div class=\"mat-otp mat-otp--lg mat-otp--center\" data-otp data-length=\"6\" data-chars=\"digits\"><input class=\"mat-otp__input\" id=\"{id}\" name=\"{name}\" inputmode=\"numeric\" autocomplete=\"one-time-code\" pattern=\"[0-9]{{6}}\" data-msg-pattern=\"The code has six digits.\"{common} /></div>");
                 break;
             default:
-                var type = Kind is "email" or "password" or "number" or "date" or "url" or "tel" or "search" ? Kind : "text";
+                var type = Kind is "email" or "password" or "number" or "url" or "tel" or "search" ? Kind : "text";
                 sb.Append($"<input class=\"mat-input{(Mono ? " mat-mono" : string.Empty)}\" type=\"{type}\" id=\"{id}\" name=\"{name}\" value=\"{E(value)}\"{limits}{common} />");
                 break;
         }
+    }
+
+    /// <summary>Up to five exclusive choices (FORM-12): a fieldset with a legend and a radio per choice, as the toolkit draws them.</summary>
+    private string Radios(string id, string value, string? error)
+    {
+        var sb = new StringBuilder();
+        sb.Append($"<fieldset class=\"mat-field mat-fieldset{(error is null ? string.Empty : " is-invalid")}\" id=\"{id}\"");
+        if (ShowIf is not null)
+        {
+            sb.Append($" data-show-if=\"{E(ShowIf)}\"");
+            if (ShowValue is not null)
+            {
+                sb.Append($" data-show-value=\"{E(ShowValue)}\"");
+            }
+        }
+
+        sb.Append($"><legend class=\"mat-legend\">{E(Label)}</legend><div class=\"mat-checks mat-checks--inline\">");
+        var i = 0;
+        foreach (var o in Options ?? [])
+        {
+            var checkedAttr = o.Value == value ? " checked" : string.Empty;
+            sb.Append($"<label class=\"mat-check\"><input type=\"radio\" id=\"{id}-{i++}\" name=\"{E(Name)}\" value=\"{E(o.Value)}\"{checkedAttr}{(Disabled ? " disabled" : string.Empty)} />");
+            sb.Append($"<span class=\"mat-check__text\">{E(o.Label)}{(o.Hint is null ? string.Empty : $"<small class=\"mat-muted\">{E(o.Hint)}</small>")}</span></label>");
+        }
+
+        sb.Append("</div>");
+        if (Hint is not null)
+        {
+            sb.Append($"<span class=\"mat-hint\" id=\"{id}-hint\">{E(Hint)}</span>");
+        }
+
+        sb.Append($"<span class=\"mat-error\" id=\"{id}-error\" aria-live=\"polite\">{E(error)}</span></fieldset>");
+        return sb.ToString();
     }
 
     private static bool Ui_IsColour(string? value) => MatDo.Services.Ui.IsColour(value);

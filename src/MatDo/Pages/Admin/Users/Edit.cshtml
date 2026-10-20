@@ -12,7 +12,7 @@
         <div class="mat-card__body mat-form">
             <md-field name="DisplayName" label="@L["Account.Name"]" required value="@Model.DisplayName" maxlength="120" msg-required="@L["Account.Name.Required"]" />
             <md-field name="Email" kind="email" label="@L["Account.Email"]" required value="@Model.Email" autocomplete="off" msg-required="@L["Account.Login.Email.Required"]" />
-            <md-field name="Role" kind="select" label="@L["Users.Col.Role"]" value="@Model.Role" options="Model.Roles" />
+            <md-field name="Role" kind="radios" label="@L["Users.Col.Role"]" value="@Model.Role" options="Model.Roles" />
             <md-field name="IsActive" kind="switch" label="@L["Users.CanSignIn"]" value="@Model.IsActive.ToString()" />
             <md-field name="Password" kind="password" label="@L[Model.IsNew ? "Account.Password" : "Password.New"]" required="@Model.IsNew" optional="@(!Model.IsNew)" autocomplete="new-password"
                       hint="@(Model.IsNew ? L["Account.Password.Hint", PasswordService.MinLength].Value : L["Users.Password.Hint"].Value)" />

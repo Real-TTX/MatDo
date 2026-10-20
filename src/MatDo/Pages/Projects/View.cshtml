@@ -68,8 +68,7 @@
         <details class="md-newsection">
             <summary class="md-newsection__add">@Ui.Icon("plus")<span>@L["Sections.Add"]</span></summary>
             <form class="md-newsection__form" method="post" asp-page-handler="AddSection" asp-route-id="@Model.Project.Id" novalidate>
-                <label class="mat-sr-only" for="SectionName">@L["Sections.Name"]</label>
-                <input class="mat-input" id="SectionName" name="SectionName" maxlength="120" required placeholder="@L["Sections.Name"]" data-msg-required="@L["Common.NameRequired"]" />
+                <md-field name="SectionName" label="@L["Sections.Name"]" required maxlength="120" msg-required="@L["Common.NameRequired"]" />
                 <div class="mat-btn-row mat-btn-row--plain">
                     <button type="submit" class="mat-btn mat-btn--primary mat-btn--sm">@Ui.Icon("plus")<span>@L["Sections.Add"]</span></button>
                 </div>
