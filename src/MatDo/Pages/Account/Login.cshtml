@@ -12,7 +12,43 @@
         <p class="mat-muted">@L["Account.Login.Welcome"]</p>
     </div>
 
-    <form class="mat-form" method="post" novalidate>
+    @if (Model.PendingLink is { } link)
+    {
+        <div class="mat-alert mat-alert--info" role="status" id="login-link">
+            @Ui.Icon("link")
+            <div class="mat-alert__body">@L["Account.Login.Link", link.Email ?? string.Empty]</div>
+        </div>
+    }
+    else if (Model.LinkExpired)
+    {
+        <div class="mat-alert mat-alert--warning" role="status" id="login-link-expired">
+            @Ui.Icon("alert")
+            <div class="mat-alert__body">@L["Account.Login.LinkExpired"]</div>
+        </div>
+    }
+    else if (Model.Denied)
+    {
+        <div class="mat-alert mat-alert--danger" role="alert" id="login-denied">
+            @Ui.Icon("alert")
+            <div class="mat-alert__body">@L["Account.Login.Denied"]</div>
+        </div>
+    }
+    else if (Model.SsoError && Model.IdentityEnabled)
+    {
+        <div class="mat-alert mat-alert--warning" role="status" id="login-sso-error">
+            @Ui.Icon("alert")
+            <div class="mat-alert__body">@L["Account.Login.SsoError"]</div>
+        </div>
+    }
+    else if (Model.SignedOut)
+    {
+        <div class="mat-alert mat-alert--info" role="status" id="login-signed-out">
+            @Ui.Icon("info")
+            <div class="mat-alert__body">@L["Account.Login.SignedOut"]</div>
+        </div>
+    }
+
+    <form class="mat-form" method="post" novalidate id="login-form">
         <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
         <partial name="_FormSummary" model="ViewData.ModelState" />
         <md-field name="Email" kind="email" label="@L["Account.Email"]" required autocomplete="username" inputmode="email" value="@Model.Email" autofocus msg-required="@L["Account.Login.Email.Required"]" />
@@ -21,6 +57,18 @@
         <div class="mat-btn-row mat-btn-row--plain">
             <button type="submit" class="mat-btn mat-btn--primary mat-btn--block">@Ui.Icon("login")<span>@L["Account.Login.Title"]</span></button>
         </div>
+        @if (Model.PendingLink is not null)
+        {
+            <div class="mat-btn-row mat-btn-row--plain">
+                <button type="submit" class="mat-btn mat-btn--block" id="login-link-cancel" formaction="/Account/Login?handler=CancelLink" formnovalidate>@Ui.Icon("x")<span>@L["Common.Cancel"]</span></button>
+            </div>
+        }
+        else if (Model.IdentityEnabled)
+        {
+            <div class="mat-btn-row mat-btn-row--plain">
+                <a class="mat-btn mat-btn--block" id="lf-sso" href="@Model.IdentitySignInUrl">@Ui.Icon("shield")<span>@L["Account.Login.Sso"]</span></a>
+            </div>
+        }
         @if (Model.CanRegister)
         {
             <p class="mat-muted">@L["Account.Login.NoAccount"] <a href="/Account/Register">@L["Account.Login.RegisterNow"]</a></p>

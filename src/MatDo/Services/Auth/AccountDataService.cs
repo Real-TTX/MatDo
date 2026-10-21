@@ -10,7 +10,7 @@ namespace MatDo.Services.Auth;
 /// <para>
 /// The export holds the account and its settings, the keywords, labels, personal projects with their sections and tasks (with sub-tasks, labels, comments), the
 /// teams and the tasks of team projects the person created or was given, the comments they wrote there, the webhooks, the devices for notifications and the
-/// sessions. No secret: no password hash, no token of a session or a webhook, no key of a device.
+/// sessions (and the person of MatIdentity the account is linked with). No secret: no password hash, no token of a session or a webhook, no ID token, no key of a device.
 /// </para>
 /// <para>
 /// The erasure deletes for good (the account is not just hidden): the personal projects with everything in them, the labels, keywords, webhooks, devices,
@@ -97,6 +97,7 @@ public sealed class AccountDataService(AppDbContext db)
                 user.DigestTime,
                 user.CreateDate,
                 user.LastLoginDate,
+                MatIdentitySubject = user.ExternalSubject,
             },
             Keywords = await db.Keywords.IgnoreQueryFilters().AsNoTracking().Where(k => k.UserId == userId).Select(k => new { k.Word, k.Kind }).ToListAsync(ct),
             Labels = labels.Select(l => new { l.Name, l.Color, l.IsFavorite, Deleted = l.Deleted ? true : (bool?)null }),

@@ -567,6 +567,10 @@ namespace MatDo.Data.Migrations
                         .HasMaxLength(254)
                         .HasColumnType("character varying(254)");
 
+                    b.Property<string>("ExternalSubject")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
                     b.Property<int>("FailedLogins")
                         .HasColumnType("integer");
 
@@ -625,6 +629,10 @@ namespace MatDo.Data.Migrations
 
                     b.HasIndex("Email")
                         .IsUnique();
+
+                    b.HasIndex("ExternalSubject")
+                        .IsUnique()
+                        .HasFilter("\"ExternalSubject\" IS NOT NULL");
 
                     b.ToTable("User", (string)null);
                 });
@@ -687,6 +695,13 @@ namespace MatDo.Data.Migrations
                     b.Property<DateTime>("ExpiresDate")
                         .HasColumnType("timestamp with time zone");
 
+                    b.Property<string>("IdentitySessionId")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)");
+
+                    b.Property<string>("IdentityToken")
+                        .HasColumnType("text");
+
                     b.Property<string>("IpAddress")
                         .HasMaxLength(64)
                         .HasColumnType("character varying(64)");
@@ -714,6 +729,8 @@ namespace MatDo.Data.Migrations
                         .HasColumnType("bigint");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("IdentitySessionId");
 
                     b.HasIndex("Token")
                         .IsUnique();

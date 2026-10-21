@@ -22,6 +22,13 @@
   "Account.Login.Inactive": { "en": "This account is disabled.", "de": "Dieses Konto ist gesperrt." },
   "Account.Login.NoAccount": { "en": "No account yet?", "de": "Noch kein Konto?" },
   "Account.Login.RegisterNow": { "en": "Register now", "de": "Jetzt registrieren" },
+  "Account.Login.Sso": { "en": "Sign in with MatIdentity", "de": "Mit MatIdentity anmelden" },
+  "Account.Login.SsoError": { "en": "The sign-in through MatIdentity did not work, or MatIdentity cannot be reached. Sign in here with your password.", "de": "Die Anmeldung über MatIdentity hat nicht geklappt oder MatIdentity ist nicht erreichbar. Melde dich hier mit deinem Passwort an." },
+  "Account.Login.SignedOut": { "en": "You are signed out.", "de": "Du bist abgemeldet." },
+  "Account.Login.Denied": { "en": "MatIdentity knows you, but this account cannot be used in MatDo: it is disabled or connected with another person.", "de": "MatIdentity kennt dich, aber dieses Konto kann MatDo nicht nutzen: Es ist gesperrt oder mit einer anderen Person verbunden." },
+  "Account.Login.Link": { "en": "An account with the address {0} exists in MatDo. Sign in once with its password to connect it with MatIdentity.", "de": "In MatDo gibt es ein Konto mit der Adresse {0}. Melde dich einmal mit seinem Passwort an, um es mit MatIdentity zu verbinden." },
+  "Account.Login.LinkExpired": { "en": "The connection with MatIdentity has expired. Sign in through MatIdentity again to connect the account.", "de": "Die Verbindung mit MatIdentity ist abgelaufen. Melde dich noch einmal über MatIdentity an, um das Konto zu verbinden." },
+  "Account.Login.Linked": { "en": "Your account is now connected with MatIdentity.", "de": "Dein Konto ist jetzt mit MatIdentity verbunden." },
 
   "Account.Register.Title": { "en": "Register", "de": "Registrieren" },
   "Account.Register.Heading": { "en": "Create an account", "de": "Konto erstellen" },

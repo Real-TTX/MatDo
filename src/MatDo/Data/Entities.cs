@@ -102,6 +102,9 @@ public sealed class User : SoftEntity
 
     /// <summary>The day the last overview was sent (in the zone of the person), so it goes once a day.</summary>
     public DateOnly? LastDigestDate { get; set; }
+
+    /// <summary>The person of MatIdentity (the claim <c>sub</c>) this account is linked with; null = a local account only.</summary>
+    public string? ExternalSubject { get; set; }
 }
 
 /// <summary>A browser or an installed app that receives notifications (Web Push): the subscription the browser handed out. Deleted when the push service says it is gone.</summary>
@@ -144,6 +147,12 @@ public sealed class UserSession : Entity
     public string? UserAgent { get; set; }
 
     public string? IpAddress { get; set; }
+
+    /// <summary>The ID token of a sign-in through MatIdentity (for the sign-out there); null for a local sign-in. A secret: never exported.</summary>
+    public string? IdentityToken { get; set; }
+
+    /// <summary>The session of MatIdentity (the claim <c>sid</c>) this session started with: the back-channel logout ends it by this.</summary>
+    public string? IdentitySessionId { get; set; }
 }
 
 /// <summary>A word of the quick add that introduces a value: <c>Projekt</c> in "Projekt EIMER".</summary>

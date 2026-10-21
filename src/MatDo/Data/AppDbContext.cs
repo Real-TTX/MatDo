@@ -50,6 +50,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
             e.Property(x => x.Language).HasMaxLength(5);
             e.Property(x => x.Theme).HasMaxLength(10);
             e.Property(x => x.Scheme).HasMaxLength(10);
+            e.Property(x => x.ExternalSubject).HasMaxLength(200);
+            e.HasIndex(x => x.ExternalSubject).IsUnique().HasFilter("\"ExternalSubject\" IS NOT NULL");
             e.HasQueryFilter(x => x.UpdateState != SoftEntity.Deleted);
         });
 
@@ -61,6 +63,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
             e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
             e.Property(x => x.UserAgent).HasMaxLength(300);
             e.Property(x => x.IpAddress).HasMaxLength(64);
+            e.Property(x => x.IdentitySessionId).HasMaxLength(200);
+            e.HasIndex(x => x.IdentitySessionId);
         });
 
         b.Entity<UserKeyword>(e =>

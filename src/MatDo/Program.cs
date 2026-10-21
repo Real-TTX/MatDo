@@ -39,6 +39,7 @@ builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<ExternalSignInService>();
 builder.Services.AddScoped<MatDo.Services.Auth.AccountDataService>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<TaskService>();
@@ -95,6 +96,14 @@ builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationSc
 
             return Task.CompletedTask;
         };
+    })
+
+    // Sign-in through MatIdentity, only when MATIDENTITY_AUTHORITY is set (nothing changes without it); with it also the back-channel logout.
+    .AddMatIdentitySignIn<MatDoIdentityUsers>(platform, o =>
+    {
+        o.CookieScheme = CookieAuthenticationDefaults.AuthenticationScheme;
+        o.LoginPath = "/Account/Login";
+        o.AccessDeniedPath = "/Account/Login?local=1&denied=1";
     });
 
 builder.Services.AddAuthorization(options =>

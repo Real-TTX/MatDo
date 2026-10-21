@@ -28,7 +28,11 @@ public sealed class SessionService(AppDbContext db, IMemoryCache cache)
 
     public static UserSnapshot Snapshot(User u) => new(u.Id, u.Email, u.DisplayName, u.Role, u.Theme, u.Scheme, u.TimeZone, u.Language);
 
-    public async Task SignInAsync(HttpContext http, User user, bool remember)
+    /// <summary>
+    /// Starts a session. After a sign-in through MatIdentity the session keeps its ID token (for the sign-out there) and the session of MatIdentity it started
+    /// with (the claim <c>sid</c>, for the back-channel logout).
+    /// </summary>
+    public async Task SignInAsync(HttpContext http, User user, bool remember, string? identityToken = null, string? identitySessionId = null)
     {
         var now = DateTime.UtcNow;
         var session = new UserSession
@@ -40,6 +44,8 @@ public sealed class SessionService(AppDbContext db, IMemoryCache cache)
             CreateUserId = user.Id,
             UserAgent = Trim(http.Request.Headers.UserAgent.ToString(), 300),
             IpAddress = http.Connection.RemoteIpAddress?.ToString(),
+            IdentityToken = string.IsNullOrEmpty(identityToken) ? null : identityToken,
+            IdentitySessionId = Trim(identitySessionId, 200),
         };
         db.Sessions.Add(session);
         await db.SaveChangesAsync();
@@ -72,6 +78,42 @@ public sealed class SessionService(AppDbContext db, IMemoryCache cache)
     }
 
     public static long? CurrentSessionId(HttpContext http) => http.Items["MatDo.SessionId"] as long?;
+
+    /// <summary>The ID token of MatIdentity the current session started with; null for a local sign-in.</summary>
+    public async Task<string?> IdentityTokenAsync(HttpContext http)
+        => CurrentSessionId(http) is { } id
+            ? await db.Sessions.AsNoTracking().Where(s => s.Id == id).Select(s => s.IdentityToken).FirstOrDefaultAsync()
+            : null;
+
+    /// <summary>
+    /// The back-channel logout of MatIdentity: with <paramref name="identitySessionId"/> the sessions that started with that session of MatIdentity end (only those
+    /// of the person of <paramref name="subject"/> when it is named too); with <paramref name="subject"/> alone every session of the account linked with it.
+    /// An unknown subject or session ends nothing. The next request of an ended session is signed out (<see cref="ValidateAsync"/>). Answers how many ended.
+    /// </summary>
+    public async Task<int> EndIdentitySessionsAsync(string? subject, string? identitySessionId, CancellationToken ct = default)
+    {
+        var sessions = db.Sessions.Where(s => !s.IsRevoked);
+        if (!string.IsNullOrEmpty(identitySessionId))
+        {
+            sessions = sessions.Where(s => s.IdentitySessionId == identitySessionId);
+            if (!string.IsNullOrEmpty(subject))
+            {
+                sessions = sessions.Where(s => s.User!.ExternalSubject == subject);
+            }
+        }
+        else if (!string.IsNullOrEmpty(subject))
+        {
+            sessions = sessions.Where(s => s.User!.ExternalSubject == subject);
+        }
+        else
+        {
+            return 0;
+        }
+
+        var ended = await sessions.ExecuteUpdateAsync(s => s.SetProperty(x => x.IsRevoked, true), ct);
+        Invalidate();
+        return ended;
+    }
 
     /// <summary>Runs for every request with a cookie: accepts it only while its session is valid and the user is active.</summary>
     public static async Task ValidateAsync(CookieValidatePrincipalContext context)
