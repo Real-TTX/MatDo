@@ -100,6 +100,42 @@ Dann **http://localhost:6006** öffnen und registrieren – das erste Konto ist 
 
 Volumes je Stack: `web-data` (Schlüssel der Sitzungen) und `db-data` (PostgreSQL), bei dev/local zusätzlich `pgadmin-data`. Die Compose-Dateien brauchen keine Variablen; Verbindung (`Host=db;Database=matdo;Username=matdo;Password=matdo`) und Port stehen im Image. Für den Betrieb im Internet das Datenbank-Passwort in der Compose-Datei **und** per `ConnectionStrings__Default` ändern und einen TLS-Proxy (Caddy, Traefik) davorsetzen.
 
+### Einstellungen (Umgebung)
+
+Keine davon ist nötig; ohne sie läuft MatDo allein mit eigenen Konten.
+
+| Variable | Bedeutung |
+|---|---|
+| `ConnectionStrings__Default` | Verbindung zu PostgreSQL (Standard im Image: `Host=db;Port=5432;Database=matdo;Username=matdo;Password=matdo`) |
+| `DataDirectory` | Ordner der Schlüssel für die Sitzungen (Standard `/data`, das Volume `web-data`) |
+| `MAT_API_KEY` | Schlüssel für die Plattform-API `/api/*` (Header `X-Api-Key`); leer = nur mit einem Token von MatIdentity. Mattiverse setzt ihn |
+| `MATIDENTITY_AUTHORITY` | Adresse von MatIdentity (`https://id.example.com`); gesetzt = Anmeldung über MatIdentity |
+| `MATIDENTITY_CLIENT_ID` | Client von MatDo in MatIdentity (Standard: `matdo`) |
+| `MATIDENTITY_CLIENT_SECRET` | sein Geheimnis |
+| `MATIDENTITY_INTERNAL_URL` | optional: wo MatDo MatIdentity im Docker-Netz erreicht (`http://matidentity:2300`); der Browser nutzt weiter `MATIDENTITY_AUTHORITY` |
+
+MatDo verschickt keine E-Mails (Erinnerungen und Tagesübersicht kommen als Web Push), daher gibt es keine `MATSMTP_*`-Variablen.
+
+## Plattform (Mattiverse, MatIdentity)
+
+MatDo erfüllt den Plattform-Vertrag der Mat-Apps ([MatDesign `docs/PLATFORM.md`](https://github.com/Real-TTX/MatDesign/blob/main/docs/PLATFORM.md), Paket MatPlatform 1.4.0 in `src/MatDo/MatPlatform`, eine Kopie): Mattiverse und andere Apps können MatDo anzeigen, überwachen und einrichten, ohne es vorher zu kennen.
+
+| Endpunkt | Inhalt | Zugriff |
+|---|---|---|
+| `GET /api` | Beschreibung (MatApiDefinition): Seiten *Übersicht* und *Einstellungen*, Kacheln, Felder, Schaltflächen, Rollen `admin`/`user` | anonym |
+| `GET /api/health` | `ok` / `degraded` (kein aktiver Administrator) / `down` (Datenbank weg); 200 bzw. 503 – der Docker-`HEALTHCHECK` fragt hier | anonym |
+| `GET /api/state[/{key}]` | Kacheln: aktive Benutzer, Teams, Projekte, offene und überfällige Aufgaben, erledigt in 7 Tagen, aktive Webhooks, Geräte mit Benachrichtigungen, Registrierung, letzte Änderung | Schlüssel oder Token |
+| `GET`/`PUT /api/configure` | Registrierung offen, öffentliche Adresse – dieselben Werte wie *Administration → System* | Schlüssel oder Token |
+| `POST /api/actions/cleanUp` | Aufräumen: beendete Sitzungen und vor über 30 Tagen gelöschte Aufgaben und Kommentare endgültig entfernen | Schlüssel oder Token |
+
+Die übrigen Schaltflächen sind Links (*Öffnen* `/Today`, *Benutzer* `/Admin/Users`, *System* `/Admin/System`). Änderungen über die API stehen mit dem Aufrufer im Log.
+
+**Anmeldung über MatIdentity** (nur mit `MATIDENTITY_AUTHORITY`): Wer nicht angemeldet ist, landet direkt bei MatIdentity (OpenID Connect, Code mit PKCE) und kommt angemeldet zurück. Die Person wird über `sub` gefunden, sonst als neues Konto angelegt (mit Eingang und Schlüsselwörtern, ohne Passwort). Ein bestehendes Konto mit derselben Adresse wird **nicht** über die Adresse übernommen: Es wird erst verbunden, nachdem es sich einmal mit seinem Passwort angemeldet hat (`/Account/Login?local=1&link=1`, mit Abbrechen). Der Claim `role` (`admin`/`user`) gilt bei jeder Anmeldung, der letzte aktive Administrator wird nie herabgestuft; ohne Claim vergibt MatDo die Rollen selbst.
+
+- Lokale Anmeldung (z. B. wenn MatIdentity nicht erreichbar ist): `/Account/Login?local=1`
+- Adressen für den Client in MatIdentity: Redirect `/signin-oidc`, nach der Abmeldung `/signout-callback-oidc`, Back-Channel-Logout `/signout-backchannel`
+- Abmelden beendet auch die Sitzung bei MatIdentity; meldet MatIdentity eine Person ab (oder beendet ein Administrator dort ihre Sitzungen), endet ihre Sitzung in MatDo bei der nächsten Anfrage (Back-Channel-Logout)
+
 ## Webhook
 
 ```bash
@@ -118,7 +154,7 @@ curl -X POST "https://todo.example.com/api/v1/webhook/<token>" \
 ## Entwicklung
 
 - .NET 10, ASP.NET Core **Razor Pages**, EF Core + **PostgreSQL**, MatUi-Toolkit von MatDesign (kopiert nach `wwwroot/matui`)
-- `dotnet build MatDo.slnx`, `dotnet test` (Parser, Wiederholungen)
+- `dotnet build MatDo.slnx`, `dotnet test` (Parser, Wiederholungen; die Tests der Plattform und der Anmeldung starten die App und brauchen PostgreSQL: `MATDO_TEST_DB="Host=localhost;Port=5432;Username=postgres;Password=…"`, jede Testklasse legt dort eine eigene Datenbank an und löscht sie wieder – ohne die Variable werden sie übersprungen)
 - `./scripts/redeploy.ps1` baut den Container neu und startet den lokalen Stack (`-Clean` = leere Datenbank)
 - Migrationen: `dotnet ef migrations add <Name> -p src/MatDo -o Data/Migrations` (werden beim Start angewendet)
 - Texte: `src/MatDo/Resources/Texts/*.json` (`{"en": …, "de": …}` je Schlüssel); ein Test prüft, dass jeder benutzte Schlüssel in beiden Sprachen existiert

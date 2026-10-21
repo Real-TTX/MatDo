@@ -11,6 +11,13 @@ services:
       - "6006:6006"
     volumes:
       - web-data:/data
+    # Optional, none of them is needed (README "Einstellungen"); Mattiverse sets them when it installs MatDo:
+    # environment:
+    #   MAT_API_KEY: ""                    # the key of /api/* (platform contract)
+    #   MATIDENTITY_AUTHORITY: ""          # https://id.example.com: sign-in through MatIdentity
+    #   MATIDENTITY_CLIENT_ID: "matdo"
+    #   MATIDENTITY_CLIENT_SECRET: ""
+    #   MATIDENTITY_INTERNAL_URL: ""       # http://matidentity:2300 inside Docker
     depends_on:
       db:
         condition: service_healthy
