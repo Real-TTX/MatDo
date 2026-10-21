@@ -5,7 +5,9 @@ using MatDo;
 using MatDo.Api;
 using MatDo.Data;
 using MatDo.Localization;
+using MatDo.Platform;
 using MatDo.Services;
+using MatPlatform;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.DataProtection;
@@ -43,12 +45,17 @@ builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<QuickAddService>();
 builder.Services.AddScoped<TeamService>();
 builder.Services.AddScoped<MenuService>();
+builder.Services.AddScoped<InstanceService>();
 builder.Services.AddScoped<QuickAddEditor>();
 builder.Services.AddHostedService<MaintenanceService>();
 builder.Services.AddSingleton<LiveService>();
 builder.Services.AddScoped<MatDo.Services.Notifications.PushService>();
 builder.Services.AddHostedService<MatDo.Services.Notifications.NotificationService>();
 builder.Services.AddHttpClient("push", c => c.Timeout = TimeSpan.FromSeconds(15));
+
+// The Mat platform contract (MatDesign docs/PLATFORM.md): /api, /api/health, /api/state, /api/configure, /api/actions with MAT_API_KEY or a token of MatIdentity.
+// The package MatPlatform (a copy in MatPlatform/) serves the endpoints; MatDoPlatform describes MatDo and supplies the values through the services.
+var platform = builder.AddMatPlatform<MatDoPlatform>(MatDoPlatform.Describe, o => o.DefaultLanguage = Languages.Default);
 
 // The interface speaks English and German (MatDo.Localization); every localizer reads the one catalog of JSON texts.
 builder.Services.AddSingleton<Microsoft.Extensions.Localization.IStringLocalizerFactory, CatalogLocalizerFactory>();
@@ -183,6 +190,7 @@ app.MapGet("/health", async (AppDbContext db) => await db.Database.CanConnectAsy
 app.MapWebhookApi();
 app.MapAppApi();
 app.MapPushApi();
+app.MapMatPlatform();
 app.MapRazorPages();
 
 app.Run();

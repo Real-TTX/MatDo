@@ -5,7 +5,10 @@ using Microsoft.EntityFrameworkCore;
 
 namespace MatDo;
 
-/// <summary>Docker <c>HEALTHCHECK</c> without curl: the app asks its own <c>/health</c> and answers with an exit code.</summary>
+/// <summary>
+/// Docker <c>HEALTHCHECK</c> without curl: the app asks its own <c>/api/health</c> (platform contract: 200 for ok and degraded, 503 for down, so a degraded app is not
+/// restarted) and answers with an exit code.
+/// </summary>
 public static partial class HealthCheck
 {
     [GeneratedRegex(@":(\d+)")]
@@ -20,7 +23,7 @@ public static partial class HealthCheck
         try
         {
             using var http = new HttpClient { Timeout = TimeSpan.FromSeconds(5) };
-            var response = await http.GetAsync($"http://localhost:{port}/health");
+            var response = await http.GetAsync($"http://localhost:{port}/api/health");
             return response.IsSuccessStatusCode ? 0 : 1;
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
@@ -105,14 +108,8 @@ public sealed class MaintenanceService(IServiceScopeFactory scopes, ILogger<Main
     public async Task RunOnceAsync(CancellationToken ct)
     {
         using var scope = scopes.CreateScope();
-        var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-        var now = DateTime.UtcNow;
-        var limit = now.AddDays(-30);
-
-        var sessions = await db.Sessions.Where(s => s.IsRevoked || s.ExpiresDate < now.AddDays(-1)).ExecuteDeleteAsync(ct);
-        var comments = await db.Comments.IgnoreQueryFilters().Where(c => c.UpdateState == SoftEntity.Deleted && c.UpdateDate < limit).ExecuteDeleteAsync(ct);
-        var tasks = await db.Tasks.IgnoreQueryFilters().Where(t => t.UpdateState == SoftEntity.Deleted && t.UpdateDate < limit).ExecuteDeleteAsync(ct);
-        logger.LogInformation("Housekeeping: {Sessions} old sessions, {Tasks} tasks and {Comments} comments removed.", sessions, tasks, comments);
+        var result = await scope.ServiceProvider.GetRequiredService<InstanceService>().CleanUpAsync(ct);
+        logger.LogInformation("Housekeeping: {Sessions} old sessions, {Tasks} tasks and {Comments} comments removed.", result.Sessions, result.Tasks, result.Comments);
     }
 }
 

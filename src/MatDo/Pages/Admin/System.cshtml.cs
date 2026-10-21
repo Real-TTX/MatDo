@@ -1,53 +1,44 @@
 using MatDo.Localization;
-using MatDo.Data;
 using MatDo.Services;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 
 namespace MatDo.Pages.Admin;
 
-/// <summary>The settings of the installation (registration, public address) and what is in it.</summary>
-public sealed class SystemModel(AppDbContext db, AccountService accounts) : AppPageModel
+/// <summary>The settings of the installation (registration, public address) and what is in it; the same values as the platform API (<see cref="InstanceService"/>).</summary>
+public sealed class SystemModel(InstanceService instance) : AppPageModel
 {
     [BindProperty] public bool RegistrationOpen { get; set; }
 
     [BindProperty] public string PublicUrl { get; set; } = string.Empty;
 
-    public (int Users, int Teams, int Projects, int Open, int Done, int Webhooks) Counts { get; private set; }
+    public InstanceSnapshot Counts { get; private set; } = null!;
 
     public string Database { get; private set; } = string.Empty;
 
     public async Task OnGetAsync()
     {
-        var s = await accounts.SettingsAsync();
-        RegistrationOpen = s.RegistrationOpen;
-        PublicUrl = s.PublicUrl ?? string.Empty;
+        var (open, url) = await instance.SettingsAsync();
+        RegistrationOpen = open;
+        PublicUrl = url ?? string.Empty;
         await LoadAsync();
     }
 
     public async Task<IActionResult> OnPostAsync()
     {
-        var url = PublicUrl.Trim().TrimEnd('/');
-        if (url.Length > 0 && (!Uri.TryCreate(url, UriKind.Absolute, out var uri) || uri.Scheme is not ("http" or "https")))
+        if (await instance.SaveSettingsAsync(RegistrationOpen, PublicUrl) is { } problem)
         {
-            ModelState.AddModelError(nameof(PublicUrl), Text.T("System.PublicUrl.Invalid"));
+            ModelState.AddModelError(nameof(PublicUrl), problem);
             await LoadAsync();
             return Page();
         }
 
-        var s = await accounts.SettingsAsync();
-        s.RegistrationOpen = RegistrationOpen;
-        s.PublicUrl = url.Length == 0 ? null : url;
-        await db.SaveChangesAsync();
         Flash(Text.T("Common.Saved"));
         return LocalRedirect("/Admin/System");
     }
 
     private async Task LoadAsync()
     {
-        Counts = (await db.Users.CountAsync(), await db.Teams.CountAsync(), await db.Projects.CountAsync(),
-            await db.Tasks.CountAsync(t => !t.IsCompleted), await db.Tasks.CountAsync(t => t.IsCompleted), await db.Webhooks.CountAsync());
-        var cs = new Npgsql.NpgsqlConnectionStringBuilder(db.Database.GetConnectionString());
-        Database = $"PostgreSQL {cs.Host}:{cs.Port}/{cs.Database}";
+        Counts = await instance.SnapshotAsync();
+        Database = instance.DatabaseName();
     }
 }

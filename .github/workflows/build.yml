@@ -19,6 +19,20 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
+    # The tests that start the app (platform contract, sign-in) need PostgreSQL: each creates and drops a database of its own there.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: matdo
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 20
+
     steps:
       - uses: actions/checkout@v4
 
@@ -54,6 +68,8 @@ jobs:
           -p:BuildDate=${{ steps.ver.outputs.date }}
 
       - name: Test
+        env:
+          MATDO_TEST_DB: Host=localhost;Port=5432;Username=postgres;Password=matdo
         run: dotnet test MatDo.slnx -c Release --no-build --verbosity normal --logger GitHubActions
 
       - name: Resolve version string

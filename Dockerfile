@@ -49,7 +49,7 @@ RUN mkdir -p /data/keys && chown -R $APP_UID:$APP_UID /data
 VOLUME /data
 USER $APP_UID
 
-# The app checks itself, so the image needs no extra tools.
+# The app checks itself on /api/health (200 for ok and degraded, 503 for down), so the image needs no curl.
 HEALTHCHECK --interval=30s --timeout=8s --start-period=30s --retries=3 \
     CMD ["dotnet", "MatDo.dll", "--healthcheck"]
 
