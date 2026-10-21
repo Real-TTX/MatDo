@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Version 0.3.1 of the toolkit MatUi (what changed in each version: CHANGELOG.md; how to update an app: docs/VERSIONING.md).
+   Version 0.8.0 of the toolkit MatUi (what changed in each version: CHANGELOG.md; how to update an app: docs/VERSIONING.md).
    `node tools/bump.js` writes the version here, in matui.boot.js and in MatUiVersion (Directory.Build.props); window.MatUi.version has it.
    MatUi · behaviour
    Dependency-free. Everything is wired by delegated listeners and data-attributes, so server-rendered and dynamically added
@@ -52,7 +52,8 @@
                                             data-placeholder, data-clearable (a button that clears the value), data-min / data-max / data-week-start / data-flex (dates),
                                             data-step / data-hour12 (times), data-swatches (colours), data-search / data-multiple / data-sep (select; the options are
                                             .mat-picker__option with data-value), data-select-all (select with data-multiple: a first row "Select all" with a box in three
-                                            states for the options that are shown). The texts change with data-pk-<name> on <html>, the format of dates with data-locale.
+                                            states for the options that are shown). The texts change with data-pk-<name> on <html>, the format of dates with data-locale (on <html>; a date field in an element with lang, or with its own
+                                            data-locale, writes its value in that language: a German document in an English page)
                                             tags is a field of chips and has no panel: data-sep, data-max (number of tags), data-max-length (of one tag),
                                             data-duplicates (allow a tag twice), data-strict (only the options, which are the suggestions, can be added)
                                             slot books an appointment (FORM-18): a month with the days that have a free time, then the times of the chosen day. It posts
@@ -93,6 +94,8 @@
      data-show-if="#id | name" data-show-value="a,b | * | true"   show a dependent field only when it is needed
      data-copy="text | #id"                 copy to the clipboard
      data-tabs                              a tab group (role=tablist buttons + role=tabpanel panels)
+     data-table-scroll                      on a .mat-table-wrap: the table keeps every column and scrolls sideways (TABLE-04). Without it a table that is wider than
+                                            its frame above 720 px leaves out its mat-hide-sm columns, the last one first, until it fits (is-col-hidden on their cells)
      data-groups="key"                      a table whose groups (<tbody class="mat-group" data-group="name">) open and close (LIST-16): the toggle in the heading row
                                             (data-group-toggle, aria-expanded) opens or closes its group, and the choice is remembered per table key and group; a group with
                                             data-group-fixed stays as the server drew it (the one with a search hit). data-groups-set="open|closed|toggle" on a button does it
@@ -127,6 +130,33 @@
                                             that another element has as data-shortcut stays that element's). In the header bar (.mat-topbar__search, SHELL-20) a phone gets an icon button; on a phone
                                             the focused field is a full-screen panel with an X. Events: mat:search-select (cancelable), mat:search-results. API: MatUi.search.init / setItems /
                                             open / close / clear / focus / value. The texts: data-sr-<name> on <html>
+
+   Events (CustomEvents named after the control and what happened; this is all of them, docs/ADOPTING.md section 3b has the same list as a table and a test holds both to the code).
+   Each is sent on the element it is about and bubbles, so one listener on document hears them all, except the first four: they are sent on <html> and do not bubble
+   (listen on document.documentElement). None can be cancelled except where it says so; a cancelled one (preventDefault) stops what the script would do next.
+     mat:theme            <html>           { theme: 'system' | 'light' | 'dark' }: the theme was applied (a click, MatUi.theme.set) and once when the script starts
+     mat:accent           <html>           { accent: name | null } or { accent: 'custom', color: '#rrggbb' }: MatUi.accent.set / .custom, and once at the start for data-custom-accent
+     mat:scheme           <html>           { scheme: 'standard' | 'paper' | 'contrast' | 'oled' }: the colour scheme was chosen (data-scheme-set, MatUi.scheme.set)
+     mat:navset           <html>           { set: id }: the menu switcher shows another menu (an entry that is a button, MatUi.nav.set)
+     mat:dialog-open      the dialog       no detail: a dialog.mat-dialog was opened (data-dialog-open, data-autoopen, MatUi.dialog.open, MatUi.confirm / alert / prompt)
+     mat:group-toggle     tbody.mat-group  { group, open }: a group of a table opened or closed
+     mat:item-action      li.mat-item      { item, action, list }: a sliding option was pressed (action is its data-item-action or its text in lower case)
+     mat:reorder          li.mat-item      { list, item, from, to, order }: a row was dropped in a new place (order = the keys of the rows now)
+     mat:item-filter      the list         { list, text, shown, total }: the filter field of a list changed which rows are shown
+     mat:slots-needed     .mat-picker      { month, from, to, picker }: the appointment picker shows a month it has no times for; answer with MatUi.picker.setSlots
+     mat:otp-complete     .mat-otp         { value }: every box has a character; cancelable: preventDefault keeps data-submit from sending the form
+     mat:rating-change    .mat-rating      { value, rating }: the user chose a value
+     mat:schedule-select  .mat-schedule    the event as the app gave it: an event was chosen; cancelable: preventDefault keeps a link (url) from being followed
+     mat:schedule-range   .mat-schedule    { from, to, view, date }: the range that is shown changed (and once when it is drawn first): load its events
+     mat:schedule-day     .mat-schedule    { date, view }: the user chose a day
+     mat:tree-select      li.mat-tree__item  { tree, item, selected, values }: an item was selected or ticked
+     mat:tree-toggle      li.mat-tree__item  { tree, item, open }: a parent opened or closed (not when the remembered state is restored)
+     mat:tree-load        li.mat-tree__item  { tree, item, id, value }: a lazy parent opens for the first time; answer with MatUi.tree.setChildren
+     mat:tree-filter      ul.mat-tree      { tree, text, shown, total }: the filter field changed which items are shown
+     mat:upload-change    .mat-upload      { files, added, removed, source }: the list of files changed (source: picker, drop, paste, remove, reset or api)
+     mat:upload-refused   .mat-upload      { refused, source }: files that were not taken, each with its reason
+     mat:search-results   .mat-search      { query, count, source }: suggestions were drawn (source: local, server or error)
+     mat:search-select    .mat-search      { item, group, query, source }: an option was chosen (source: result, recent or all); cancelable: preventDefault means the app takes over, nothing is followed
    ========================================================================== */
 (function () {
   'use strict';
@@ -285,6 +315,47 @@
       drawerOpener = null;
     }
   }
+
+  // The drawer follows the finger like a phone app (MOBILE-02): a swipe to the right that starts at the left edge of the screen (the first 32 px) opens it, a swipe to
+  // the left closes it. The very edges of a touch screen (20 px) are the app's while the drawer is closed: there a swipe would be the browser's back (on the left) or
+  // forward (on the right), so the touch is taken; a tap there is given to what lies under the finger. (The back gesture of the system on Android is not the page's:
+  // a swipe that starts a little further in opens the drawer there.)
+  var EDGE_OPEN = 32, EDGE_BLOCK = 20, EDGE_DISTANCE = 48;
+  var edgeSwipe = null;
+  function drawerMode() { return !!app() && !!$('.mat-nav', app()) && window.matchMedia('(max-width: 900px)').matches; }
+  function nearEdge(x) { return drawerMode() && !app().classList.contains('is-nav-open') && x <= EDGE_OPEN; }
+  doc.addEventListener('touchstart', function (e) {
+    edgeSwipe = null;
+    if (e.touches.length !== 1 || dialogStack.length > 0 || !drawerMode()) { return; }
+    var t = e.touches[0], x = t.clientX, open = app().classList.contains('is-nav-open');
+    var atLeft = x <= EDGE_OPEN, atRight = x >= window.innerWidth - EDGE_BLOCK;
+    if (!open && !atLeft && !atRight) { return; }
+    edgeSwipe = { x0: x, y0: t.clientY, side: open ? 'close' : atLeft ? 'open' : 'edge', moved: false, taken: false };
+    if (!open && (x <= EDGE_BLOCK || atRight)) { e.preventDefault(); edgeSwipe.taken = true; }
+  }, { passive: false });
+  doc.addEventListener('touchmove', function (e) {
+    var s = edgeSwipe;
+    if (!s) { return; }
+    var t = e.touches[0], dx = t.clientX - s.x0, dy = t.clientY - s.y0;
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) { s.moved = true; }
+    // a sideways move from the edge is the drawer's, not a scroll of the page
+    if (s.side === 'open' && Math.abs(dx) > Math.abs(dy) && e.cancelable) { e.preventDefault(); }
+  }, { passive: false });
+  doc.addEventListener('touchend', function (e) {
+    var s = edgeSwipe;
+    edgeSwipe = null;
+    if (!s) { return; }
+    var t = e.changedTouches[0], dx = t.clientX - s.x0, dy = t.clientY - s.y0;
+    var sideways = Math.abs(dx) >= EDGE_DISTANCE && Math.abs(dx) > Math.abs(dy) * 1.5;
+    if (s.side === 'open' && sideways && dx > 0) { setNav(true); return; }
+    if (s.side === 'close' && sideways && dx < 0) { setNav(false); return; }
+    // a tap at the edge: the touch was taken with its click, so the click goes to what lies there
+    if (s.taken && !s.moved) {
+      var el = doc.elementFromPoint(t.clientX, t.clientY);
+      if (el) { var target = el.closest('a, button, input, select, textarea, label, summary, [tabindex]') || el; if (target.focus) { target.focus({ preventScroll: true }); } target.click(); }
+    }
+  });
+  doc.addEventListener('touchcancel', function () { edgeSwipe = null; });
 
   // ------------------------------------------------------------------------------ menu: submenus and menu sets (SHELL-13, SHELL-15)
   // A parent item is a button (data-nav-branch="key", aria-expanded) that opens its children. The branch with the current page is open
@@ -646,7 +717,7 @@
     }
     var row = t.closest('.mat-item__row');
     var item = row && row.closest('.mat-item--sliding');
-    if (item && item._matSlide && !t.closest('input, textarea, select, .mat-item__options, .mat-item__more')) {
+    if (item && item._matSlide && !t.closest('input, textarea, select, .mat-item__options, .mat-item__more') && !(e.pointerType === 'touch' && nearEdge(e.clientX))) {
       ilGesture = { kind: 'swipe', id: e.pointerId, item: item, row: row, x0: e.clientX, y0: e.clientY, lastX: e.clientX, lastT: e.timeStamp, vx: 0, x: 0, active: false,
                     startW: ilWidth(item, 'start'), endW: ilWidth(item, 'end'),
                     base: item._matSide === 'end' ? -ilWidth(item, 'end') : item._matSide === 'start' ? ilWidth(item, 'start') : 0 };
@@ -1105,7 +1176,45 @@
     if (host.parentNode !== home) { home.appendChild(host); }
     return host;
   }
-  function placeToasts() { if ($('.mat-toasts')) { toastHost(); } }
+  function placeToasts() { if ($('.mat-toasts')) { toastHost(); toasts.slice().forEach(toastSettle); } }
+
+  // A toast goes after 6 s, but never while it is being read or used: the timer waits while the pointer is over the toast or the focus is inside it (its X, a link), and when both have
+  // gone it runs the time that was left, 1.5 s at least. A toast lets taps through (CSS: pointer-events: none, only its X takes one), so it never receives a pointer event of its own:
+  // the pointer is looked for by its position, by one listener on the document that works only while a toast is there, and a touch is never "over" (it has no hover).
+  var TOAST_TIME = 6000, TOAST_LEAST = 1500;
+  var toasts = [];
+  function toastHeld(s) { return s.over || s.el.contains(doc.activeElement); }
+  // is the timer to run or to wait? Called whenever the pointer or the focus may have changed; the focus is read from the document, never from a focus event (moving the host
+  // into a dialog takes the focus off a toast without one).
+  function toastSettle(s) {
+    if (!s.el.parentNode) { toastEnd(s); return; }
+    if (toastHeld(s)) {
+      if (s.timer) { clearTimeout(s.timer); s.timer = 0; s.left = Math.max(s.left - (Date.now() - s.since), TOAST_LEAST); }
+    } else if (!s.timer) {
+      s.since = Date.now();
+      s.timer = setTimeout(function () { s.timer = 0; if (toastHeld(s)) { s.left = Math.max(s.left, TOAST_LEAST); } else { toastEnd(s); } }, s.left);
+    }
+  }
+  function toastEnd(s) {
+    clearTimeout(s.timer);
+    s.timer = 0;
+    var at = toasts.indexOf(s);
+    if (at >= 0) { toasts.splice(at, 1); }
+    var focused = s.el.contains(doc.activeElement);
+    if (s.el.parentNode) { s.el.parentNode.removeChild(s.el); }
+    // a toast that had the focus gives it back to what had it before (A11Y-09)
+    if (focused && s.back && s.back.focus && doc.contains(s.back)) { s.back.focus({ preventScroll: true }); }
+  }
+  doc.addEventListener('pointermove', function (e) {
+    if (!toasts.length || e.pointerType === 'touch') { return; }
+    toasts.slice().forEach(function (s) {
+      var r = s.el.getBoundingClientRect();
+      var over = r.width > 0 && e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      if (over !== s.over) { s.over = over; toastSettle(s); }
+    });
+  }, { passive: true });
+  // the pointer that leaves the window from the toast sends no more moves
+  root.addEventListener('pointerleave', function () { toasts.slice().forEach(function (s) { if (s.over) { s.over = false; toastSettle(s); } }); });
 
   function toast(message, options) {
     var o = options || {};
@@ -1116,9 +1225,14 @@
       '<div class="mat-alert__body">' + esc(message) + '</div>' +
       '<button type="button" class="mat-alert__close" aria-label="' + esc(label('data-dlg-close', 'Close')) + '">' + icon('x') + '</button>';
     host.appendChild(t);
-    function remove() { if (t.parentNode) { t.parentNode.removeChild(t); } }
-    $('.mat-alert__close', t).addEventListener('click', remove);
-    setTimeout(remove, o.timeout || 6000);
+    var s = { el: t, left: o.timeout || TOAST_TIME, since: 0, timer: 0, over: false, back: null };
+    toasts.push(s);
+    $('.mat-alert__close', t).addEventListener('click', function () { toastEnd(s); });
+    t.addEventListener('focusin', function (e) { if (e.relatedTarget && !t.contains(e.relatedTarget)) { s.back = e.relatedTarget; } toastSettle(s); });
+    t.addEventListener('focusout', function () { toastSettle(s); });
+    // Escape closes the toast that has the focus, and only it (not the dialog it is shown in)
+    t.addEventListener('keydown', function (e) { if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); toastEnd(s); } });
+    toastSettle(s);
   }
 
   // ----------------------------------------------------------------------------------------- dependent form fields
@@ -1589,6 +1703,32 @@
     }
   });
 
+  // ------------------------------------------------------------------------------------------------- tables that fit
+  // Under 720 px the rows of a table are cards (TABLE-02). Above, a table that is wider than its frame does not scroll sideways either: the columns that the phone
+  // leaves out (mat-hide-sm on the heading) go, the last one first, until it fits, and come back when there is room (a ResizeObserver on the frame). Only the rows
+  // with as many cells as the heading are touched (a group heading spans the row). data-table-scroll on the frame keeps every column and lets it scroll (TABLE-04).
+  function fitTable(wrap) {
+    var table = $('table.mat-table', wrap);
+    if (!table || !table.tHead || !table.tHead.rows.length) { return; }
+    var heads = Array.prototype.slice.call(table.tHead.rows[0].cells);
+    var optional = heads.map(function (th, i) { return th.classList.contains('mat-hide-sm') ? i : -1; }).filter(function (i) { return i >= 0; }).reverse();
+    if (!optional.length) { return; }
+    $$('.is-col-hidden', table).forEach(function (cell) { cell.classList.remove('is-col-hidden'); });
+    for (var k = 0; k < optional.length && wrap.scrollWidth > wrap.clientWidth; k += 1) {
+      Array.prototype.forEach.call(table.rows, function (row) {
+        if (row.cells.length === heads.length) { row.cells[optional[k]].classList.add('is-col-hidden'); }
+      });
+    }
+  }
+  function initTables(scope) {
+    $$('.mat-table-wrap', scope).forEach(function (wrap) {
+      if (wrap._matFit || wrap.hasAttribute('data-table-scroll')) { return; }
+      wrap._matFit = true;
+      fitTable(wrap);
+      if (typeof ResizeObserver === 'function') { new ResizeObserver(function () { fitTable(wrap); }).observe(wrap); }
+    });
+  }
+
   // ------------------------------------------------------------------------------------------------------- tabs
   function selectTab(tab, focus) {
     var group = tab.closest('[data-tabs]');
@@ -1861,6 +2001,23 @@
       };
     }
     return pkFormats;
+  }
+  // The language of the value of one date field: its own data-locale, else the lang of the nearest element inside the page that has one (a German document in an
+  // English page writes its dates the German way), else the page's. Only the value in the field: the panel and its texts stay in the language of the page.
+  var pkDayFormats = {};
+  function valueLocale(el) {
+    var holder = el && el.closest ? el.closest('[lang]') : null;
+    var l = (el && el.getAttribute('data-locale')) || (holder && holder !== root ? holder.getAttribute('lang') : null);
+    if (!l) { return pkLocale(); }
+    if (/^en$/i.test(l)) { l = 'en-GB'; }
+    try { Intl.DateTimeFormat(l); } catch (e) { return pkLocale(); }
+    return l;
+  }
+  function dayFormat(el) {
+    var l = valueLocale(el);
+    if (l === pkLocale()) { return formats().day; }
+    if (!pkDayFormats[l]) { pkDayFormats[l] = new Intl.DateTimeFormat(l, { dateStyle: 'medium' }); }
+    return pkDayFormats[l];
   }
   function isPhone() { return window.matchMedia('(max-width: 640px)').matches; }
   function clamp(n, lo, hi) { return Math.min(hi, Math.max(lo, n)); }
@@ -2885,7 +3042,7 @@
   var CAL_FOCUS = '.mat-cal__day[tabindex="0"]';
 
   function calDisplay(p, out) {
-    var v = dateValue(p), f = formats().day;
+    var v = dateValue(p), f = dayFormat(p.wrap);
     if (!p.input.value) { out.textContent = placeholderOf(p); return; }
     if (!v.start) { out.textContent = p.input.value; return; }
     var text = f.format(v.start);
@@ -7912,6 +8069,7 @@
     initSchedules();
     initItemLists();
     initRatings();
+    initTables();
     initTrees();
     initUploads();
     initSearches();
@@ -7941,7 +8099,7 @@
   if (doc.readyState === 'loading') { doc.addEventListener('DOMContentLoaded', init); } else { init(); }
 
   window.MatUi = {
-    version: '0.3.1',
+    version: '0.8.0',
     dialog: { open: openDialog, close: closeDialog },
     confirm: confirmDialog,
     alert: alertDialog,
@@ -7964,6 +8122,6 @@
     tree: tree,
     upload: { init: initUploads, files: upFiles, add: upAddFiles, remove: upRemoveFile, clear: upClearFiles, setProgress: upSetProgress, setError: upSetError },
     search: search,
-    refresh: function (scope) { refreshDependents(scope); fillMeters(scope); initForms(scope); applyColours(scope); initPickers(scope); initOtps(scope); initCalendars(scope); initCarousels(scope); initSchedules(scope); initItemLists(scope); initRatings(scope); initTrees(scope); initUploads(scope); initSearches(scope); restoreGroups(scope); }
+    refresh: function (scope) { refreshDependents(scope); fillMeters(scope); initForms(scope); applyColours(scope); initPickers(scope); initOtps(scope); initCalendars(scope); initCarousels(scope); initSchedules(scope); initItemLists(scope); initRatings(scope); initTables(scope); initTrees(scope); initUploads(scope); initSearches(scope); restoreGroups(scope); }
   };
 })();
