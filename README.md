@@ -17,18 +17,22 @@ Selbst gehostet: ein App-Container und PostgreSQL. Port **6006**.
 ## Auf einen Blick
 
 **Aufgaben wie in Todoist**
-- **Schnelleingabe** in einer Zeile: `Angebot schreiben übermorgen 9:30 #Kunde EIMER @wichtig p1` – erkannte Teile werden **im Text markiert** und als Chips angezeigt; ein ✕ am Chip schaltet die Erkennung für diese Art ab
-- Datum, Priorität, Labels und Projekt zusätzlich per Button; **Enter** legt an, **Esc** schließt, **Q** öffnet die Schnelleingabe überall
+- **Schnelleingabe** in einer Zeile: `Angebot schreiben übermorgen 9:30 Projekt Kunde EIMER @wichtig p1` – erkannte Teile werden **im Text markiert** und als Chips angezeigt; ein ✕ am Chip schaltet die Erkennung für diese Art ab
+- Datum (mit Kalender, Uhrzeit und Wiederholung), Priorität, Labels und Projekt zusätzlich per Button – dieselben Felder auf der Seite einer Aufgabe; alle Tastenkürzel unter *Einstellungen → Hotkeys*
 - **Eingang**, **Heute** (mit Überfälligem und „Auf heute verschieben“), **Demnächst** (14 Tage, pro Tag ein Editor), **Filter & Suche**, **Labels**, **Erledigt**
-- **Projekte** mit **Abschnitten**, Farben, Favoriten, Archiv; **Unteraufgaben**, **Kommentare**, **Fristen**, **Wiederholungen**, Prioritäten **p1–p4**
-- Abhaken ohne Neuladen; eine wiederkehrende Aufgabe springt auf den nächsten Termin; **Drag & Drop** für die Reihenfolge
+- **Projekte** mit **Abschnitten**, Farben, Favoriten, Archiv; **Unteraufgaben** eingerückt direkt in der Liste (beliebig tief, zum Abhaken und Zuklappen), **Kommentare**, **Fristen**, **Wiederholungen**, Prioritäten **p1–p4**
+- Abhaken ohne Neuladen; eine wiederkehrende Aufgabe springt auf den nächsten Termin; **Drag & Drop** für die Reihenfolge; auf dem Smartphone **Wischen** (rechts: erledigt, links: morgen / löschen) und **langes Drücken** für das Menü
+- **Live:** eine diktierte Aufgabe oder eine Änderung auf einem anderen Gerät erscheint sofort im offenen Fenster
+- **Benachrichtigungen** (Web Push, auch als installierte App auf dem iPhone): Erinnerung zur Uhrzeit einer Aufgabe (oder 10/30/60 Minuten vorher), Tagesübersicht, Zahl der fälligen Aufgaben am App-Icon, „Erledigt“ und „Morgen“ direkt in der Benachrichtigung
+- **Offline:** ohne Netz eine Offline-Seite, auf der neue Aufgaben notiert werden – sie kommen in den Eingang, sobald das Netz zurück ist, gelesen wie beim Webhook
 
 **Natürliche Sprache (Deutsch und Englisch)**
 
 | Art | Beispiele |
 |---|---|
-| Datum | heute, morgen, übermorgen, am Freitag, nächsten Montag, in 3 Tagen, nächste Woche, am Wochenende, Monatsende, 24.12., 24.12.2027, 24. Dezember, 2026-12-24 · today, tomorrow, next friday, Dec 24 |
-| Uhrzeit | um 15 Uhr, 15:30, 9.30 Uhr, um halb 4, um 7 abends, morgen früh, heute Abend, 3pm |
+| Datum | heute, morgen, übermorgen, am Freitag, nächsten Montag, übernächsten Freitag, in 3 Tagen, nächste Woche, **nächste Woche Mittwoch**, **Mittwoch nächster Woche**, übernächste Woche, am Wochenende, Monatsende, 24.12., 24.12.2027, 24. Dezember, 2026-12-24 · today, tomorrow, next friday, **next week friday**, week after next, Dec 24 |
+| Uhrzeit | um 15 Uhr, 15:30, 9.30 Uhr, um halb 4, um 7 abends, morgen früh, heute Abend, 3pm, **in 10 min**, **in 2 Stunden**, in einer halben Stunde · in 15 minutes, in an hour |
+| Erinnerung | *„Erinnerung in 10 min an Waffel“* → „Waffel“ in 10 Minuten · *„Remind me tomorrow at 8 to call Bob“* → „call Bob“ |
 | Wiederholung | täglich, jeden Tag, werktags, jeden Montag, jede Woche, alle 2 Wochen, jeden Monat, jeden 15., jährlich · every day, every monday |
 | Projekt / Abschnitt | `#Projekt` (auch mit Leerzeichen, z. B. `#Haus und Garten`), `/Abschnitt` |
 | Label / Priorität | `@label`, `p1` … `p4` |
@@ -48,7 +52,8 @@ Die **Schlüsselwörter** legt jede Person unter *Einstellungen → Schlüsselw�
 
 **Oberfläche**
 - **Englisch und Deutsch** (EN / DE): Sprache aus dem Konto, sonst aus dem Umschalter der Anmeldeseite, sonst aus dem Browser. Datumsangaben, Wiederholungen, Meldungen und die Antworten des Webhooks folgen der Sprache; die Schnelleingabe versteht immer beide
-- **Menü-Umschalter unten** im Menü: *Aufgaben*, *Einstellungen* (Profil, Schlüsselwörter, Webhooks, Passwort) und – für Administratoren – *Administration* (Benutzer, System)
+- **Menü-Umschalter unten** im Menü: *Aufgaben*, *Einstellungen* (Profil, Schlüsselwörter, Webhooks, Benachrichtigungen, Hotkeys, Passwort, Deine Daten) und – für Administratoren – *Administration* (Benutzer, System)
+- **Deine Daten (DSGVO):** alles als JSON herunterladen und das Konto endgültig löschen; Team-Projekte bleiben beim Team
 - Design von [MatDesign](https://github.com/Real-TTX/MatDesign) (MatUi), hell/dunkel, Smartphone. Das erste Konto ist der Administrator.
 
 ## Screenshots
@@ -57,7 +62,7 @@ Die **Schlüsselwörter** legt jede Person unter *Einstellungen → Schlüsselw�
 |---|---|
 | ![Heute](docs/images/today-light.png) | ![Demnächst, dunkel](docs/images/upcoming-dark.png) |
 
-| Projekt mit Abschnitten | Aufgabe |
+| Projekt mit Unteraufgaben | Aufgabe |
 |---|---|
 | ![Projekt](docs/images/project-light.png) | ![Aufgabe](docs/images/task-light.png) |
 
@@ -69,9 +74,13 @@ Die **Schlüsselwörter** legt jede Person unter *Einstellungen → Schlüsselw�
 |---|---|
 | ![Team](docs/images/teams-light.png) | ![Benutzer](docs/images/users-dark.png) |
 
-| Smartphone | | |
-|---|---|---|
-| ![Heute auf dem Smartphone](docs/images/today-phone.png) | ![Projekt auf dem Smartphone](docs/images/project-phone.png) | ![Aufgabe auf dem Smartphone](docs/images/task-phone.png) |
+| Benachrichtigungen | Deine Daten (DSGVO) |
+|---|---|
+| ![Benachrichtigungen](docs/images/notifications-light.png) | ![Deine Daten, dunkel](docs/images/data-dark.png) |
+
+| Smartphone | | | |
+|---|---|---|---|
+| ![Heute auf dem Smartphone](docs/images/today-phone.png) | ![Projekt auf dem Smartphone](docs/images/project-phone.png) | ![Aufgabe auf dem Smartphone](docs/images/task-phone.png) | ![Offline: Aufgaben notieren](docs/images/offline-phone.png) |
 
 ## Starten
 
