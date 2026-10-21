@@ -7,7 +7,7 @@
   "Users.Create": { "en": "Create account", "de": "Konto anlegen" },
   "Users.Created": { "en": "Account for {0} created.", "de": "Konto für {0} angelegt." },
   "Users.Delete": { "en": "Delete account", "de": "Konto löschen" },
-  "Users.DeleteConfirm": { "en": "Delete the account of {0}? The person is signed out and cannot sign in any more.", "de": "Konto von {0} löschen? Die Person wird abgemeldet und kann sich nicht mehr anmelden." },
+  "Users.DeleteConfirm": { "en": "Delete the account of {0} and all its data for good? Team projects stay with their teams.", "de": "Konto von {0} mit allen Daten endgültig löschen? Team-Projekte bleiben bei ihren Teams." },
   "Users.Deleted": { "en": "Account of {0} deleted.", "de": "Konto von {0} gelöscht." },
   "Users.NoMatch": { "en": "No user matches", "de": "Kein Benutzer passt" },
   "Users.Col.User": { "en": "User", "de": "Benutzer" },

@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore;
 namespace MatDo.Pages.Admin.Users;
 
 /// <summary>An account: name, address, role, locked or not, a new password. The last active administrator cannot lose the role, be locked or be deleted.</summary>
-public sealed class EditModel(AppDbContext db, AccountService accounts, PasswordService passwords, SessionService sessions) : AppPageModel
+public sealed class EditModel(AppDbContext db, AccountService accounts, PasswordService passwords, SessionService sessions, MatDo.Services.Auth.AccountDataService accountData) : AppPageModel
 {
     [BindProperty(SupportsGet = true)] public long? Id { get; set; }
 
@@ -136,14 +136,9 @@ public sealed class EditModel(AppDbContext db, AccountService accounts, Password
             return LocalRedirect($"/Admin/Users/Edit?id={user.Id}");
         }
 
-        // the account goes softly (its address is freed); its sessions and webhooks end at once
-        user.Email = $"deleted-{user.Id}-{Guid.NewGuid():N}@deleted.invalid";
-        user.IsActive = false;
-        db.Users.Remove(user);
-        await db.Webhooks.Where(w => w.UserId == user.Id).ExecuteUpdateAsync(s => s.SetProperty(w => w.IsActive, false));
-        db.TeamMembers.RemoveRange(await db.TeamMembers.Where(m => m.UserId == user.Id).ToListAsync());
-        await db.SaveChangesAsync();
+        // the account and its data go for good (GDPR Art. 17, the same as when the person deletes it): team projects stay with their teams
         await sessions.RevokeAllAsync(user.Id);
+        await accountData.EraseAsync(user.Id);
         Flash(Text.T("Users.Deleted", DisplayName));
         return LocalRedirect("/Admin/Users");
     }

@@ -1,0 +1,30 @@
+@page "/Account/Data"
+@model MatDo.Pages.Account.DataModel
+@{
+    ViewData["Title"] = L["Data.Title"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Settings.Title"].Value, "/Account"), (L["Data.Title"].Value, null) };
+    ViewData["Width"] = "narrow";
+}
+
+<div class="mat-card">
+    <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("download")@L["Data.Export"]</h2></div>
+    <div class="mat-card__body">
+        <p>@L["Data.Export.Text"]</p>
+        <div class="mat-btn-row mat-btn-row--plain">
+            <a class="mat-btn mat-btn--secondary" href="/Account/Data?handler=Export" download>@Ui.Icon("download")<span>@L["Data.Export.Button"]</span></a>
+        </div>
+    </div>
+</div>
+
+@* deleting the account (FORM-09: no danger zone – the destructive button is the last of its row and asks first, FORM-11) *@
+<form class="mat-form" method="post" asp-page-handler="Delete" novalidate>
+    <partial name="_FormSummary" model="ViewData.ModelState" />
+    <div class="mat-card">
+        <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("user")@L["Data.Delete"]</h2></div>
+        <div class="mat-card__body mat-form">
+            <p>@L["Data.Delete.Text"]</p>
+            <md-field name="Password" kind="password" label="@L["Data.Delete.Password"]" required autocomplete="current-password" msg-required="@L["Password.Current.Required"]" />
+        </div>
+    </div>
+    <md-buttons back="/Account" delete-handler="Delete" delete-label="@L["Data.Delete.Button"]" delete-confirm="@L["Data.Delete.Confirm", Model.Email]" delete-ok="@L["Data.Delete.Button"]" />
+</form>

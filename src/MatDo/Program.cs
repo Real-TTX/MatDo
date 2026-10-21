@@ -37,6 +37,7 @@ builder.Services.AddSingleton<PasswordService>();
 builder.Services.AddScoped<CurrentUser>();
 builder.Services.AddScoped<SessionService>();
 builder.Services.AddScoped<AccountService>();
+builder.Services.AddScoped<MatDo.Services.Auth.AccountDataService>();
 builder.Services.AddScoped<ProjectService>();
 builder.Services.AddScoped<TaskService>();
 builder.Services.AddScoped<QuickAddService>();

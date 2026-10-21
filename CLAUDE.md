@@ -64,6 +64,7 @@ src/MatDo
 
 - **Database**: PascalCase tables and columns, `Id` BIGINT, `CreateDate/CreateUserId/UpdateDate/UpdateUserId` everywhere, `UpdateState` (0 deleted, 1 created, 2 updated) where soft delete makes sense,
   a `Token` (uuid) where a key is a secret. Dates of tasks are `DateOnly`/`TimeOnly` in the person's zone ("floating", like Todoist); moments are UTC.
+- **GDPR**: `Services/Auth/AccountDataService` – `ExportAsync` (Art. 15/20: everything about the person as JSON, also what is in the bin, never a secret: no hash, token or key) and `EraseAsync` (Art. 17: deletes for good with `ExecuteDelete`, not the soft delete; team projects go to another member, a team keeps an owner, a team without others goes with its projects). Page `/Account/Data` (password, not the last admin); the admin delete of a user uses the same erasure. A new table with data of a person goes into both.
 - **Security**: a project/task the person may not see answers 404. CSP without inline script/style. Webhook token = the secret (renewable). Registration answers do not tell who has an account
   (team add uses one message for "no account" and "already member").
 - **Forms**: a second submit button (Delete) posts to `ButtonRowTagHelper.HandlerUrl` – the query of the page (`?id=5`) plus `handler=`; a bare `?handler=X` drops the id.

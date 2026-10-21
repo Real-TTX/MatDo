@@ -1,0 +1,50 @@
+{
+  "Data.Title": {
+    "en": "Your data",
+    "de": "Deine Daten"
+  },
+  "Data.Export": {
+    "en": "Export",
+    "de": "Exportieren"
+  },
+  "Data.Export.Text": {
+    "en": "Everything MatDo keeps about you in one JSON file: your account and settings, projects, tasks with sub-tasks and comments, labels, keywords, teams, webhooks, devices and sessions – without passwords, tokens or keys.",
+    "de": "Alles, was MatDo über dich speichert, in einer JSON-Datei: Konto und Einstellungen, Projekte, Aufgaben mit Unteraufgaben und Kommentaren, Labels, Schlüsselwörter, Teams, Webhooks, Geräte und Sitzungen – ohne Passwörter, Tokens oder Schlüssel."
+  },
+  "Data.Export.Button": {
+    "en": "Download (JSON)",
+    "de": "Herunterladen (JSON)"
+  },
+  "Data.Delete": {
+    "en": "Delete account",
+    "de": "Konto löschen"
+  },
+  "Data.Delete.Text": {
+    "en": "Deletes your account for good: your projects, tasks, labels, keywords, webhooks and comments. Team projects stay with the team; a team without other members goes. This cannot be undone – download your data first if you want to keep it.",
+    "de": "Löscht dein Konto endgültig: deine Projekte, Aufgaben, Labels, Schlüsselwörter, Webhooks und Kommentare. Team-Projekte bleiben beim Team; ein Team ohne weitere Mitglieder wird gelöscht. Das lässt sich nicht rückgängig machen – lade deine Daten vorher herunter, wenn du sie behalten willst."
+  },
+  "Data.Delete.Password": {
+    "en": "Your password",
+    "de": "Dein Passwort"
+  },
+  "Data.Delete.Button": {
+    "en": "Delete account",
+    "de": "Konto löschen"
+  },
+  "Data.Delete.Confirm": {
+    "en": "Delete the account {0} and all its data for good?",
+    "de": "Das Konto {0} und alle seine Daten endgültig löschen?"
+  },
+  "Data.Delete.WrongPassword": {
+    "en": "The password is not right.",
+    "de": "Das Passwort stimmt nicht."
+  },
+  "Data.Delete.LastAdmin": {
+    "en": "You are the last administrator. Make someone else an administrator first.",
+    "de": "Du bist der letzte Administrator. Mach zuerst jemand anderen zum Administrator."
+  },
+  "Data.Delete.Done": {
+    "en": "Your account and its data are deleted.",
+    "de": "Dein Konto und seine Daten sind gelöscht."
+  }
+}
