@@ -47,7 +47,7 @@ public sealed class PlatformApiTests(MatDoFactory site) : IClassFixture<MatDoFac
         var root = doc.RootElement;
         Assert.Equal(1, root.GetProperty("contract").GetInt32());
         Assert.Equal("matdo", root.GetProperty("app").GetProperty("id").GetString());
-        Assert.Equal("#8300bc", root.GetProperty("app").GetProperty("accent").GetString());
+        Assert.Equal("#d03d33", root.GetProperty("app").GetProperty("accent").GetString());
         Assert.True(root.GetProperty("auth").GetProperty("apiKey").GetBoolean());
         Assert.False(root.GetProperty("auth").TryGetProperty("identity", out _));
 

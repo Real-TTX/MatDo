@@ -16,8 +16,8 @@ public sealed class MatDoPlatform(InstanceService instance, ILogger<MatDoPlatfor
     /// <summary>The id of MatDo in the platform (and the default client id at MatIdentity), as in MatDesign <c>AppRegistry.cs</c>.</summary>
     public const string AppId = "matdo";
 
-    /// <summary>The accent of MatDo in MatDesign <c>AppRegistry.cs</c>.</summary>
-    public const string Accent = "#8300bc";
+    /// <summary>The accent of MatDo (its red, as in MatDesign <c>AppRegistry.cs</c> and <c>wwwroot/css/app.css</c>).</summary>
+    public const string Accent = "#d03d33";
 
     /// <summary>The MatApiDefinition of MatDo (<c>GET /api</c>); <c>auth</c> and <c>endpoints</c> are set by MatPlatform.</summary>
     public static void Describe(MatPlatformBuilder o)

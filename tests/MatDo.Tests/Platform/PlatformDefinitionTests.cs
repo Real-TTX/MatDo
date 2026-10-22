@@ -18,7 +18,7 @@ public sealed class PlatformDefinitionTests
         var definition = MatPlatformBuilder.Build(MatDoPlatform.Describe, "de");
         Assert.Equal("matdo", definition.App.Id);
         Assert.Equal("MatDo", definition.App.Name);
-        Assert.Equal("#8300bc", definition.App.Accent);
+        Assert.Equal("#d03d33", definition.App.Accent);
         Assert.Equal("/Today", definition.App.Home);
         Assert.True(File.Exists(Path.Combine(Repo.Root, "src", "MatDo", "wwwroot", definition.App.Icon!.TrimStart('/'))), definition.App.Icon);
     }
