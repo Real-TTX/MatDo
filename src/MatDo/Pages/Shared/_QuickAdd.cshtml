@@ -19,14 +19,14 @@
         <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
         <input type="hidden" name="Editor" value="@id" />
         <input type="hidden" name="DefaultSectionId" value="@Model.DefaultSectionId" />
-        <input type="hidden" name="DefaultDueDate" value="@(Model.DefaultDueDate is { } d ? Dates.Iso(d) : "")" />
+        <input type="hidden" name="DefaultDueDate" value="@(Model.DefaultDueDate is { } d ? Dates.Iso(d) : "")" data-qa-default-due />
         <input type="hidden" name="ParentId" value="@Model.ParentId" />
         <input type="hidden" name="Off" value="" data-qa-off />
         <input type="hidden" name="DueDate" value="" data-qa-due />
         <input type="hidden" name="DueTime" value="" data-qa-time />
         <input type="hidden" name="NoDate" value="false" data-qa-nodate />
         <input type="hidden" name="Priority" value="" data-qa-priority />
-        <input type="hidden" name="Labels" value="" data-qa-labels />
+        <input type="hidden" name="Labels" value="@string.Join(",", Model.DefaultLabels)" data-qa-labels />
         <input type="hidden" name="ProjectTouched" value="false" data-qa-touched />
 
         <div class="md-qa__field">
@@ -57,7 +57,7 @@
                     }
                     @foreach (var l in Model.Labels)
                     {
-                        <label class="mat-check md-qa__check"><input type="checkbox" value="@l.Name" data-qa-label /><span class="mat-check__text">@Ui.Icon("tag", null, l.Color)@l.Name</span></label>
+                        <label class="mat-check md-qa__check"><input type="checkbox" value="@l.Name" data-qa-label checked="@Model.DefaultLabels.Contains(l.Name, StringComparer.OrdinalIgnoreCase)" /><span class="mat-check__text">@Ui.Icon("tag", null, l.Color)@l.Name</span></label>
                     }
                 </div>
             </div>

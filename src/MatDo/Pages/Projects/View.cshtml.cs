@@ -40,6 +40,7 @@ public sealed class ViewModel(AppDbContext db, ProjectService projects, TaskServ
         }
 
         Project = project;
+        QuickAddDefaults(new QuickAddContext(ProjectId: project.Id));
         ShowDone = done;
         CanManage = await projects.CanManageAsync(UserId, project);
         var q = TaskTools.Read(Request);

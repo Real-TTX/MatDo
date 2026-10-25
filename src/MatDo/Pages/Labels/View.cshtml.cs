@@ -24,6 +24,7 @@ public sealed class ViewModel(AppDbContext db, TaskService tasks) : AppPageModel
         }
 
         Label = label;
+        QuickAddDefaults(new QuickAddContext(Label: label.Name));
         var q = TaskTools.Read(Request, "due");
         var query = tasks.Visible(UserId).Where(t => !t.IsCompleted && t.Labels.Any(l => l.LabelId == id));
         var rows = await tasks.RowsAsync(query, q, Today);

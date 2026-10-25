@@ -34,6 +34,7 @@
     var labels = $('[data-qa-labels]', root);
     var touched = $('[data-qa-touched]', root);
     var project = $('[data-qa-project]', root);
+    var defaultDue = $('[data-qa-default-due]', root);
     var disabled = {};
     var tokens = [];
     var parsed = null;
@@ -76,10 +77,11 @@
       if (p.description) { html += chip('description', 'file-text', t('Js.Kind.description')); }
       chips.innerHTML = html;
       var dateLabel = $('[data-qa-date-label]', root), prioLabel = $('[data-qa-priority-label]', root);
-      dateLabel.textContent = noDate.value === 'true' ? t('Js.NoDate') : due.value ? label(due.value, time.value) : t('Js.Kind.date');
+      var fallback = defaultDue && defaultDue.value && !p.dueText ? label(defaultDue.value) : '';
+      dateLabel.textContent = noDate.value === 'true' ? t('Js.NoDate') : due.value ? label(due.value, time.value) : fallback || t('Js.Kind.date');
       prioLabel.textContent = prio.value ? 'P' + prio.value : t('Js.Kind.priority');
       // a button with a value picked by hand shows it, also on a phone (where the others show their icon only)
-      dateLabel.parentNode.classList.toggle('is-set', noDate.value === 'true' || !!due.value);
+      dateLabel.parentNode.classList.toggle('is-set', noDate.value === 'true' || !!due.value || !!fallback);
       prioLabel.parentNode.classList.toggle('is-set', !!prio.value);
     }
 
@@ -112,12 +114,13 @@
 
     function reset() {
       form.reset();
-      due.value = time.value = prio.value = labels.value = off.value = '';
+      due.value = time.value = prio.value = off.value = '';
+      labels.value = labels.defaultValue;
       noDate.value = 'false';
       touched.value = 'false';
       disabled = {};
       tokens = []; parsed = null;
-      $$('[data-qa-label]', root).forEach(function (c) { c.checked = false; });
+      $('[data-qa-label]', root).forEach(function (c) { c.checked = c.defaultChecked; });
       // the pickers (project, time) show the values the reset put back
       if (window.MatUi && MatUi.picker) { MatUi.picker.init(root); }
       paint(); renderChips(); autosize(input); autosize(desc);
@@ -251,6 +254,7 @@
     });
 
     paint();
+    renderChips(); // the buttons show what the editor starts with (the day of the page, its labels)
     if (root.open) { autosize(input); }
   }
 

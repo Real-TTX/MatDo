@@ -20,6 +20,7 @@ public sealed class UpcomingModel(TaskService tasks, QuickAddEditor editors) : A
 
     public async Task OnGetAsync(string? from)
     {
+        QuickAddDefaults(new QuickAddContext(Due: Today));
         From = Dates.ParseIso(from) is { } f && f > Today ? f : Today;
         var to = From.AddDays(Days - 1);
         var q = TaskTools.Read(Request, "due");

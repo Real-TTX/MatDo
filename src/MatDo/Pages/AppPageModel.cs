@@ -21,6 +21,9 @@ public abstract class AppPageModel : PageModel
     protected IActionResult Back(string? returnUrl, string fallback)
         => !string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl) ? LocalRedirect(returnUrl) : LocalRedirect(fallback);
 
+    /// <summary>What a new task of the quick add dialog starts with on this page (the project, the day, the label of the page).</summary>
+    protected void QuickAddDefaults(QuickAddContext context) => ViewData[QuickAddContext.Key] = context;
+
     /// <summary>The address of this page with its query (the return address of the forms on it).</summary>
     public string Here => Request.Path + Request.QueryString;
 }

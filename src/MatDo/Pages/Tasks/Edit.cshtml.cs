@@ -307,6 +307,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
             ShowProject = false,
             Reorder = true,
         };
+        QuickAddDefaults(new QuickAddContext(ProjectId: Item.ProjectId, SectionId: Item.SectionId));
         SubEditor = await editors.CreateAsync("qa-sub", $"/Tasks/Edit?id={Id}", projectId: Item.ProjectId, parentId: Id, open: Request.Query["qa"] == "qa-sub", addLabel: Text.T("Tasks.AddSubTask"));
 
         Comments = (await db.Comments.Where(c => c.TaskId == Id).OrderBy(c => c.CreateDate)

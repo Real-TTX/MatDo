@@ -27,6 +27,7 @@ public sealed class TodayModel(AppDbContext db, TaskService tasks, QuickAddEdito
         Overdue = new TaskListModel { Id = "today-overdue", Rows = rows.Where(r => r.DueDate < Today).ToList(), Today = Today, ReturnUrl = Here };
         Due = new TaskListModel { Id = "today-due", Rows = rows.Where(r => r.DueDate == Today).ToList(), Today = Today, ReturnUrl = Here, ShowDate = false };
         Editor = await editors.CreateAsync("qa-today", Here, due: Today, open: Request.Query["qa"] == "qa-today");
+        QuickAddDefaults(new QuickAddContext(Due: Today));
     }
 
     /// <summary>Moves everything that is overdue to today (the times stay).</summary>

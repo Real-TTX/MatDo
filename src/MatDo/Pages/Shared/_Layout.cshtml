@@ -13,7 +13,10 @@
     var ownHead = ViewData["OwnHead"] is true;
     var menu = await Menus.GetAsync();
     var here = Context.Request.Path + Context.Request.QueryString;
-    var dialogEditor = await Editors.CreateAsync("md-qa-dialog", here.ToString(), inDialog: true);
+    // the dialog of the quick add starts with what the page is about (QuickAddDefaults of the page: a project, today, a label)
+    var qa = ViewData[QuickAddContext.Key] as QuickAddContext;
+    var dialogEditor = await Editors.CreateAsync("md-qa-dialog", here.ToString(), projectId: qa?.ProjectId, sectionId: qa?.SectionId, due: qa?.Due, inDialog: true,
+        labels: qa?.Label is { } label ? [label] : null);
     var themeAttr = user.Theme is "light" or "dark" ? $" data-theme=\"{user.Theme}\"" : string.Empty;
     var area = MenuService.AreaOf(Context.Request.Path.Value);
     var areas = MenuService.Areas(Me.IsAdmin);
