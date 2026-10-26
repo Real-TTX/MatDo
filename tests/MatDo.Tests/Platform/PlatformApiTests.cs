@@ -127,7 +127,12 @@ public sealed class PlatformApiTests(MatDoFactory site) : IClassFixture<MatDoFac
         Assert.Equal(1, Number("doneLast7Days"));
         Assert.Equal(1, Number("webhooks"));
         Assert.Equal(1, Number("pushDevices"));
-        Assert.Equal("info", values.GetProperty("registration").GetProperty("value").GetString());
+        // the tile of the registration says what is saved: open (info) or closed (ok, the default)
+        using (var settings = site.Services.CreateScope())
+        {
+            var open = (await settings.ServiceProvider.GetRequiredService<InstanceService>().SettingsAsync()).RegistrationOpen;
+            Assert.Equal(open ? "info" : "ok", values.GetProperty("registration").GetProperty("value").GetString());
+        }
         Assert.Equal(JsonValueKind.String, values.GetProperty("lastActivity").GetProperty("value").ValueKind);
 
         // No secret of the sample data: no key of a device, no token of a webhook.
@@ -189,22 +194,28 @@ public sealed class PlatformApiTests(MatDoFactory site) : IClassFixture<MatDoFac
     [DbFact]
     public async Task A_wrong_value_or_an_unknown_key_is_400_and_saves_nothing()
     {
+        bool before;
+        using (var first = site.Services.CreateScope())
+        {
+            before = (await first.ServiceProvider.GetRequiredService<InstanceService>().SettingsAsync()).RegistrationOpen;
+        }
+
         var api = site.Api();
-        var wrong = await api.PutAsJsonAsync("/api/configure", new { values = new { registrationOpen = false, publicUrl = "ftp://files.example.com" } });
+        var wrong = await api.PutAsJsonAsync("/api/configure", new { values = new { registrationOpen = !before, publicUrl = "ftp://files.example.com" } });
         Assert.Equal(HttpStatusCode.BadRequest, wrong.StatusCode);
         using (var doc = JsonDocument.Parse(await wrong.Content.ReadAsStringAsync()))
         {
             Assert.True(doc.RootElement.GetProperty("errors").TryGetProperty("publicUrl", out _));
         }
 
-        var unknown = await api.PutAsJsonAsync("/api/configure", new { values = new { registrationOpen = false, vapidPrivateKey = "x" } });
+        var unknown = await api.PutAsJsonAsync("/api/configure", new { values = new { registrationOpen = !before, vapidPrivateKey = "x" } });
         Assert.Equal(HttpStatusCode.BadRequest, unknown.StatusCode);
 
         var typed = await api.PutAsJsonAsync("/api/configure", new { values = new { registrationOpen = "no" } });
         Assert.Equal(HttpStatusCode.BadRequest, typed.StatusCode);
 
         using var scope = site.Services.CreateScope();
-        Assert.True((await scope.ServiceProvider.GetRequiredService<InstanceService>().SettingsAsync()).RegistrationOpen);
+        Assert.Equal(before, (await scope.ServiceProvider.GetRequiredService<InstanceService>().SettingsAsync()).RegistrationOpen);
     }
 
     [DbFact]

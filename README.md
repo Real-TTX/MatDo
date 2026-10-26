@@ -90,7 +90,7 @@ docker compose -f docker-compose.dev.yml up -d        # Development (Branch dev,
 docker compose -f docker-compose.local.yml up -d --build   # lokal aus dem Quellcode, mit pgAdmin (6007) und Postgres auf 6008
 ```
 
-Dann **http://localhost:6006** öffnen und registrieren – das erste Konto ist Administrator.
+Dann **http://localhost:6006** öffnen und registrieren – das erste Konto ist Administrator. Danach ist die Registrierung **geschlossen**: weitere Konten legt ein Administrator an (*Administration → Benutzer*), oder er öffnet die Registrierung (*Administration → System*).
 
 | Datei | Branch | Image | Dienste |
 |---|---|---|---|

@@ -340,7 +340,9 @@ public sealed class WebhookToken : SoftEntity
 /// <summary>The settings of the whole installation (one row, Id 1).</summary>
 public sealed class SystemSetting : Entity
 {
-    public bool RegistrationOpen { get; set; } = true;
+    /// <summary>Whether anyone may create an account. Closed until an administrator opens it (Administration → System): the first account of an installation can always
+    /// sign up (it becomes the administrator), after it the administrators create the accounts.</summary>
+    public bool RegistrationOpen { get; set; }
 
     /// <summary>The address the app is reached at from outside (for the webhook addresses shown to a person); empty = the address of the request.</summary>
     public string? PublicUrl { get; set; }
