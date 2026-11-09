@@ -107,8 +107,10 @@ Keine davon ist nötig; ohne sie läuft MatDo allein mit eigenen Konten.
 | Variable | Bedeutung |
 |---|---|
 | `ConnectionStrings__Default` | Verbindung zu PostgreSQL (Standard im Image: `Host=db;Port=5432;Database=matdo;Username=matdo;Password=matdo`) |
-| `DataDirectory` | Ordner der Schlüssel für die Sitzungen (Standard `/data`, das Volume `web-data`) |
+| `DataDirectory` | Ordner der Schlüssel für die Sitzungen und der Verbindungen (`matplatform/`; Standard `/data`, das Volume `web-data`) |
 | `MAT_API_KEY` | Schlüssel für die Plattform-API `/api/*` (Header `X-Api-Key`); leer = nur mit einem Token von MatIdentity. Mattiverse setzt ihn |
+| `MAT_PUBLIC_URL` | öffentliche Adresse von MatDo (für die Webhook-Adressen); gesetzt = *Administration → System* zeigt sie nur an. Mattiverse setzt sie, sobald MatDo eine eigene Adresse hat |
+| `MAT_FRAME_ANCESTORS` | Adressen, die MatDo in einem Rahmen zeigen dürfen (das Fenster von Mattiverse); Mattiverse setzt sie |
 | `MATIDENTITY_AUTHORITY` | Adresse von MatIdentity (`https://id.example.com`); gesetzt = Anmeldung über MatIdentity |
 | `MATIDENTITY_CLIENT_ID` | Client von MatDo in MatIdentity (Standard: `matdo`) |
 | `MATIDENTITY_CLIENT_SECRET` | sein Geheimnis |
@@ -118,17 +120,24 @@ MatDo verschickt keine E-Mails (Erinnerungen und Tagesübersicht kommen als Web 
 
 ## Plattform (Mattiverse, MatIdentity)
 
-MatDo erfüllt den Plattform-Vertrag der Mat-Apps ([MatDesign `docs/PLATFORM.md`](https://github.com/Real-TTX/MatDesign/blob/main/docs/PLATFORM.md), Paket MatPlatform 1.4.0 in `src/MatDo/MatPlatform`, eine Kopie): Mattiverse und andere Apps können MatDo anzeigen, überwachen und einrichten, ohne es vorher zu kennen.
+MatDo erfüllt den Plattform-Vertrag der Mat-Apps in Version 2 ([MatDesign `docs/PLATFORM.md`](https://github.com/Real-TTX/MatDesign/blob/main/docs/PLATFORM.md), Paket MatPlatform 2.2.1 in `src/MatDo/MatPlatform`, eine Kopie; das App-Modell: [`docs/APP-MODEL.md`](https://github.com/Real-TTX/MatDesign/blob/main/docs/APP-MODEL.md)): Mattiverse und andere Apps können MatDo anzeigen, überwachen und einrichten, ohne es vorher zu kennen.
+
+**Was MatDo nutzt:** nur die Anmeldung über MatIdentity (`identity.oidc`, optional, über die `MATIDENTITY_*`-Variablen). MatDo hängt von keiner anderen App ab und läuft ohne Mattiverse genauso.
+
+**Was MatDo zum Startbildschirm beiträgt** (z. B. von Mattiverse): das Symbol *MatDo* (`/Today`) mit den Schnellaktionen *Aufgabe hinzufügen* (`/Today?quick=1`, öffnet die Schnelleingabe), *Heute*, *Demnächst* und *Eingang*, dazu zwei Widgets für Administratoren: *Aufgaben* (offen, überfällig, erledigt in 7 Tagen) und *Aktive Benutzer*.
+
+**Verbindungen:** *Administration → Verbindungen* (`/Admin/Connections`, nur Administratoren) zeigt, was MatDo nutzt, woher es kommt (Variable oder nicht verbunden) und was es zum Startbildschirm beiträgt; `GET /api/connections` antwortet dasselbe als JSON.
 
 | Endpunkt | Inhalt | Zugriff |
 |---|---|---|
 | `GET /api` | Beschreibung (MatApiDefinition): Seiten *Übersicht* und *Einstellungen*, Kacheln, Felder, Schaltflächen, Rollen `admin`/`user` | anonym |
 | `GET /api/health` | `ok` / `degraded` (kein aktiver Administrator) / `down` (Datenbank weg); 200 bzw. 503 – der Docker-`HEALTHCHECK` fragt hier | anonym |
 | `GET /api/state[/{key}]` | Kacheln: aktive Benutzer, Teams, Projekte, offene und überfällige Aufgaben, erledigt in 7 Tagen, aktive Webhooks, Geräte mit Benachrichtigungen, Registrierung, letzte Änderung | Schlüssel oder Token |
-| `GET`/`PUT /api/configure` | Registrierung offen, öffentliche Adresse – dieselben Werte wie *Administration → System* | Schlüssel oder Token |
+| `GET`/`PUT /api/configure` | Registrierung offen, öffentliche Adresse (fest, solange `MAT_PUBLIC_URL` gesetzt ist) – dieselben Werte wie *Administration → System* | Schlüssel oder Token |
+| `GET /api/connections` | Verbindungen: was MatDo nutzt und zum Startbildschirm beiträgt | Schlüssel oder Token |
 | `POST /api/actions/cleanUp` | Aufräumen: beendete Sitzungen und vor über 30 Tagen gelöschte Aufgaben und Kommentare endgültig entfernen | Schlüssel oder Token |
 
-Die übrigen Schaltflächen sind Links (*Öffnen* `/Today`, *Benutzer* `/Admin/Users`, *System* `/Admin/System`). Änderungen über die API stehen mit dem Aufrufer im Log.
+Die übrigen Schaltflächen sind Links (*Öffnen* `/Today`, *Benutzer* `/Admin/Users`, *Verbindungen* `/Admin/Connections`, *System* `/Admin/System`). Änderungen über die API stehen mit dem Aufrufer im Log.
 
 **Anmeldung über MatIdentity** (nur mit `MATIDENTITY_AUTHORITY`): Wer nicht angemeldet ist, landet direkt bei MatIdentity (OpenID Connect, Code mit PKCE) und kommt angemeldet zurück. Die Person wird über `sub` gefunden, sonst als neues Konto angelegt (mit Eingang und Schlüsselwörtern, ohne Passwort). Ein bestehendes Konto mit derselben Adresse wird **nicht** über die Adresse übernommen: Es wird erst verbunden, nachdem es sich einmal mit seinem Passwort angemeldet hat (`/Account/Login?local=1&link=1`, mit Abbrechen). Der Claim `role` (`admin`/`user`) gilt bei jeder Anmeldung, der letzte aktive Administrator wird nie herabgestuft; ohne Claim vergibt MatDo die Rollen selbst.
 

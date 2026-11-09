@@ -5,12 +5,13 @@ using MatPlatform;
 namespace MatDo.Platform;
 
 /// <summary>
-/// MatDo as an app of the platform contract (MatDesign docs/PLATFORM.md) on the shared package MatPlatform (the folder <c>MatPlatform/</c>, a copy):
-/// how a consumer such as Mattiverse shows MatDo (<see cref="Describe"/>: tiles, the few settings, buttons), its values and what its buttons do.
+/// MatDo as an app of the platform contract (MatDesign docs/PLATFORM.md, contract 2) on the shared package MatPlatform (the folder <c>MatPlatform/</c>, a copy):
+/// how a consumer such as Mattiverse shows MatDo (<see cref="Describe"/>: tiles, the few settings, buttons), what it consumes (only the sign-in of MatIdentity,
+/// optional), what it adds to a shell (the launcher MatDo with its views, two widgets for administrators), its values and what its buttons do.
 /// The settings are the two of the admin page System (registration, public address), kept in the same place (<see cref="InstanceService"/>).
 /// The values come from the services (no DbContext here: this is the web layer).
 /// </summary>
-public sealed class MatDoPlatform(InstanceService instance, ILogger<MatDoPlatform> log)
+public sealed class MatDoPlatform(InstanceService instance, MatPlatformSettings settings, ILogger<MatDoPlatform> log)
     : IMatPlatformState, IMatPlatformConfiguration, IMatPlatformActions, IMatPlatformHealth
 {
     /// <summary>The id of MatDo in the platform (and the default client id at MatIdentity), as in MatDesign <c>AppRegistry.cs</c>.</summary>
@@ -19,16 +20,46 @@ public sealed class MatDoPlatform(InstanceService instance, ILogger<MatDoPlatfor
     /// <summary>The accent of MatDo (its red, as in MatDesign <c>AppRegistry.cs</c> and <c>wwwroot/css/app.css</c>).</summary>
     public const string Accent = "#d03d33";
 
-    /// <summary>The MatApiDefinition of MatDo (<c>GET /api</c>); <c>auth</c> and <c>endpoints</c> are set by MatPlatform.</summary>
-    public static void Describe(MatPlatformBuilder o)
+    /// <summary>The MatApiDefinition of MatDo (<c>GET /api</c>) without <c>MAT_PUBLIC_URL</c>.</summary>
+    public static void Describe(MatPlatformBuilder o) => Describe(o, null);
+
+    /// <summary>
+    /// The MatApiDefinition of MatDo (<c>GET /api</c>); <c>auth</c> and <c>endpoints</c> are set by MatPlatform. <paramref name="publicUrl"/> is the value of
+    /// <c>MAT_PUBLIC_URL</c>: while it is set, the field <c>publicUrl</c> is fixed.
+    /// </summary>
+    public static void Describe(MatPlatformBuilder o, string? publicUrl)
     {
         var T = o.T;
 
         o.App(AppId, "MatDo", T("Aufgaben, Projekte und Teams", "Tasks, projects and teams"), AppInfo.Version, "/img/logo/matdo-mark.svg", Accent, "/Today");
 
+        // What MatDo uses from other apps: only the sign-in through MatIdentity, set by its variables (MatDo sends no mail).
+        o.Consumes(MatCapabilities.IdentityOidc, optional: true);
+
+        // What MatDo adds to the home screen of a shell (Mattiverse): its icon with the views of its menu and the quick add, and two widgets for administrators.
+        o.Launcher("tasks", "MatDo", "/img/logo/matdo-mark.svg", "/Today");
+        o.QuickAction("tasks", T("Aufgabe hinzufügen", "Add task"), "plus", url: "/Today?quick=1");
+        o.QuickAction("tasks", T("Heute", "Today"), "sun", url: "/Today");
+        o.QuickAction("tasks", T("Demnächst", "Upcoming"), "calendar", url: "/Upcoming");
+        o.QuickAction("tasks", T("Eingang", "Inbox"), "archive", url: "/Inbox");
+        o.Widget(new MatWidget("tasks", T("Aufgaben", "Tasks"), MatWidgetKinds.Tiles, "medium")
+        {
+            Items = ["openTasks", "overdueTasks", "doneLast7Days"],
+            Icon = "check-square",
+            Url = "/Admin/System",
+            Audience = MatAudience.Admin,
+        });
+        o.Widget(new MatWidget("users", T("Aktive Benutzer", "Active users"), MatWidgetKinds.Stat)
+        {
+            Items = ["users"],
+            Icon = "users",
+            Url = "/Admin/Users",
+            Audience = MatAudience.Admin,
+        });
+
         o.Page("overview", T("Übersicht", "Overview"), "dashboard",
             MatSection.Tiles("users", "teams", "projects", "openTasks", "overdueTasks", "doneLast7Days", "webhooks", "pushDevices", "registration", "lastActivity"),
-            MatSection.Actions("openApp", "openUsers", "openSystem", "cleanUp"));
+            MatSection.Actions("openApp", "openUsers", "openConnections", "openSystem", "cleanUp"));
         o.Page("settings", T("Einstellungen", "Settings"), "settings",
             MatSection.Form(T("Allgemein", "General"), "registrationOpen", "publicUrl"));
 
@@ -47,15 +78,21 @@ public sealed class MatDoPlatform(InstanceService instance, ILogger<MatDoPlatfor
         {
             Hint = T("Aus: nur Administratoren legen Konten an.", "Off: only administrators create accounts."),
         });
-        o.Field(new MatField("publicUrl", T("Öffentliche Adresse", "Public address"), "url")
+        var address = new MatField("publicUrl", T("Öffentliche Adresse", "Public address"), "url")
         {
             Max = 300,
             Placeholder = "https://todo.example.com",
             Hint = T("Für die Adressen der Webhooks; leer: die Adresse des Aufrufs.", "For the addresses of the webhooks; empty: the address of the request."),
+        };
+        o.Field(publicUrl is null ? address : address with
+        {
+            Fixed = true,
+            Hint = T("Festgelegt durch MAT_PUBLIC_URL (Mattiverse); hier lässt sie sich nicht ändern.", "Set by MAT_PUBLIC_URL (Mattiverse); it cannot be changed here."),
         });
 
         o.LinkAction("openApp", T("Öffnen", "Open"), "external", "/Today");
         o.LinkAction("openUsers", T("Benutzer", "Users"), "users", "/Admin/Users");
+        o.LinkAction("openConnections", T("Verbindungen", "Connections"), "plug", "/Admin/Connections");
         o.LinkAction("openSystem", T("System", "System"), "settings", "/Admin/System");
         o.PostAction(
             "cleanUp",
@@ -127,6 +164,9 @@ public sealed class MatDoPlatform(InstanceService instance, ILogger<MatDoPlatfor
             {
                 case "registrationOpen" when value.ValueKind is JsonValueKind.True or JsonValueKind.False:
                     open = value.GetBoolean();
+                    break;
+                case "publicUrl" when settings.AppPublicUrl is not null:
+                    errors[key] = call.T("Festgelegt durch MAT_PUBLIC_URL.", "Set by MAT_PUBLIC_URL.");
                     break;
                 case "publicUrl" when value.ValueKind is JsonValueKind.String:
                     url = value.GetString()!;

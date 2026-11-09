@@ -24,7 +24,7 @@ public sealed record PushPayload(string Title, string Body, string Url, string T
 /// <see cref="SystemSetting"/>; a subscription the push service no longer knows (404, 410) is deleted. Only the push services of the browsers are called:
 /// an endpoint elsewhere is refused when a device subscribes (<see cref="IsPushService"/>), so the server never posts to an address a user chose.
 /// </summary>
-public sealed class PushService(AppDbContext db, IHttpClientFactory http, ILogger<PushService> logger)
+public sealed class PushService(AppDbContext db, IHttpClientFactory http, MatPlatform.MatPlatformSettings platform, ILogger<PushService> logger)
 {
     private static readonly SemaphoreSlim KeyGate = new(1, 1);
 
@@ -106,8 +106,9 @@ public sealed class PushService(AppDbContext db, IHttpClientFactory http, ILogge
             }
 
             var admin = await db.Users.Where(u => u.Role == UserRole.Admin).OrderBy(u => u.Id).Select(u => u.Email).FirstOrDefaultAsync(ct);
-            var subject = !string.IsNullOrWhiteSpace(settings.PublicUrl) && settings.PublicUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
-                ? settings.PublicUrl.TrimEnd('/')
+            var publicUrl = InstanceService.PublicUrlOf(settings, platform);
+            var subject = publicUrl is not null && publicUrl.StartsWith("https://", StringComparison.OrdinalIgnoreCase)
+                ? publicUrl
                 : "mailto:" + (admin ?? "admin@matdo.invalid");
             return (settings.VapidPublicKey, settings.VapidPrivateKey!, subject);
         }

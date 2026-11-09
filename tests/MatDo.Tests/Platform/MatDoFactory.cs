@@ -46,7 +46,7 @@ public class MatDoFactory : WebApplicationFactory<Program>
     {
     }
 
-    protected MatDoFactory(bool withKey, string? authority, bool reachable = true)
+    protected MatDoFactory(bool withKey, string? authority, bool reachable = true, string? publicUrl = null)
     {
         _authority = authority;
         _reachable = reachable;
@@ -62,6 +62,7 @@ public class MatDoFactory : WebApplicationFactory<Program>
         Environment.SetEnvironmentVariable(MatPlatformSettings.ClientIdVariable, null);
         Environment.SetEnvironmentVariable(MatPlatformSettings.ClientSecretVariable, authority is null ? null : "test-secret");
         Environment.SetEnvironmentVariable(MatPlatformSettings.InternalUrlVariable, null);
+        Environment.SetEnvironmentVariable(MatPlatformSettings.PublicUrlVariable, publicUrl);
     }
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
@@ -154,6 +155,12 @@ public class MatDoFactory : WebApplicationFactory<Program>
 
 /// <summary>Without <c>MAT_API_KEY</c>: the protected endpoints answer 401 to everyone.</summary>
 public sealed class NoKeyFactory() : MatDoFactory(withKey: false, authority: null);
+
+/// <summary>With <c>MAT_PUBLIC_URL</c>, as a broker (Mattiverse) sets it once the app has an address of its own.</summary>
+public sealed class PublicUrlFactory() : MatDoFactory(withKey: true, authority: null, publicUrl: PublicUrl + "/")
+{
+    public const string PublicUrl = "https://todo.example.com";
+}
 
 /// <summary>With <c>MATIDENTITY_AUTHORITY</c> (a MatIdentity that does not need to run).</summary>
 public sealed class IdentityFactory() : MatDoFactory(withKey: true, authority: Authority)

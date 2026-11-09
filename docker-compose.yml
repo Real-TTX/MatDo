@@ -14,6 +14,8 @@ services:
     # Optional, none of them is needed (README "Einstellungen"); Mattiverse sets them when it installs MatDo:
     # environment:
     #   MAT_API_KEY: ""                    # the key of /api/* (platform contract)
+    #   MAT_PUBLIC_URL: ""                 # https://todo.example.com: the public address (fixed on Administration -> System while set)
+    #   MAT_FRAME_ANCESTORS: ""            # origins that may show MatDo in a frame (Mattiverse)
     #   MATIDENTITY_AUTHORITY: ""          # https://id.example.com: sign-in through MatIdentity
     #   MATIDENTITY_CLIENT_ID: "matdo"
     #   MATIDENTITY_CLIENT_SECRET: ""

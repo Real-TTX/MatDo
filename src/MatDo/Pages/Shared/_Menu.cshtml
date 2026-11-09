@@ -4,7 +4,7 @@
     The menus (SHELL-01 .. SHELL-19): one panel per menu of the switcher at the foot (SHELL-15), the one of the page shown.
     - tasks:    the main action first, the views, the favourites, the personal projects and the projects of each team, the teams
     - settings: profile, keywords, webhooks, password
-    - admin:    users, system (administrators only)
+    - admin:    users, connections, system (administrators only)
     A page names what it belongs to: ViewData["ActiveNav"] or ViewData["ActiveProject"] (the id of a project).
 *@
 @{
@@ -109,6 +109,7 @@
     <nav class="mat-nav__scroll" aria-label="@L["Admin.Title"]" data-nav-panel="admin" hidden="@(Model.Area != "admin")">
         <ul class="mat-nav__list">
             <li><a class="@Cls(Under("/Admin/Users"))" href="/Admin/Users" aria-current="@Cur(Under("/Admin/Users"))">@Ui.Icon("user-circle")<span>@L["Users.Title"]</span></a></li>
+            <li><a class="@Cls(Under("/Admin/Connections"))" href="/Admin/Connections" aria-current="@Cur(Under("/Admin/Connections"))">@Ui.Icon("plug")<span>@L["Connections.Title"]</span></a></li>
             <li><a class="@Cls(Under("/Admin/System"))" href="/Admin/System" aria-current="@Cur(Under("/Admin/System"))">@Ui.Icon("server")<span>@L["System.Title"]</span></a></li>
         </ul>
     </nav>

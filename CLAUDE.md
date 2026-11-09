@@ -40,13 +40,17 @@ src/MatDo
   Services/TeamService.cs, MenuService.cs (menus of the switcher), Dates.cs (German formatting, user time zone), Ui.cs, TaskTools.cs (toolbar of task lists), QuickAddEditor.cs (editors of a page)
   Api/WebhookApi.cs             POST /api/v1/webhook/{token} (+ Bearer variant): JSON / form / text → task, 201 JSON with message
   Api/AppApi.cs                 /api/app/parse (live parse), tasks/{id}/complete|reopen, tasks/reorder (cookie + RequestVerificationToken header)
-  MatPlatform/                  the platform package of MatDesign (a copy: node tools/matplatform-copy.js src/MatDo in MatDesign; never edited here)
-  Platform/MatDoPlatform.cs     the platform contract: GET /api (tiles, the two settings, actions, roles), state, configure, cleanUp, health – values from InstanceService
+  MatPlatform/                  the platform package of MatDesign, 2.2.1 (a copy: node tools/matplatform-copy.js src/MatDo in MatDesign; never edited here): contract 2, the Connections area
+                                (<mat-connections />, /api/connections, kept in /data/matplatform), MAT_PUBLIC_URL, MAT_FRAME_ANCESTORS
+  Platform/MatDoPlatform.cs     the platform contract 2: GET /api (tiles, the two settings, actions, roles; consumes identity.oidc; contributes the launcher MatDo with the
+                                quick actions Add task/Today/Upcoming/Inbox and the admin widgets tasks/users), state, configure (publicUrl fixed while MAT_PUBLIC_URL is set),
+                                cleanUp, health – values from InstanceService
   Platform/MatDoIdentityUsers.cs  sign-in through MatIdentity (ExternalSignInService: by sub, link only after the password, role claim) and the back-channel logout
-  Services/InstanceService.cs   numbers, system settings, database check, housekeeping (platform, /Admin/System, MaintenanceService)
+  Services/InstanceService.cs   numbers, system settings (the public address in force: MAT_PUBLIC_URL, else the stored one: PublicUrlOf), database check, housekeeping
+                                (platform, /Admin/System, MaintenanceService)
   Controls/                     ONE code base per control: <md-field>, <md-buttons>, <md-table>, <md-tabs>; partials _Toolbar, _Pager, _FormSummary, _TaskList, _QuickAdd
   Pages/                        Today, Upcoming, Inbox (→ project), Projects/, Sections/, Tasks/ (Add = target of every editor, Edit, Index = filter, Completed), Labels/, Teams/,
-                                Account/ (profile, Keywords/, Webhooks/, Password, Login, Register, Logout), Admin/ (Users/, System)
+                                Account/ (profile, Keywords/, Webhooks/, Password, Login, Register, Logout), Admin/ (Users/, Connections = <mat-connections />, System)
   wwwroot/js/quickadd.js        the editor: mirror with <mark>s behind a transparent textarea, chips, pops, Enter/Esc, Q opens the dialog
   wwwroot/js/tasks.js           checks in the background, mat:reorder → order
   wwwroot/css/app.css           accent + md- classes only, tokens of the toolkit
@@ -70,7 +74,7 @@ src/MatDo
 - **Database**: PascalCase tables and columns, `Id` BIGINT, `CreateDate/CreateUserId/UpdateDate/UpdateUserId` everywhere, `UpdateState` (0 deleted, 1 created, 2 updated) where soft delete makes sense,
   a `Token` (uuid) where a key is a secret. Dates of tasks are `DateOnly`/`TimeOnly` in the person's zone ("floating", like Todoist); moments are UTC.
 - **GDPR**: `Services/Auth/AccountDataService` – `ExportAsync` (Art. 15/20: everything about the person as JSON, also what is in the bin, never a secret: no hash, token or key) and `EraseAsync` (Art. 17: deletes for good with `ExecuteDelete`, not the soft delete; team projects go to another member, a team keeps an owner, a team without others goes with its projects). Page `/Account/Data` (password, not the last admin); the admin delete of a user uses the same erasure. A new table with data of a person goes into both.
-- **Platform (MatDesign docs/PLATFORM.md)**: `/api*` comes from MatPlatform; MatDoPlatform only describes and asks the services (no DbContext in the web layer). `MAT_API_KEY` for the key; with `MATIDENTITY_AUTHORITY` the sign-in page challenges MatIdentity (local form with `?local=1`, also `?signedOut=1`, `?ssoError=1`, `?denied=1`, `?link=1`). An account with the address of a MatIdentity person is linked only after its own password (`MatIdentityPendingLink`); `User.ExternalSubject`, `UserSession.IdentityToken`/`IdentitySessionId`; the back-channel logout revokes sessions by sid or sub. MatDo sends no mail, so no `MATSMTP_*`.
+- **Platform (MatDesign docs/PLATFORM.md, contract 2, the app model docs/APP-MODEL.md)**: `/api*` comes from MatPlatform; MatDoPlatform only describes and asks the services (no DbContext in the web layer). MatDo consumes only `identity.oidc` and runs without any variable; a new figure for a home screen is a widget made of existing tiles (no code per shell). `MAT_PUBLIC_URL` wins over the stored public address everywhere (`InstanceService.PublicUrlOf`: webhooks, push) and fixes it on the page and in the API. `MAT_API_KEY` for the key; with `MATIDENTITY_AUTHORITY` the sign-in page challenges MatIdentity (local form with `?local=1`, also `?signedOut=1`, `?ssoError=1`, `?denied=1`, `?link=1`). An account with the address of a MatIdentity person is linked only after its own password (`MatIdentityPendingLink`); `User.ExternalSubject`, `UserSession.IdentityToken`/`IdentitySessionId`; the back-channel logout revokes sessions by sid or sub. MatDo sends no mail, so no `MATSMTP_*`.
 - **Security**: a project/task the person may not see answers 404. CSP without inline script/style. Webhook token = the secret (renewable). Registration answers do not tell who has an account
   (team add uses one message for "no account" and "already member").
 - **Forms**: a second submit button (Delete) posts to `ButtonRowTagHelper.HandlerUrl` – the query of the page (`?id=5`) plus `handler=`; a bare `?handler=X` drops the id.

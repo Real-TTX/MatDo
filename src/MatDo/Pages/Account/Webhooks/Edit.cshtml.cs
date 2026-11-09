@@ -3,13 +3,14 @@ using System.Globalization;
 using MatDo.Controls;
 using MatDo.Data;
 using MatDo.Services;
+using MatPlatform;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
 namespace MatDo.Pages.Account.Webhooks;
 
 /// <summary>A webhook: its name, where its tasks go when the text names no project, on or off; its address with the instructions; a new address; delete.</summary>
-public sealed class EditModel(AppDbContext db, ProjectService projects, AccountService accounts) : AppPageModel
+public sealed class EditModel(AppDbContext db, ProjectService projects, AccountService accounts, MatPlatformSettings platform) : AppPageModel
 {
     [BindProperty(SupportsGet = true)] public long? Id { get; set; }
 
@@ -136,7 +137,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, AccountS
     private async Task LoadAsync()
     {
         var settings = await accounts.SettingsAsync();
-        BaseUrl = string.IsNullOrWhiteSpace(settings.PublicUrl) ? $"{Request.Scheme}://{Request.Host}" : settings.PublicUrl.TrimEnd('/');
+        BaseUrl = InstanceService.PublicUrlOf(settings, platform) ?? $"{Request.Scheme}://{Request.Host}";
         if (Hook is not null)
         {
             HookUrl = $"{BaseUrl}/api/v1/webhook/{Hook.Token}";

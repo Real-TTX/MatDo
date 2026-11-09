@@ -45,7 +45,8 @@ public sealed class PlatformApiTests(MatDoFactory site) : IClassFixture<MatDoFac
 
         using var doc = JsonDocument.Parse(text);
         var root = doc.RootElement;
-        Assert.Equal(1, root.GetProperty("contract").GetInt32());
+        Assert.Equal(2, root.GetProperty("contract").GetInt32());
+        Assert.Equal("tasks", root.GetProperty("contributes").GetProperty("launchers")[0].GetProperty("id").GetString());
         Assert.Equal("matdo", root.GetProperty("app").GetProperty("id").GetString());
         Assert.Equal("#d03d33", root.GetProperty("app").GetProperty("accent").GetString());
         Assert.True(root.GetProperty("auth").GetProperty("apiKey").GetBoolean());
@@ -285,9 +286,88 @@ public sealed class PlatformWithoutKeyTests(NoKeyFactory site) : IClassFixture<N
         client.DefaultRequestHeaders.Add("X-Api-Key", MatDoFactory.ApiKey);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/state")).StatusCode);
         Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/configure")).StatusCode);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/api/connections")).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/health")).StatusCode);
 
         using var doc = JsonDocument.Parse(await client.GetStringAsync("/api"));
         Assert.False(doc.RootElement.GetProperty("auth").GetProperty("apiKey").GetBoolean());
+    }
+}
+
+/// <summary>MatDo with <c>MAT_PUBLIC_URL</c>: the address in force everywhere, fixed in the definition, on the admin page and in the platform API.</summary>
+public sealed class PlatformPublicUrlTests(PublicUrlFactory site) : IClassFixture<PublicUrlFactory>
+{
+    [DbFact]
+    public async Task MAT_PUBLIC_URL_is_the_address_and_cannot_be_changed()
+    {
+        var api = site.Api();
+        using (var doc = JsonDocument.Parse(await api.GetStringAsync("/api")))
+        {
+            var field = doc.RootElement.GetProperty("configure").EnumerateArray().Single(f => f.GetProperty("key").GetString() == "publicUrl");
+            Assert.True(field.GetProperty("fixed").GetBoolean());
+        }
+
+        using (var doc = JsonDocument.Parse(await api.GetStringAsync("/api/configure")))
+        {
+            Assert.Equal(PublicUrlFactory.PublicUrl, doc.RootElement.GetProperty("values").GetProperty("publicUrl").GetString());
+        }
+
+        var refused = await api.PutAsJsonAsync("/api/configure", new { values = new { publicUrl = "https://other.example.com" } });
+        Assert.Equal(HttpStatusCode.BadRequest, refused.StatusCode);
+
+        // the admin page shows it read-only; a post leaves it as it is and keeps the stored value apart
+        var admin = new Browser(site);
+        Assert.Equal(HttpStatusCode.Redirect, (await admin.SignInAsync("/Account/Login", MatDoFactory.AdminEmail, MatDoFactory.AdminPassword)).StatusCode);
+        var html = await (await admin.GetAsync("/Admin/System")).Content.ReadAsStringAsync();
+        Assert.Contains("value=\"" + PublicUrlFactory.PublicUrl + "\"", html);
+        Assert.Contains("MAT_PUBLIC_URL", html);
+        var saved = await admin.PostAsync("/Admin/System", new Dictionary<string, string>
+        {
+            ["__RequestVerificationToken"] = Browser.Antiforgery(html),
+            ["RegistrationOpen"] = "false",
+            ["PublicUrl"] = "https://other.example.com",
+        });
+        Assert.Equal(HttpStatusCode.Redirect, saved.StatusCode);
+        using var scope = site.Services.CreateScope();
+        Assert.Equal(PublicUrlFactory.PublicUrl, (await scope.ServiceProvider.GetRequiredService<InstanceService>().SettingsAsync()).PublicUrl);
+        Assert.Null((await scope.ServiceProvider.GetRequiredService<AccountService>().SettingsAsync()).PublicUrl);
+    }
+}
+
+/// <summary>The Connections area of MatDo (MatPlatform's <c>&lt;mat-connections /&gt;</c>): for administrators only, it says what MatDo uses and adds to a home screen.</summary>
+public sealed class ConnectionsTests(MatDoFactory site) : IClassFixture<MatDoFactory>
+{
+    [DbFact]
+    public async Task The_Connections_area_is_for_administrators_and_says_what_MatDo_uses()
+    {
+        var api = site.Api();
+        using (var doc = JsonDocument.Parse(await api.GetStringAsync("/api/connections")))
+        {
+            var use = Assert.Single(doc.RootElement.GetProperty("uses").EnumerateArray());
+            Assert.Equal(("identity.oidc", "none"), (use.GetProperty("capability").GetString(), use.GetProperty("source").GetString()));
+            Assert.Empty(doc.RootElement.GetProperty("offers").EnumerateArray());
+            Assert.Equal("tasks", doc.RootElement.GetProperty("contributes").GetProperty("launchers")[0].GetProperty("id").GetString());
+        }
+
+        var admin = new Browser(site);
+        Assert.Equal(HttpStatusCode.Redirect, (await admin.SignInAsync("/Account/Login", MatDoFactory.AdminEmail, MatDoFactory.AdminPassword)).StatusCode);
+        var page = await admin.GetAsync("/Admin/Connections");
+        Assert.Equal(HttpStatusCode.OK, page.StatusCode);
+        var html = await page.Content.ReadAsStringAsync();
+        Assert.Contains("data-connections", html);
+        Assert.Contains("href=\"/Admin/Connections\"", html);
+
+        // a person who is not an administrator gets neither the page nor the menu entry
+        var name = "u" + Guid.NewGuid().ToString("N")[..10];
+        using (var scope = site.Services.CreateScope())
+        {
+            var (user, error) = await scope.ServiceProvider.GetRequiredService<AccountService>().RegisterAsync(name + "@example.com", name, "Correct-Horse-Battery");
+            Assert.True(user is not null, error?.Message);
+        }
+
+        var person = new Browser(site);
+        Assert.Equal(HttpStatusCode.Redirect, (await person.SignInAsync("/Account/Login", name + "@example.com", "Correct-Horse-Battery")).StatusCode);
+        Assert.NotEqual(HttpStatusCode.OK, (await person.GetAsync("/Admin/Connections")).StatusCode);
+        Assert.DoesNotContain("href=\"/Admin/Connections\"", await (await person.GetAsync("/Today")).Content.ReadAsStringAsync());
     }
 }

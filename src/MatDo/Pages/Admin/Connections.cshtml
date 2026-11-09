@@ -1,0 +1,10 @@
+@page "/Admin/Connections"
+@model MatDo.Pages.Admin.ConnectionsModel
+@{
+    ViewData["Title"] = L["Connections.Title"].Value;
+    ViewData["PageSub"] = L["Connections.Sub"].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Admin.Title"].Value, null), (L["Connections.Title"].Value, null) };
+}
+
+@* the Connections area of MatPlatform, the same in every app: its forms post to /api/connections/form and come back here *@
+<mat-connections />

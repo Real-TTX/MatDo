@@ -13,7 +13,7 @@
                 <div class="mat-card__head"><h2 class="mat-card__title">@Ui.Icon("settings")@L["System.Settings"]</h2></div>
                 <div class="mat-card__body mat-form">
                     <md-field name="RegistrationOpen" kind="switch" label="@L["System.RegistrationOpen"]" value="@Model.RegistrationOpen.ToString()" hint="@L["System.RegistrationOpen.Hint"]" />
-                    <md-field name="PublicUrl" kind="url" label="@L["System.PublicUrl"]" value="@Model.PublicUrl" placeholder="https://todo.example.com" optional hint="@L["System.PublicUrl.Hint"]" />
+                    <md-field name="PublicUrl" kind="url" label="@L["System.PublicUrl"]" value="@Model.PublicUrl" placeholder="https://todo.example.com" optional="@(!Model.PublicUrlFixed)" disabled="@Model.PublicUrlFixed" hint="@L[Model.PublicUrlFixed ? "System.PublicUrl.Fixed" : "System.PublicUrl.Hint"]" />
                 </div>
             </div>
             <md-buttons save="@L["Common.Save"]" back="/Today" />
