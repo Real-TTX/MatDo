@@ -41,6 +41,9 @@ public sealed record TaskRow(
 /// <summary>The search, filters and sort of a task list (the toolbar).</summary>
 public sealed record TaskQuery(string? Search = null, int? Priority = null, long? LabelId = null, string? Due = null, string Sort = "manual", bool Descending = false);
 
+/// <summary>One slot of a team's cleaning plan: a repeating task on a day of the week, and whose turn it is. <see cref="IsNext"/> marks the task's real next date (the only one that can be checked off); later rows are a preview of the rotation ahead.</summary>
+public sealed record PutzplanEntry(long TaskId, string Content, long ProjectId, string ProjectName, DateOnly Date, long? AssigneeId, bool IsNext);
+
 /// <summary>Reading and changing tasks. Every query starts with the projects the person may see (<see cref="ProjectService.Visible"/>).</summary>
 public sealed class TaskService(AppDbContext db, ProjectService projects)
 {
@@ -193,6 +196,50 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         var pool = await db.TaskRotations.Where(r => r.TaskId == task.Id).OrderBy(r => r.SortOrder).ThenBy(r => r.Id)
             .Select(r => r.UserId).ToListAsync();
         task.AssigneeId = NextAssignee(pool, task.AssigneeId);
+    }
+
+    /// <summary>Is there any cleaning plan in the team at all: a repeating team task with a rotation pool (used to tell "nothing this week" from "no plan yet").</summary>
+    public Task<bool> HasPutzplanAsync(long userId, long teamId)
+        => Visible(userId).AnyAsync(t => !t.IsCompleted && t.Recurrence != null && t.Project!.TeamId == teamId && t.Rotations.Any());
+
+    /// <summary>The cleaning plan ("Putzplan") of a team for one week: every repeating task with a rotation pool, rolled forward to the instances that fall in the week, each with the person whose turn it is. Only the task's actual next date is checkable; the rest is a preview of the weeks ahead.</summary>
+    public async Task<List<PutzplanEntry>> PutzplanAsync(long userId, long teamId, DateOnly weekStart, DateOnly weekEnd)
+    {
+        var items = await Visible(userId)
+            .Where(t => !t.IsCompleted && t.Recurrence != null && t.Project!.TeamId == teamId)
+            .Include(t => t.Project).Include(t => t.Rotations)
+            .ToListAsync();
+
+        var entries = new List<PutzplanEntry>();
+        foreach (var t in items)
+        {
+            if (t.DueDate is not { } start || t.Rotations.Count == 0 || !Recurrence.IsValid(t.Recurrence))
+            {
+                continue;
+            }
+
+            var pool = t.Rotations.OrderBy(r => r.SortOrder).ThenBy(r => r.Id).Select(r => r.UserId).ToList();
+            var date = start;
+            long? who = t.AssigneeId;
+            for (var k = 0; k < 120 && date <= weekEnd; k++)
+            {
+                if (date >= weekStart)
+                {
+                    entries.Add(new PutzplanEntry(t.Id, t.Content, t.ProjectId, t.Project!.Name, date, who, date == start));
+                }
+
+                var next = Recurrence.Next(t.Recurrence!, date, date);
+                if (next <= date)
+                {
+                    break;
+                }
+
+                date = next;
+                who = NextAssignee(pool, who);
+            }
+        }
+
+        return entries.OrderBy(e => e.Date).ThenBy(e => e.Content, StringComparer.CurrentCultureIgnoreCase).ToList();
     }
 
     /// <summary>The next person in a rotation after the current one (wrapping round); the first when the current one is unknown or not in the pool. An empty pool keeps the current person.</summary>

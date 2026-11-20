@@ -1,0 +1,20 @@
+@model MatDo.Pages.Teams.PutzplanRow
+@{
+    var e = Model.Entry;
+}
+<li class="md-putz__item@(e.IsNext ? " md-putz__item--next" : "")">
+    <a class="md-putz__task" href="/Tasks/Edit?id=@e.TaskId">
+        <span class="md-putz__name">@e.Content</span>
+        <span class="md-putz__meta">@Ui.Icon("hash")@e.ProjectName · @Dates.WeekdayName(e.Date.DayOfWeek), @Dates.Short(e.Date)</span>
+    </a>
+    @if (e.IsNext)
+    {
+        <form method="post" asp-page-handler="Complete" asp-route-id="@Model.TeamId" asp-route-taskId="@e.TaskId" asp-route-from="@Model.From" class="md-putz__done">
+            <button type="submit" class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" aria-label="@L["Tasks.CompleteNext"]" data-tip="@L["Tasks.CompleteNext"]">@Ui.Icon("check")<span>@L["Tasks.Complete"]</span></button>
+        </form>
+    }
+    else
+    {
+        <span class="mat-pill mat-pill--plain md-putz__preview">@L["Teams.Putzplan.Upcoming"]</span>
+    }
+</li>

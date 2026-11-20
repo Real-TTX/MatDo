@@ -1,0 +1,80 @@
+@page "/Teams/Putzplan"
+@model MatDo.Pages.Teams.PutzplanModel
+@{
+    ViewData["Title"] = Model.Team.Name;
+    ViewData["PageSub"] = L["Teams.Putzplan.Range", Dates.Short(Model.WeekStart), Dates.Short(Model.WeekEnd)].Value;
+    ViewData["Crumbs"] = new List<(string, string?)> { (L["Teams.Title"].Value, "/Teams"), (Model.Team.Name, $"/Teams/Members?id={Model.Id}"), (L["Teams.Putzplan.Title"].Value, null) };
+    ViewData["Width"] = "narrow";
+    var prevMonday = Model.WeekStart.AddDays(-7);
+    var from = Model.IsThisWeek ? null : Dates.Iso(Model.WeekStart);
+}
+
+<div class="mat-list md-view">
+    <nav class="md-weeknav" aria-label="@L["Teams.Putzplan.Period"]">
+        @if (!Model.IsThisWeek)
+        {
+            <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@Model.WeekUrl(prevMonday)">@Ui.Icon("chevron-left")<span>@L["Teams.Putzplan.Earlier"]</span></a>
+            <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@Model.WeekUrl(MatDo.Pages.Teams.PutzplanModel.MondayOf(Model.Today))">@Ui.Icon("calendar-today")<span>@L["Teams.Putzplan.ThisWeek"]</span></a>
+        }
+        <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@Model.WeekUrl(Model.WeekStart.AddDays(7))"><span>@L["Teams.Putzplan.Later"]</span>@Ui.Icon("chevron-right")</a>
+    </nav>
+
+    @if (!Model.AnyPlan)
+    {
+        <div class="mat-empty mat-empty--first">
+            <span class="mat-empty__icon">@Ui.Icon("repeat")</span>
+            <div class="mat-empty__title">@L["Teams.Putzplan.Empty"]</div>
+            <p>@L["Teams.Putzplan.EmptyHint"]</p>
+        </div>
+    }
+    else
+    {
+        <div class="mat-cols">
+            @foreach (var m in Model.Members)
+            {
+                var mine = Model.EntriesOf(m.UserId);
+                <div class="mat-col-12 mat-col-lg-6">
+                    <section class="mat-card md-putz" aria-labelledby="h-m-@m.UserId">
+                        <div class="mat-card__head">
+                            <h2 class="mat-card__title" id="h-m-@m.UserId">
+                                <span class="mat-avatar mat-avatar--sm" aria-hidden="true">@Ui.Initials(m.DisplayName)</span>
+                                <span>@m.DisplayName@(m.UserId == Model.MeId ? " " + L["Teams.You"].Value : "")</span>
+                                @if (mine.Count > 0) { <span class="md-group__count">@mine.Count</span> }
+                            </h2>
+                        </div>
+                        <div class="mat-card__body">
+                            @if (mine.Count == 0)
+                            {
+                                <p class="mat-muted">@L["Teams.Putzplan.Nothing"]</p>
+                            }
+                            else
+                            {
+                                <ul class="md-putz__list">
+                                    @foreach (var e in mine)
+                                    {
+                                        <partial name="_PutzplanRow" model="@(new MatDo.Pages.Teams.PutzplanRow(Model.Id, e, from))" />
+                                    }
+                                </ul>
+                            }
+                        </div>
+                    </section>
+                </div>
+            }
+        </div>
+
+        @if (Model.Unassigned.Count > 0)
+        {
+            <section class="md-group" aria-labelledby="h-unassigned">
+                <div class="md-group__head">
+                    <h2 class="md-group__title" id="h-unassigned">@Ui.Icon("user")@L["Teams.Putzplan.Unassigned"] <span class="md-group__count">@Model.Unassigned.Count</span></h2>
+                </div>
+                <ul class="md-putz__list">
+                    @foreach (var e in Model.Unassigned)
+                    {
+                        <partial name="_PutzplanRow" model="@(new MatDo.Pages.Teams.PutzplanRow(Model.Id, e, from))" />
+                    }
+                </ul>
+            </section>
+        }
+    }
+</div>
