@@ -310,6 +310,36 @@ public sealed class TaskLabel : Entity
     public Label? Label { get; set; }
 }
 
+/// <summary>
+/// One check-off of a task: who did it, when, for which date, and whose turn it was. A repeating task stays one task and moves on, so this is the only trace of
+/// each time it was done; <see cref="NextDue"/> is where it moved to, so that the newest check-off can be undone while the task is still there.
+/// </summary>
+public sealed class TaskCompletion : Entity
+{
+    public long TaskId { get; set; }
+
+    public TaskItem? Task { get; set; }
+
+    /// <summary>Who checked it off (null when that account is gone).</summary>
+    public long? UserId { get; set; }
+
+    public User? User { get; set; }
+
+    /// <summary>Whose turn it was (the assignee at that moment).</summary>
+    public long? AssigneeId { get; set; }
+
+    public User? Assignee { get; set; }
+
+    /// <summary>The moment (UTC).</summary>
+    public DateTime CompletedAt { get; set; }
+
+    /// <summary>The date that was done (the due date at that moment).</summary>
+    public DateOnly? DueDate { get; set; }
+
+    /// <summary>For a repeating task: the date it moved to. Null for a task that was completed for good.</summary>
+    public DateOnly? NextDue { get; set; }
+}
+
 /// <summary>One person in the rotation of a repeating task (the "Putzplan"). The order (<see cref="SortOrder"/>) decides whose turn comes next.</summary>
 public sealed class TaskRotation : Entity
 {

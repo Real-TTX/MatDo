@@ -9,14 +9,14 @@ namespace MatDo.Services.Auth;
 /// The data of a person under the GDPR: the export of everything that is about them (Art. 15 and 20, a JSON file), and the erasure of the account (Art. 17).
 /// <para>
 /// The export holds the account and its settings, the keywords, labels, personal projects with their sections and tasks (with sub-tasks, labels, comments), the
-/// teams and the tasks of team projects the person created or was given, the comments they wrote there, the webhooks, the devices for notifications and the
-/// sessions (and the person of MatIdentity the account is linked with). No secret: no password hash, no token of a session or a webhook, no ID token, no key of a device.
+/// teams and the tasks of team projects the person created or was given, the comments they wrote there, the check-offs they made or that were their turn, the
+/// webhooks, the devices for notifications and the sessions (and the person of MatIdentity the account is linked with). No secret: no password hash, no token of a session or a webhook, no ID token, no key of a device.
 /// </para>
 /// <para>
 /// The erasure deletes for good (the account is not just hidden): the personal projects with everything in them, the labels, keywords, webhooks, devices,
 /// sessions, the memberships and the comments the person wrote. What belongs to a team stays with the team: a team project the person created goes to
 /// another member, a team keeps an owner (the longest member becomes one), a team without other members goes with its projects. A task given to the person
-/// is given to nobody.
+/// is given to nobody, and the check-offs they made in a team stay without their name.
 /// </para>
 /// </summary>
 public sealed class AccountDataService(AppDbContext db)
@@ -124,6 +124,8 @@ public sealed class AccountDataService(AppDbContext db)
                     .Select(t => new { Project = teamProjects[t.ProjectId].Name, Task = TaskOf(t) }).ToList(),
             }),
             CommentsOnOtherTasks = comments.Where(c => c.AuthorId == userId && !taskIds.Contains(c.TaskId)).Select(c => new { c.TaskId, c.Text, c.CreateDate }),
+            CheckedOff = await db.TaskCompletions.IgnoreQueryFilters().AsNoTracking().Where(c => c.UserId == userId || c.AssigneeId == userId).OrderBy(c => c.CompletedAt)
+                .Select(c => new { c.TaskId, Task = c.Task!.Content, c.DueDate, c.CompletedAt, ByYou = c.UserId == userId, YourTurn = c.AssigneeId == userId }).ToListAsync(ct),
             Webhooks = await db.Webhooks.IgnoreQueryFilters().AsNoTracking().Where(w => w.UserId == userId)
                 .Select(w => new { w.Name, w.IsActive, w.UseCount, w.LastUsedDate, w.CreateDate }).ToListAsync(ct),
             NotificationDevices = await db.PushDevices.AsNoTracking().Where(d => d.UserId == userId)

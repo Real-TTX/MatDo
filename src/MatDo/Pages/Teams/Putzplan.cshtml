@@ -11,9 +11,9 @@
 
 <div class="mat-list md-view">
     <nav class="md-weeknav" aria-label="@L["Teams.Putzplan.Period"]">
+        <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@Model.WeekUrl(prevMonday)">@Ui.Icon("chevron-left")<span>@L["Teams.Putzplan.Earlier"]</span></a>
         @if (!Model.IsThisWeek)
         {
-            <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@Model.WeekUrl(prevMonday)">@Ui.Icon("chevron-left")<span>@L["Teams.Putzplan.Earlier"]</span></a>
             <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@Model.WeekUrl(MatDo.Pages.Teams.PutzplanModel.MondayOf(Model.Today))">@Ui.Icon("calendar-today")<span>@L["Teams.Putzplan.ThisWeek"]</span></a>
         }
         <a class="mat-btn mat-btn--ghost mat-btn--sm" href="@Model.WeekUrl(Model.WeekStart.AddDays(7))"><span>@L["Teams.Putzplan.Later"]</span>@Ui.Icon("chevron-right")</a>

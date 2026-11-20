@@ -107,6 +107,7 @@
 .md-check.is-checked .mat-icon { opacity: 1; }
 .md-check--static { cursor: default; width: 22px; height: 22px; }
 .md-check--static .mat-icon { opacity: 0; }
+.md-check--fixed { cursor: default; }
 @media (pointer: coarse) { .md-check::before { content: ""; position: absolute; left: 50%; top: 50%; width: 44px; height: 44px; transform: translate(-50%, -50%); } }
 
 /* ---- The quick add editor ----------------------------------------------------------------------------------------- */
@@ -362,5 +363,13 @@ html[lang="de"] .md-offline-page [lang="en"], html[lang="en"] .md-offline-page [
 .md-putz__task { display: grid; gap: 2px; min-width: 0; text-decoration: none; color: inherit; }
 .md-putz__name { font-weight: 560; overflow-wrap: anywhere; }
 .md-putz__meta { display: inline-flex; align-items: center; gap: var(--mat-space-1); color: var(--mat-text-muted); font-size: var(--mat-fs-sm); }
-.md-putz__done { flex: 0 0 auto; }
-.md-putz__preview { flex: 0 0 auto; }
+.md-putz__state { flex: 0 0 auto; }
+.md-putz__item--done .md-putz__name { color: var(--mat-text-muted); text-decoration: line-through; }
+
+/* the history of a task: who checked it off, when, for which date */
+.md-history { list-style: none; margin: 0; padding: 0; }
+.md-history__item { display: flex; align-items: flex-start; gap: var(--mat-space-3); padding: var(--mat-space-2) 0; border-top: 1px solid var(--mat-border); }
+.md-history__item:first-child { border-top: 0; }
+.md-history__body { flex: 1 1 auto; min-width: 0; display: grid; gap: 2px; }
+.md-history__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 2px var(--mat-space-3); font-size: var(--mat-fs-xs); color: var(--mat-text-muted); }
+.md-history__meta .mat-icon { width: 14px; height: 14px; font-size: 14px; margin-right: 3px; }

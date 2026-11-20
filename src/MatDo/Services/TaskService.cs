@@ -36,13 +36,28 @@ public sealed record TaskRow(
 
     /// <summary>How many rows of the list stand under this one (its open sub-tasks in the tree).</summary>
     public int Children { get; init; }
+
+    /// <summary>In the list of what was done: the check-off this row stands for (a repeating task has a row for each time).</summary>
+    public long? CompletionId { get; init; }
+
+    /// <summary>In the list of what was done: who checked it off.</summary>
+    public string? CompletedBy { get; init; }
+
+    /// <summary>The check cannot be taken back from this row (an older check-off of a repeating task).</summary>
+    public bool Locked { get; init; }
 }
 
 /// <summary>The search, filters and sort of a task list (the toolbar).</summary>
 public sealed record TaskQuery(string? Search = null, int? Priority = null, long? LabelId = null, string? Due = null, string Sort = "manual", bool Descending = false);
 
+/// <summary>A check-off on the page of a task: when, for which date, by whom, whose turn it was (when that was someone else), and whether it can be taken back.</summary>
+public sealed record CompletionView(long Id, DateTime At, DateOnly? DueDate, string? By, string? Turn, bool Undoable);
+
+/// <summary>A check-off in the list of what was done.</summary>
+public sealed record CompletionEntry(long Id, long TaskId, DateTime At, DateOnly? DueDate, string? By, bool Undoable);
+
 /// <summary>One slot of a team's cleaning plan: a repeating task on a day of the week, and whose turn it is. <see cref="IsNext"/> marks the task's real next date (the only one that can be checked off); later rows are a preview of the rotation ahead.</summary>
-public sealed record PutzplanEntry(long TaskId, string Content, long ProjectId, string ProjectName, DateOnly Date, long? AssigneeId, bool IsNext);
+public sealed record PutzplanEntry(long TaskId, string Content, long ProjectId, string ProjectName, DateOnly Date, long? AssigneeId, bool IsNext, bool Done = false, string? DoneBy = null);
 
 /// <summary>Reading and changing tasks. Every query starts with the projects the person may see (<see cref="ProjectService.Visible"/>).</summary>
 public sealed class TaskService(AppDbContext db, ProjectService projects)
@@ -161,7 +176,10 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         return list;
     }
 
-    /// <summary>Checks a task off. A repeating task moves to its next date instead and stays open. Its sub-tasks are checked off with it.</summary>
+    /// <summary>
+    /// Checks a task off, and notes who did it (<see cref="TaskCompletion"/>). A repeating task moves to its next date instead and stays open: the next person of its
+    /// rotation takes it, and its sub-tasks are open again for the next time. A task that is not repeating is completed with its open sub-tasks.
+    /// </summary>
     public async Task<(bool Completed, DateOnly? NextDue)> CompleteAsync(long userId, long id, DateOnly today)
     {
         var task = await Visible(userId).FirstOrDefaultAsync(t => t.Id == id);
@@ -170,24 +188,78 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
             return (false, null);
         }
 
-        if (!task.IsCompleted && Recurrence.IsValid(task.Recurrence))
+        if (task.IsCompleted)
         {
+            return (true, null);
+        }
+
+        var now = DateTime.UtcNow;
+        if (Recurrence.IsValid(task.Recurrence))
+        {
+            var done = new TaskCompletion { TaskId = task.Id, UserId = userId, AssigneeId = task.AssigneeId, CompletedAt = now, DueDate = task.DueDate };
             task.DueDate = Recurrence.Next(task.Recurrence!, task.DueDate ?? today, today);
+            done.NextDue = task.DueDate;
             await AdvanceRotationAsync(task);
+            foreach (var c in (await DescendantsAsync(id)).Where(c => c.IsCompleted))
+            {
+                c.IsCompleted = false;
+                c.CompletedDate = null;
+            }
+
+            db.TaskCompletions.Add(done);
             await db.SaveChangesAsync();
             return (false, task.DueDate);
         }
 
         task.IsCompleted = true;
-        task.CompletedDate = DateTime.UtcNow;
+        task.CompletedDate = now;
+        db.TaskCompletions.Add(new TaskCompletion { TaskId = task.Id, UserId = userId, AssigneeId = task.AssigneeId, CompletedAt = now, DueDate = task.DueDate });
         foreach (var c in await DescendantsAsync(id, openOnly: true))
         {
             c.IsCompleted = true;
-            c.CompletedDate = task.CompletedDate;
+            c.CompletedDate = now;
+            db.TaskCompletions.Add(new TaskCompletion { TaskId = c.Id, UserId = userId, AssigneeId = c.AssigneeId, CompletedAt = now, DueDate = c.DueDate });
         }
 
         await db.SaveChangesAsync();
         return (true, null);
+    }
+
+    /// <summary>
+    /// Can the newest check-off of a task be taken back? A completed task: when that check-off completed it. A repeating task: while it still stands on the date that
+    /// check-off moved it to (nobody changed it since).
+    /// </summary>
+    public static bool CanUndo(bool isCompleted, DateOnly? dueDate, DateOnly? nextDue)
+        => isCompleted ? nextDue is null : nextDue is not null && dueDate == nextDue;
+
+    /// <summary>The check-offs of a task, newest first, for its page; only the newest can be taken back (<see cref="CanUndo"/>).</summary>
+    public async Task<List<CompletionView>> HistoryAsync(TaskItem task, int limit = 50)
+    {
+        var rows = await db.TaskCompletions.Where(c => c.TaskId == task.Id).OrderByDescending(c => c.CompletedAt).ThenByDescending(c => c.Id).Take(limit)
+            .Select(c => new { c.Id, c.CompletedAt, c.DueDate, c.NextDue, c.UserId, By = c.User!.DisplayName, c.AssigneeId, Turn = c.Assignee!.DisplayName })
+            .AsNoTracking().ToListAsync();
+        return rows.Select((r, i) => new CompletionView(r.Id, r.CompletedAt, r.DueDate, r.By, r.AssigneeId != r.UserId ? r.Turn : null,
+            i == 0 && CanUndo(task.IsCompleted, task.DueDate, r.NextDue))).ToList();
+    }
+
+    /// <summary>The tasks with at least one check-off (the list of what was done).</summary>
+    public IQueryable<TaskItem> Done(long userId) => Visible(userId).Where(t => db.TaskCompletions.Any(c => c.TaskId == t.Id));
+
+    /// <summary>How many check-offs there are in the tasks the person sees.</summary>
+    public Task<int> CompletionCountAsync(long userId)
+    {
+        var ids = Visible(userId).Select(t => t.Id);
+        return db.TaskCompletions.CountAsync(c => ids.Contains(c.TaskId));
+    }
+
+    /// <summary>The check-offs of these tasks, each marked whether it is the one that can be taken back.</summary>
+    public async Task<List<CompletionEntry>> CompletionsAsync(IReadOnlyCollection<long> taskIds)
+    {
+        var rows = await db.TaskCompletions.Where(c => taskIds.Contains(c.TaskId))
+            .Select(c => new { c.Id, c.TaskId, c.CompletedAt, c.DueDate, c.NextDue, By = c.User!.DisplayName, Done = c.Task!.IsCompleted, Due = c.Task.DueDate })
+            .AsNoTracking().ToListAsync();
+        var newest = rows.GroupBy(r => r.TaskId).ToDictionary(g => g.Key, g => g.OrderByDescending(r => r.CompletedAt).ThenByDescending(r => r.Id).First().Id);
+        return rows.Select(r => new CompletionEntry(r.Id, r.TaskId, r.CompletedAt, r.DueDate, r.By, newest[r.TaskId] == r.Id && CanUndo(r.Done, r.Due, r.NextDue))).ToList();
     }
 
     /// <summary>A repeating task with a rotation pool (the "Putzplan") hands over to the next person each time it recurs.</summary>
@@ -202,7 +274,11 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
     public Task<bool> HasPutzplanAsync(long userId, long teamId)
         => Visible(userId).AnyAsync(t => !t.IsCompleted && t.Recurrence != null && t.Project!.TeamId == teamId && t.Rotations.Any());
 
-    /// <summary>The cleaning plan ("Putzplan") of a team for one week: every repeating task with a rotation pool, rolled forward to the instances that fall in the week, each with the person whose turn it is. Only the task's actual next date is checkable; the rest is a preview of the weeks ahead.</summary>
+    /// <summary>
+    /// The cleaning plan ("Putzplan") of a team for one week: every repeating task with a rotation pool, rolled forward to the instances that fall in the week, each with
+    /// the person whose turn it is, and the times it was done that week (from its check-offs, under the person whose turn it was). Only the task's actual next date is
+    /// checkable; the rest is a preview of the weeks ahead.
+    /// </summary>
     public async Task<List<PutzplanEntry>> PutzplanAsync(long userId, long teamId, DateOnly weekStart, DateOnly weekEnd)
     {
         var items = await Visible(userId)
@@ -237,6 +313,16 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
                 date = next;
                 who = NextAssignee(pool, who);
             }
+        }
+
+        var plan = items.Where(t => t.Rotations.Count > 0).ToDictionary(t => t.Id);
+        var ids = plan.Keys.ToList();
+        var done = await db.TaskCompletions.Where(c => ids.Contains(c.TaskId) && c.DueDate >= weekStart && c.DueDate <= weekEnd)
+            .Select(c => new { c.TaskId, c.DueDate, c.AssigneeId, c.UserId, By = c.User!.DisplayName }).AsNoTracking().ToListAsync();
+        foreach (var d in done)
+        {
+            var t = plan[d.TaskId];
+            entries.Add(new PutzplanEntry(t.Id, t.Content, t.ProjectId, t.Project!.Name, d.DueDate!.Value, d.AssigneeId ?? d.UserId, false, true, d.By));
         }
 
         return entries.OrderBy(e => e.Date).ThenBy(e => e.Content, StringComparer.CurrentCultureIgnoreCase).ToList();
@@ -283,6 +369,10 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         return all;
     }
 
+    /// <summary>
+    /// Takes the newest check-off back. A completed task is open again (and the check-off leaves the history). A repeating task goes back to the date and the person of
+    /// that check-off, as long as nobody changed it since (<see cref="CanUndo"/>); otherwise nothing happens (false).
+    /// </summary>
     public async Task<bool> ReopenAsync(long userId, long id)
     {
         var task = await Visible(userId).FirstOrDefaultAsync(t => t.Id == id);
@@ -291,8 +381,28 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
             return false;
         }
 
-        task.IsCompleted = false;
-        task.CompletedDate = null;
+        var last = await db.TaskCompletions.Where(c => c.TaskId == id).OrderByDescending(c => c.CompletedAt).ThenByDescending(c => c.Id).FirstOrDefaultAsync();
+        if (task.IsCompleted)
+        {
+            task.IsCompleted = false;
+            task.CompletedDate = null;
+            if (last is { NextDue: null })
+            {
+                db.TaskCompletions.Remove(last);
+            }
+
+            await db.SaveChangesAsync();
+            return true;
+        }
+
+        if (last is null || !CanUndo(false, task.DueDate, last.NextDue))
+        {
+            return false;
+        }
+
+        task.DueDate = last.DueDate;
+        task.AssigneeId = last.AssigneeId;
+        db.TaskCompletions.Remove(last);
         await db.SaveChangesAsync();
         return true;
     }

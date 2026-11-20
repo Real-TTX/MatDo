@@ -32,6 +32,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
 
     public DbSet<TaskRotation> TaskRotations => Set<TaskRotation>();
 
+    public DbSet<TaskCompletion> TaskCompletions => Set<TaskCompletion>();
+
     public DbSet<TaskComment> Comments => Set<TaskComment>();
 
     public DbSet<WebhookToken> Webhooks => Set<WebhookToken>();
@@ -153,6 +155,17 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
             e.HasIndex(x => x.LabelId);
             e.HasOne(x => x.Task).WithMany(t => t.Labels).HasForeignKey(x => x.TaskId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Label).WithMany().HasForeignKey(x => x.LabelId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<TaskCompletion>(e =>
+        {
+            e.ToTable("TaskCompletion");
+            e.HasIndex(x => new { x.TaskId, x.CompletedAt });
+            e.HasIndex(x => x.UserId);
+            e.HasIndex(x => x.AssigneeId);
+            e.HasOne(x => x.Task).WithMany().HasForeignKey(x => x.TaskId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.SetNull);
+            e.HasOne(x => x.Assignee).WithMany().HasForeignKey(x => x.AssigneeId).OnDelete(DeleteBehavior.SetNull);
         });
 
         b.Entity<TaskRotation>(e =>

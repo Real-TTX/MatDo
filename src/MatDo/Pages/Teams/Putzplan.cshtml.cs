@@ -9,8 +9,8 @@ namespace MatDo.Pages.Teams;
 public sealed record PutzplanRow(long TeamId, PutzplanEntry Entry, string? From);
 
 /// <summary>
-/// The cleaning plan ("Putzplan") of a team: one week, person by person, of the repeating tasks that rotate — who is on each this week, and a check-off for the one
-/// that is due now. The weeks ahead are a preview of the rotation; the plan looks forward, so it does not go before the current week.
+/// The cleaning plan ("Putzplan") of a team: one week, person by person, of the repeating tasks that rotate — who is on each this week, a check-off for the one that
+/// is due now, and what was done already (who did it). The weeks ahead are a preview of the rotation, the weeks before show what was done.
 /// </summary>
 public sealed class PutzplanModel(TeamService teams, TaskService tasks) : AppPageModel
 {
@@ -65,8 +65,7 @@ public sealed class PutzplanModel(TeamService teams, TaskService tasks) : AppPag
 
         Team = found.Team;
         var thisMonday = MondayOf(Today);
-        var start = Dates.ParseIso(from) is { } f ? MondayOf(f) : thisMonday;
-        WeekStart = start < thisMonday ? thisMonday : start;
+        WeekStart = Dates.ParseIso(from) is { } f ? MondayOf(f) : thisMonday;
         WeekEnd = WeekStart.AddDays(6);
         Members = await teams.MembersAsync(Id);
         Entries = await tasks.PutzplanAsync(UserId, Id, WeekStart, WeekEnd);

@@ -11,6 +11,7 @@
   "Teams.Putzplan.EmptyHint": { "en": "Open a repeating task and add people under “Rotation (cleaning plan)”.", "de": "Öffne eine wiederkehrende Aufgabe und trag unter „Rotation (Putzplan)“ Personen ein." },
   "Teams.Putzplan.Nothing": { "en": "Nothing this week", "de": "Diese Woche nichts" },
   "Teams.Putzplan.Unassigned": { "en": "No one yet", "de": "Noch niemand" },
+  "Teams.Putzplan.DoneBy": { "en": "Done by {0}", "de": "Erledigt von {0}" },
   "Teams.Putzplan.Upcoming": { "en": "Preview", "de": "Vorschau" },
   "Teams.Search": { "en": "Search teams", "de": "Teams durchsuchen" },
   "Teams.New": { "en": "New team", "de": "Neues Team" },

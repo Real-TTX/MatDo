@@ -115,6 +115,40 @@
     <partial name="_QuickAdd" model="Model.SubEditor" />
 </section>
 
+@if (Model.History.Count > 0)
+{
+    <section class="md-block" id="history" aria-labelledby="h-history">
+        <h2 class="md-block__title" id="h-history">@Ui.Icon("clock")@L["Tasks.History"] <span class="md-group__count">@Model.History.Count</span></h2>
+        <ul class="md-history">
+            @foreach (var h in Model.History)
+            {
+                <li class="md-history__item">
+                    <span class="mat-avatar mat-avatar--sm" aria-hidden="true">@Ui.Initials(h.By ?? "?")</span>
+                    <div class="md-history__body">
+                        <div><strong>@(h.By ?? L["Tasks.History.Gone"].Value)</strong> <small class="mat-muted">@Dates.Stamp(h.At, Me.TimeZone)</small></div>
+                        <div class="md-history__meta">
+                            @if (h.DueDate is { } hd)
+                            {
+                                <span class="md-meta">@Ui.Icon(t.Recurrence is null ? "calendar" : "repeat")@L["Tasks.History.For", Dates.Short(hd)]</span>
+                            }
+                            @if (h.Turn is { } turn)
+                            {
+                                <span class="md-meta">@Ui.Icon("user")@L["Tasks.History.Turn", turn]</span>
+                            }
+                        </div>
+                    </div>
+                    @if (h.Undoable)
+                    {
+                        <form method="post" asp-page-handler="Undo" asp-route-id="@t.Id">
+                            <button type="submit" class="mat-btn mat-btn--ghost mat-btn--sm md-btn-collapse" aria-label="@L["Tasks.History.Undo"]" data-tip="@L["Tasks.History.Undo"]">@Ui.Icon("back")<span>@L["Tasks.History.Undo"]</span></button>
+                        </form>
+                    }
+                </li>
+            }
+        </ul>
+    </section>
+}
+
 <section class="md-block" id="comments" aria-labelledby="h-comments">
     <h2 class="md-block__title" id="h-comments">@Ui.Icon("message-square")@L["Comments.Title"] @if (Model.Comments.Count > 0) { <span class="md-group__count">@Model.Comments.Count</span> }</h2>
     @if (Model.Comments.Count > 0)

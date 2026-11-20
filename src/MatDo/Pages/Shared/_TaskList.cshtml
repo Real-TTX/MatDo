@@ -1,4 +1,5 @@
 @model TaskListModel
+@inject CurrentUser Me
 @*
     A list of tasks (LIST-15: a list of rows that are ticked off one by one). A row: the round check in the colour of the priority (a form: it works without the script;
     tasks.js sends it in the background and lets the row go), the task as a link to its page (title, the first line of the description, date, repeating, deadline,
@@ -18,7 +19,7 @@ else
         @foreach (var t in Model.Rows)
         {
             var desc = t.Description?.Split('\n', 2)[0].Trim();
-            <li class="mat-item mat-item--top md-task @(t.IsCompleted ? "is-done" : "mat-item--sliding")" data-item-key="@t.Id" data-task="@t.Id" data-priority="@t.Priority" data-depth="@t.Depth" data-parent="@(t.Depth > 0 ? t.ParentId : null)">
+            <li class="mat-item mat-item--top md-task @(t.IsCompleted ? "is-done" : "mat-item--sliding")" data-item-key="@(t.CompletionId ?? t.Id)" data-task="@t.Id" data-priority="@t.Priority" data-depth="@t.Depth" data-parent="@(t.Depth > 0 ? t.ParentId : null)">
                 <div class="mat-item__row">
                 @if (!t.IsCompleted)
                 {
@@ -27,15 +28,23 @@ else
                         <button type="button" class="mat-item__option mat-item__option--accent" data-item-action="complete">@Ui.Icon("check")<span>@L["Tasks.Complete"]</span></button>
                     </div>
                 }
-                <form class="md-task__check" method="post" action="@(t.IsCompleted ? "/Tasks/Add?handler=Reopen" : "/Tasks/Add?handler=Complete")" data-task-toggle>
-                    @Html.AntiForgeryToken()
-                    <input type="hidden" name="id" value="@t.Id" />
-                    <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
-                    <button type="submit" class="md-check @Ui.PriorityClass(t.Priority) @(t.IsCompleted ? "is-checked" : "")"
-                            aria-label="@L[t.IsCompleted ? "Tasks.Reopen" : "Tasks.Complete"]: @t.Content" title="@L[t.IsCompleted ? "Tasks.Reopen" : "Tasks.Complete"]">
-                        @Ui.Icon("check")
-                    </button>
-                </form>
+                @if (t.Locked)
+                {
+                    @* an older check-off of a repeating task: it stays as it is *@
+                    <span class="md-task__check"><span class="md-check md-check--fixed @Ui.PriorityClass(t.Priority) is-checked" aria-hidden="true">@Ui.Icon("check")</span></span>
+                }
+                else
+                {
+                    <form class="md-task__check" method="post" action="@(t.IsCompleted ? "/Tasks/Add?handler=Reopen" : "/Tasks/Add?handler=Complete")" data-task-toggle>
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="id" value="@t.Id" />
+                        <input type="hidden" name="ReturnUrl" value="@Model.ReturnUrl" />
+                        <button type="submit" class="md-check @Ui.PriorityClass(t.Priority) @(t.IsCompleted ? "is-checked" : "")"
+                                aria-label="@L[t.IsCompleted ? "Tasks.Reopen" : "Tasks.Complete"]: @t.Content" title="@L[t.IsCompleted ? "Tasks.Reopen" : "Tasks.Complete"]">
+                            @Ui.Icon("check")
+                        </button>
+                    </form>
+                }
                 <a class="mat-item__main md-task__main" href="/Tasks/Edit?id=@t.Id">
                     <span class="mat-item__body">
                         <span class="md-task__title">@t.Content</span>
@@ -47,7 +56,12 @@ else
                             @if (t.DueDate is { } due && (Model.ShowDate || t.DueTime is not null || t.Recurrence is not null))
                             {
                                 var (text, cls) = Ui.Due(due, t.DueTime, Model.Today);
-                                <span class="md-due @cls" data-due-text>@Ui.Icon(t.Recurrence is null ? "calendar" : "repeat")@(Model.ShowDate ? text : t.DueTime is { } tm ? Dates.Time(tm) : "")</span>
+                                if (t.IsCompleted)
+                                {
+                                    // done: the day it was for, not how far it is from today
+                                    text = Dates.Short(due);
+                                }
+                                <span class="md-due @(t.IsCompleted ? "" : cls)" data-due-text>@Ui.Icon(t.Recurrence is null ? "calendar" : "repeat")@(Model.ShowDate ? text : t.DueTime is { } tm ? Dates.Time(tm) : "")</span>
                             }
                             @if (t.Deadline is { } dl)
                             {
@@ -69,9 +83,10 @@ else
                             {
                                 <span class="md-meta">@Ui.Icon("user")@t.AssigneeName</span>
                             }
-                            @if (t.IsCompleted && t.CompletedDate is not null)
+                            @if (t.IsCompleted && t.CompletedDate is { } doneAt)
                             {
-                                <span class="md-meta">@Ui.Icon("check")@L["Tasks.Done"]</span>
+                                var stamp = Dates.Stamp(doneAt, Me.TimeZone);
+                                <span class="md-meta">@Ui.Icon("check")@(t.CompletedBy is { } by ? L["Tasks.DoneByAt", by, stamp].Value : L["Tasks.DoneAt", stamp].Value)</span>
                             }
                         </span>
                     </span>

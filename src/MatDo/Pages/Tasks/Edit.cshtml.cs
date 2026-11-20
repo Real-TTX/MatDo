@@ -73,6 +73,9 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
 
     public List<CommentView> Comments { get; private set; } = [];
 
+    /// <summary>Who checked the task off and when, newest first.</summary>
+    public List<CompletionView> History { get; private set; } = [];
+
     public string BackUrl => !string.IsNullOrEmpty(ReturnUrl) && Url.IsLocalUrl(ReturnUrl) ? ReturnUrl : Parent is not null ? $"/Tasks/Edit?id={Parent.Id}" : $"/Projects/View?id={Item.ProjectId}";
 
     public async Task<IActionResult> OnGetAsync()
@@ -216,6 +219,26 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         return LocalRedirect(completed ? BackUrl : $"/Tasks/Edit?id={Id}");
     }
 
+    /// <summary>Takes the newest check-off back (a repeating task goes back to that date and that person).</summary>
+    public async Task<IActionResult> OnPostUndoAsync()
+    {
+        if (!await LoadAsync())
+        {
+            return NotFound();
+        }
+
+        if (await tasks.ReopenAsync(UserId, Id))
+        {
+            Flash(Text.T("Tasks.History.Undone"));
+        }
+        else
+        {
+            FlashError(Text.T("Tasks.History.CannotUndo"));
+        }
+
+        return LocalRedirect($"/Tasks/Edit?id={Id}#history");
+    }
+
     public async Task<IActionResult> OnPostDeleteAsync()
     {
         if (!await LoadAsync())
@@ -354,6 +377,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         QuickAddDefaults(new QuickAddContext(ProjectId: Item.ProjectId, SectionId: Item.SectionId));
         SubEditor = await editors.CreateAsync("qa-sub", $"/Tasks/Edit?id={Id}", projectId: Item.ProjectId, parentId: Id, open: Request.Query["qa"] == "qa-sub", addLabel: Text.T("Tasks.AddSubTask"));
 
+        History = await tasks.HistoryAsync(Item);
         Comments = (await db.Comments.Where(c => c.TaskId == Id).OrderBy(c => c.CreateDate)
                 .Select(c => new { c.Id, c.AuthorId, Author = c.Author!.DisplayName, c.Text, c.CreateDate }).AsNoTracking().ToListAsync())
             .Select(c => new CommentView(c.Id, c.Author, c.AuthorId == UserId, c.Text, c.CreateDate)).ToList();
