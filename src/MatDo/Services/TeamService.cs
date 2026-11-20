@@ -106,6 +106,7 @@ public sealed class TeamService(AppDbContext db)
 
         var projectIds = db.Projects.Where(p => p.TeamId == teamId).Select(p => p.Id);
         await db.Tasks.Where(t => projectIds.Contains(t.ProjectId) && t.AssigneeId == member.UserId).ExecuteUpdateAsync(s => s.SetProperty(t => t.AssigneeId, (long?)null));
+        await db.TaskRotations.Where(r => r.UserId == member.UserId && db.Tasks.Any(t => t.Id == r.TaskId && projectIds.Contains(t.ProjectId))).ExecuteDeleteAsync();
         db.TeamMembers.Remove(member);
         await db.SaveChangesAsync();
         return null;
@@ -121,7 +122,9 @@ public sealed class TeamService(AppDbContext db)
             p.OwnerId = userId;
         }
 
-        await db.Tasks.Where(t => projects.Select(p => p.Id).Contains(t.ProjectId)).ExecuteUpdateAsync(s => s.SetProperty(t => t.AssigneeId, (long?)null));
+        var projectIds = projects.Select(p => p.Id).ToList();
+        await db.Tasks.Where(t => projectIds.Contains(t.ProjectId)).ExecuteUpdateAsync(s => s.SetProperty(t => t.AssigneeId, (long?)null));
+        await db.TaskRotations.Where(r => db.Tasks.Any(t => t.Id == r.TaskId && projectIds.Contains(t.ProjectId))).ExecuteDeleteAsync();
         db.TeamMembers.RemoveRange(await db.TeamMembers.Where(m => m.TeamId == team.Id).ToListAsync());
         db.Teams.Remove(team);
         await db.SaveChangesAsync();

@@ -51,6 +51,7 @@ public sealed class AccountDataService(AppDbContext db)
         var taskIds = tasks.Select(t => t.Id).ToList();
         var comments = await db.Comments.IgnoreQueryFilters().AsNoTracking().Where(c => taskIds.Contains(c.TaskId) || c.AuthorId == userId).ToListAsync(ct);
         var sectionNames = sections.ToDictionary(s => s.Id, s => s.Name);
+        var inRotation = (await db.TaskRotations.AsNoTracking().Where(r => r.UserId == userId && taskIds.Contains(r.TaskId)).Select(r => r.TaskId).ToListAsync(ct)).ToHashSet();
 
         object TaskOf(TaskItem t) => new
         {
@@ -67,6 +68,7 @@ public sealed class AccountDataService(AppDbContext db)
             Section = t.SectionId is { } s && sectionNames.TryGetValue(s, out var sn) ? sn : null,
             Labels = t.Labels.Select(l => labelNames.GetValueOrDefault(l.LabelId)).Where(n => n is not null).ToList(),
             AssignedToYou = t.AssigneeId == userId ? true : (bool?)null,
+            InRotation = inRotation.Contains(t.Id) ? true : (bool?)null,
             t.IsCompleted,
             t.CompletedDate,
             t.Source,

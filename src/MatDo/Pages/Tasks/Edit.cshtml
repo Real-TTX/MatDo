@@ -92,6 +92,7 @@
                     @if (Model.AssigneeChoices.Count > 0)
                     {
                         <md-field name="AssigneeId" kind="select" label="@L["Tasks.Assignee"]" value="@Model.AssigneeId" options="Model.AssigneeChoices" />
+                        <md-field name="RotationIds" kind="picker" label="@L["Tasks.Rotation"]" value="@Model.RotationIds" options="Model.RotationChoices" picker="multiple search clearable" placeholder="@L["Tasks.Rotation.None"]" hint="@L["Tasks.Rotation.Hint"]" optional />
                     }
                 </div>
             </div>

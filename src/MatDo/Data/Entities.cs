@@ -281,6 +281,9 @@ public sealed class TaskItem : SoftEntity
     public DateTime? RemindedFor { get; set; }
 
     public List<TaskLabel> Labels { get; set; } = [];
+
+    /// <summary>The people a repeating task hands over to in turn (the "Putzplan"): each new instance moves to the next, in <see cref="TaskRotation.SortOrder"/>.</summary>
+    public List<TaskRotation> Rotations { get; set; } = [];
 }
 
 public sealed class Label : SoftEntity
@@ -305,6 +308,20 @@ public sealed class TaskLabel : Entity
     public long LabelId { get; set; }
 
     public Label? Label { get; set; }
+}
+
+/// <summary>One person in the rotation of a repeating task (the "Putzplan"). The order (<see cref="SortOrder"/>) decides whose turn comes next.</summary>
+public sealed class TaskRotation : Entity
+{
+    public long TaskId { get; set; }
+
+    public TaskItem? Task { get; set; }
+
+    public long UserId { get; set; }
+
+    public User? User { get; set; }
+
+    public int SortOrder { get; set; }
 }
 
 public sealed class TaskComment : SoftEntity

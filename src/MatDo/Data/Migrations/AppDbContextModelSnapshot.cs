@@ -17,7 +17,7 @@ namespace MatDo.Data.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.13")
+                .HasAnnotation("ProductVersion", "10.0.14")
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
@@ -451,6 +451,45 @@ namespace MatDo.Data.Migrations
                         .IsUnique();
 
                     b.ToTable("TaskLabel", (string)null);
+                });
+
+            modelBuilder.Entity("MatDo.Data.TaskRotation", b =>
+                {
+                    b.Property<long>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<long>("Id"));
+
+                    b.Property<DateTime>("CreateDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("CreateUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("SortOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<long>("TaskId")
+                        .HasColumnType("bigint");
+
+                    b.Property<DateTime>("UpdateDate")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<long?>("UpdateUserId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("bigint");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.HasIndex("TaskId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("TaskRotation", (string)null);
                 });
 
             modelBuilder.Entity("MatDo.Data.Team", b =>
@@ -918,6 +957,25 @@ namespace MatDo.Data.Migrations
                     b.Navigation("Task");
                 });
 
+            modelBuilder.Entity("MatDo.Data.TaskRotation", b =>
+                {
+                    b.HasOne("MatDo.Data.TaskItem", "Task")
+                        .WithMany("Rotations")
+                        .HasForeignKey("TaskId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MatDo.Data.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Task");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MatDo.Data.TeamMember", b =>
                 {
                     b.HasOne("MatDo.Data.Team", "Team")
@@ -974,6 +1032,8 @@ namespace MatDo.Data.Migrations
             modelBuilder.Entity("MatDo.Data.TaskItem", b =>
                 {
                     b.Navigation("Labels");
+
+                    b.Navigation("Rotations");
                 });
 
             modelBuilder.Entity("MatDo.Data.Team", b =>

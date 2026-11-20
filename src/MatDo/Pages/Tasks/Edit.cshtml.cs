@@ -43,6 +43,8 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
 
     [BindProperty] public string AssigneeId { get; set; } = string.Empty;
 
+    [BindProperty] public string RotationIds { get; set; } = string.Empty;
+
     [BindProperty] public string CommentText { get; set; } = string.Empty;
 
     [BindProperty(SupportsGet = true)] public string ReturnUrl { get; set; } = string.Empty;
@@ -60,6 +62,8 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
     public List<Choice> LabelChoices { get; private set; } = [];
 
     public List<Choice> AssigneeChoices { get; private set; } = [];
+
+    public List<Choice> RotationChoices { get; private set; } = [];
 
     public List<Choice> PriorityChoices { get; } = Ui.Priorities.Select(p => new Choice(p.Value.ToString(CultureInfo.InvariantCulture), p.Label)).ToList();
 
@@ -89,6 +93,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         Priority = Item.Priority;
         LabelIds = string.Join(", ", Item.Labels.Select(l => l.LabelId));
         AssigneeId = Item.AssigneeId?.ToString(CultureInfo.InvariantCulture) ?? string.Empty;
+        RotationIds = string.Join(", ", Item.Rotations.OrderBy(r => r.SortOrder).ThenBy(r => r.Id).Select(r => r.UserId));
         await ChoicesAsync();
         return Page();
     }
@@ -178,6 +183,7 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         Item.DeadlineDate = Dates.ParseIso(Deadline);
         Item.Priority = Priority is >= 1 and <= 4 ? Priority : 4;
         Item.AssigneeId = long.TryParse(AssigneeId, out var a) && project.TeamId is not null && await db.TeamMembers.AnyAsync(m => m.TeamId == project.TeamId && m.UserId == a) ? a : null;
+        await SaveRotationAsync(project);
         await db.SaveChangesAsync();
 
         var ids = LabelIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
@@ -259,6 +265,42 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         return LocalRedirect($"/Tasks/Edit?id={Id}#comments");
     }
 
+    /// <summary>Writes the rotation pool (the "Putzplan") of the task from the picker: only members of the project's team, in the order given. A rotation needs a current holder, so the assignee becomes its first person when it is not one of them.</summary>
+    private async Task SaveRotationAsync(Project project)
+    {
+        var ids = RotationIds.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+            .Select(x => long.TryParse(x, out var v) ? v : 0).Where(v => v > 0).Distinct().ToList();
+        if (project.TeamId is { } team && ids.Count > 0)
+        {
+            var members = await db.TeamMembers.Where(m => m.TeamId == team).Select(m => m.UserId).ToListAsync();
+            ids = ids.Where(members.Contains).ToList();
+        }
+        else
+        {
+            ids = [];
+        }
+
+        var existing = await db.TaskRotations.Where(r => r.TaskId == Item.Id).ToListAsync();
+        db.TaskRotations.RemoveRange(existing.Where(r => !ids.Contains(r.UserId)));
+        for (var i = 0; i < ids.Count; i++)
+        {
+            var row = existing.FirstOrDefault(r => r.UserId == ids[i]);
+            if (row is null)
+            {
+                db.TaskRotations.Add(new TaskRotation { TaskId = Item.Id, UserId = ids[i], SortOrder = i });
+            }
+            else
+            {
+                row.SortOrder = i;
+            }
+        }
+
+        if (ids.Count > 0 && (Item.AssigneeId is not { } cur || !ids.Contains(cur)))
+        {
+            Item.AssigneeId = ids[0];
+        }
+    }
+
     private async Task<bool> LoadAsync()
     {
         var task = await tasks.FindAsync(UserId, Id);
@@ -290,7 +332,9 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
 
         LabelChoices = (await tasks.LabelChipsAsync(UserId)).Select(l => new Choice(l.Id.ToString(CultureInfo.InvariantCulture), l.Name, null, l.Color)).ToList();
         var project = Item.Project ?? await db.Projects.FirstAsync(p => p.Id == Item.ProjectId);
-        AssigneeChoices = (await projects.AssigneesAsync(project)).Select(m => new Choice(m.Id.ToString(CultureInfo.InvariantCulture), m.Name)).ToList();
+        var assignees = (await projects.AssigneesAsync(project)).Select(m => new Choice(m.Id.ToString(CultureInfo.InvariantCulture), m.Name)).ToList();
+        RotationChoices = assignees;
+        AssigneeChoices = [.. assignees];
         if (AssigneeChoices.Count > 0)
         {
             AssigneeChoices.Insert(0, new Choice(string.Empty, Text.T("Tasks.Nobody")));

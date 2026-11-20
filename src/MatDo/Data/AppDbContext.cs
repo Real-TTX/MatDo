@@ -30,6 +30,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
 
     public DbSet<TaskLabel> TaskLabels => Set<TaskLabel>();
 
+    public DbSet<TaskRotation> TaskRotations => Set<TaskRotation>();
+
     public DbSet<TaskComment> Comments => Set<TaskComment>();
 
     public DbSet<WebhookToken> Webhooks => Set<WebhookToken>();
@@ -151,6 +153,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options, Current
             e.HasIndex(x => x.LabelId);
             e.HasOne(x => x.Task).WithMany(t => t.Labels).HasForeignKey(x => x.TaskId).OnDelete(DeleteBehavior.Cascade);
             e.HasOne(x => x.Label).WithMany().HasForeignKey(x => x.LabelId).OnDelete(DeleteBehavior.Cascade);
+        });
+
+        b.Entity<TaskRotation>(e =>
+        {
+            e.ToTable("TaskRotation");
+            e.HasIndex(x => new { x.TaskId, x.UserId }).IsUnique();
+            e.HasIndex(x => x.UserId);
+            e.HasOne(x => x.Task).WithMany(t => t.Rotations).HasForeignKey(x => x.TaskId).OnDelete(DeleteBehavior.Cascade);
+            e.HasOne(x => x.User).WithMany().HasForeignKey(x => x.UserId).OnDelete(DeleteBehavior.Cascade);
         });
 
         b.Entity<TaskComment>(e =>

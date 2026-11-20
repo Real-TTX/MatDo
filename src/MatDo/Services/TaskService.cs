@@ -51,7 +51,7 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
     }
 
     public Task<TaskItem?> FindAsync(long userId, long id)
-        => Visible(userId).Include(t => t.Project).Include(t => t.Labels).ThenInclude(l => l.Label).FirstOrDefaultAsync(t => t.Id == id);
+        => Visible(userId).Include(t => t.Project).Include(t => t.Labels).ThenInclude(l => l.Label).Include(t => t.Rotations).FirstOrDefaultAsync(t => t.Id == id);
 
     /// <summary>The rows of a query, with labels, sub-task and comment counts, filtered and sorted by the toolbar.</summary>
     public async Task<List<TaskRow>> RowsAsync(IQueryable<TaskItem> query, TaskQuery tools, DateOnly today, int limit = 2000)
@@ -170,6 +170,7 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         if (!task.IsCompleted && Recurrence.IsValid(task.Recurrence))
         {
             task.DueDate = Recurrence.Next(task.Recurrence!, task.DueDate ?? today, today);
+            await AdvanceRotationAsync(task);
             await db.SaveChangesAsync();
             return (false, task.DueDate);
         }
@@ -184,6 +185,38 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
 
         await db.SaveChangesAsync();
         return (true, null);
+    }
+
+    /// <summary>A repeating task with a rotation pool (the "Putzplan") hands over to the next person each time it recurs.</summary>
+    private async Task AdvanceRotationAsync(TaskItem task)
+    {
+        var pool = await db.TaskRotations.Where(r => r.TaskId == task.Id).OrderBy(r => r.SortOrder).ThenBy(r => r.Id)
+            .Select(r => r.UserId).ToListAsync();
+        task.AssigneeId = NextAssignee(pool, task.AssigneeId);
+    }
+
+    /// <summary>The next person in a rotation after the current one (wrapping round); the first when the current one is unknown or not in the pool. An empty pool keeps the current person.</summary>
+    public static long? NextAssignee(IReadOnlyList<long> pool, long? current)
+    {
+        if (pool.Count == 0)
+        {
+            return current;
+        }
+
+        var at = -1;
+        if (current is { } c)
+        {
+            for (var i = 0; i < pool.Count; i++)
+            {
+                if (pool[i] == c)
+                {
+                    at = i;
+                    break;
+                }
+            }
+        }
+
+        return pool[(at + 1) % pool.Count];
     }
 
     /// <summary>The sub-tasks of a task, and theirs, to any depth.</summary>
