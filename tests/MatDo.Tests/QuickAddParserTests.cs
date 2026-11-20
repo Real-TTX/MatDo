@@ -182,12 +182,60 @@ public sealed class QuickAddParserTests
     [InlineData("Müll rausbringen werktags", "wd", 2026, 10, 19)]
     [InlineData("Müll rausbringen jeden Monat", "m:1", 2026, 10, 19)]
     [InlineData("Müll rausbringen jeden 15.", "m:1:15", 2026, 11, 15)]
+    [InlineData("Müll rausbringen jeden Montag und Donnerstag", "w:1:1,4", 2026, 10, 19)]
+    [InlineData("Müll rausbringen jeden Mo, Mi und Fr", "w:1:1,3,5", 2026, 10, 19)]
+    [InlineData("Müll rausbringen montags und donnerstags", "w:1:1,4", 2026, 10, 19)]
+    [InlineData("Müll rausbringen every tuesday and thursday", "w:1:2,4", 2026, 10, 20)]
+    [InlineData("Müll rausbringen jede Woche am Di und Fr", "w:1:2,5", 2026, 10, 20)]
+    [InlineData("Müll rausbringen alle 2 Wochen am Montag", "w:2:1", 2026, 10, 19)]
+    [InlineData("Müll rausbringen every 2 weeks on friday", "w:2:5", 2026, 10, 23)]
+    [InlineData("Müll rausbringen every 3 days", "d:3", 2026, 10, 19)]
+    [InlineData("Müll rausbringen every 15th", "m:1:15", 2026, 11, 15)]
+    [InlineData("Müll rausbringen jeden zweiten Mittwoch", "w:2:3", 2026, 10, 21)]
+    [InlineData("Müll rausbringen every other friday", "w:2:5", 2026, 10, 23)]
+    [InlineData("Müll rausbringen jeden zweiten Tag", "d:2", 2026, 10, 19)]
+    [InlineData("Müll rausbringen jede zweite Woche am Donnerstag", "w:2:4", 2026, 10, 22)]
+    [InlineData("Müll rausbringen jeden dritten Monat", "m:3", 2026, 10, 19)]
+    [InlineData("Müll rausbringen every other week", "w:2", 2026, 10, 19)]
+    [InlineData("Müll rausbringen jeden letzten Freitag", "m:1:Lx5", 2026, 10, 30)]
+    [InlineData("Müll rausbringen jeden ersten Montag im Monat", "m:1:1x1", 2026, 11, 2)]
+    [InlineData("Müll rausbringen every last friday of the month", "m:1:Lx5", 2026, 10, 30)]
+    [InlineData("Müll rausbringen jeden Monatsletzten", "m:1:L", 2026, 10, 31)]
+    [InlineData("Müll rausbringen jeden Monat am 1.", "m:1:1", 2026, 11, 1)]
+    [InlineData("Müll rausbringen alle 3 Monate am letzten Tag", "m:3:L", 2026, 10, 31)]
+    [InlineData("Müll rausbringen alle 3 Monate ab Erledigung", "m:3;c", 2026, 10, 19)]
+    [InlineData("Müll rausbringen every! 3 months", "m:3;c", 2026, 10, 19)]
+    [InlineData("Müll rausbringen every 3 months after completion", "m:3;c", 2026, 10, 19)]
+    [InlineData("Müll rausbringen jeden Montag bis 31.12.", "w:1:1;u=2026-12-31", 2026, 10, 19)]
+    [InlineData("Müll rausbringen täglich until friday", "d:1;u=2026-10-23", 2026, 10, 19)]
+    [InlineData("Müll rausbringen jährlich am 24.12.", "y:1", 2026, 12, 24)]
+    [InlineData("Müll rausbringen alle 2 Wochen ab 2.11.", "w:2", 2026, 11, 2)]
+    [InlineData("Müll rausbringen jeden Freitag ab 1.12.", "w:1:5", 2026, 12, 4)]
     public void Recurrence(string text, string rule, int y, int m, int d)
     {
         var r = P(text);
         Assert.Equal(rule, r.Recurrence);
         Assert.Equal(new DateOnly(y, m, d), r.DueDate);
         Assert.Equal("Müll rausbringen", r.Title);
+    }
+
+    [Fact]
+    public void Until_without_a_repeat_is_the_due_date()
+    {
+        var r = P("Bericht schreiben bis Freitag");
+        Assert.Null(r.Recurrence);
+        Assert.Equal(new DateOnly(2026, 10, 23), r.DueDate);
+        Assert.Equal("Bericht schreiben", r.Title);
+    }
+
+    [Fact]
+    public void A_repeat_with_its_options_is_one_highlight_kind()
+    {
+        var r = P("Filter wechseln alle 3 Monate ab Erledigung bis 31.12.2027 um 9 Uhr");
+        Assert.Equal("m:3;c;u=2027-12-31", r.Recurrence);
+        Assert.Equal(new TimeOnly(9, 0), r.DueTime);
+        Assert.Equal("Filter wechseln", r.Title);
+        Assert.Equal(3, r.Tokens.Count(t => t.Kind == TokenKind.Recurrence));
     }
 
     [Fact]

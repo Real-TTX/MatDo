@@ -14,7 +14,8 @@ The user interface is German. Everything except the start page needs an account.
 
 - Dates: heute, morgen, übermorgen, am Freitag, nächsten Montag, in 3 Tagen, nächste Woche, am Wochenende, Monatsende, 24.12., 24.12.2026, 24. Dezember, 2026-12-24; English: today, tomorrow, next friday, in 5 days, Dec 24.
 - Times: um 15 Uhr, 15:30, 9.30 Uhr, um halb 4, um 7 abends, morgen früh, heute Abend, 3pm.
-- Repeating: täglich, jeden Tag, werktags, jeden Montag, jede Woche, alle 2 Wochen, jeden Monat, jeden 15., jährlich; every day, every monday.
+- Repeating: täglich, jeden Tag, werktags, jeden Montag, jeden Mo und Do, montags, jede Woche, alle 2 Wochen am Montag, jeden zweiten Freitag, jeden Monat, jeden 15., jeden Monatsletzten, jeden letzten Freitag (im Monat), jährlich am 24.12.; every day, every monday and thursday, every other friday, every first monday of the month.
+- A repeat can start ("ab 1.12."), end ("bis 31.12.", "until friday": the last check-off completes the task) and count from the check-off instead of the due date ("ab Erledigung", "after completion", "every! 3 months"). Each check-off is kept in the task's history; the deadline moves along with the date.
 - `#Projekt` (also names with spaces), `@label`, `p1`–`p4`, `/Abschnitt`, `{Freitag}` = deadline.
 - Keywords of the person (default: „Projekt EIMER“, „Label Einkauf“, „Priorität 1“, „Abschnitt Planung“, „Frist Freitag“, „Beschreibung …“ = the rest becomes the description). Each person can change them under Einstellungen → Schlüsselwörter.
 - Example: „Projekt EIMER Angebot schreiben übermorgen um 9 Uhr Priorität 1“ → task „Angebot schreiben“ in project EIMER, due the day after tomorrow at 09:00, priority 1.

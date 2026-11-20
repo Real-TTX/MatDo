@@ -89,6 +89,42 @@ public sealed class TaskHistoryFlowTests(MatDoFactory site) : IClassFixture<MatD
         Assert.False(await WithAsync(s => s.GetRequiredService<AppDbContext>().TaskCompletions.AnyAsync(c => c.TaskId == task)));
     }
 
+    [DbFact]
+    public async Task A_repeat_counts_from_the_check_off_moves_its_deadline_and_ends_on_its_end_date()
+    {
+        var (anna, _, project) = await TeamAsync();
+        var task = await WithAsync(async s =>
+        {
+            var db = s.GetRequiredService<AppDbContext>();
+            // due ten days ago, every 3 months from the check-off, the deadline two days after the date, until the end of February
+            var t = new TaskItem { ProjectId = project, Content = "Filter wechseln", DueDate = Today.AddDays(-10), DeadlineDate = Today.AddDays(-8), Recurrence = "m:3;c;u=2027-02-28" };
+            db.Tasks.Add(t);
+            await db.SaveChangesAsync();
+            return t.Id;
+        });
+
+        var (completed, next) = await WithAsync(s => s.GetRequiredService<TaskService>().CompleteAsync(anna, task, Today));
+        Assert.False(completed);
+        Assert.Equal(new DateOnly(2027, 2, 20), next);
+        Assert.Equal(new DateOnly(2027, 2, 22), (await TaskAsync(task)).DeadlineDate);
+
+        // taken back: the date and the deadline as they were
+        Assert.True(await WithAsync(s => s.GetRequiredService<TaskService>().ReopenAsync(anna, task)));
+        var back = await TaskAsync(task);
+        Assert.Equal(Today.AddDays(-10), back.DueDate);
+        Assert.Equal(Today.AddDays(-8), back.DeadlineDate);
+
+        // checked off on 2027-02-20 the next time would be in May, after the end: done for good, with the check-off noted
+        await WithAsync(s => s.GetRequiredService<TaskService>().CompleteAsync(anna, task, Today));
+        (completed, next) = await WithAsync(s => s.GetRequiredService<TaskService>().CompleteAsync(anna, task, new DateOnly(2027, 2, 20)));
+        Assert.True(completed);
+        Assert.Null(next);
+        var last = await TaskAsync(task);
+        Assert.True(last.IsCompleted);
+        Assert.Equal(new DateOnly(2027, 2, 20), last.DueDate);
+        Assert.Equal(2, await WithAsync(s => s.GetRequiredService<AppDbContext>().TaskCompletions.CountAsync(c => c.TaskId == task)));
+    }
+
     /// <summary>Two people (Anna, Kim) in a team with one project.</summary>
     private async Task<(long Anna, long Kim, long Project)> TeamAsync()
     {

@@ -31,7 +31,8 @@ src/MatDo
   Infrastructure.cs             HealthCheck (--healthcheck on /api/health), Database.MigrateWithRetry, SecurityHeaders (CSP: no inline script/style), MaintenanceService, EmptyStringBinderProvider
   Data/Entities.cs, AppDbContext.cs   PascalCase singular tables, Id BIGINT, audit columns, UpdateState soft delete (SaveChanges), Token (uuid) on UserSession and WebhookToken
   Services/Parsing/QuickAddParser.cs  THE parser (pure): candidates per kind, accepted left to right (longer first, one per kind, labels many); the rest is the title
-  Services/Recurrence.cs        rules d:n, wd, w:n[:dow], m:n[:day], y:n; Next() for checking off a repeating task
+  Services/Recurrence.cs        rules d:n, wd, w:n[:dows 1,4], m:n[:day|L|1x1|Lx5], y:n, options ;c (from the check-off) ;u=date (end); NextDue() for checking off
+                                (null after the end: completed), FirstOnOrAfter() for a start date; the parser also reads "bis 31.12.", "ab Erledigung", "every!"
   Services/QuickAddService.cs   ParseContext of a person (projects, labels, sections, keywords) + CreateAsync (editor and webhook); manual choices win over the text, Default* lose
   Services/ProjectService.cs    visibility: personal (owner) or team (members) – every task query starts with Visible()
   Services/TaskService.cs       rows of lists (TaskRow), complete/reopen/delete/reorder, labels
@@ -71,7 +72,7 @@ src/MatDo
 - **Check-offs and history**: `TaskService.CompleteAsync` / `ReopenAsync` are the only ways to check a task off or take it back (lists, menu, swipe, task page,
   Putzplan, notification actions all go through them). Every check-off writes a `TaskCompletion` (who, when, for which date, whose turn; for a repeating task
   `NextDue`). A repeating task stays one task: it moves on, hands over to the next person of its rotation (`TaskRotation`, the "Putzplan"), and opens its
-  sub-tasks again. Reopen takes back the newest check-off (a repeating task back to that date and person while nobody moved it since, `CanUndo`).
+  sub-tasks again; its deadline moves with the date; past its end date the check-off completes it. Reopen takes back the newest check-off (a repeating task back to that date and person while nobody moved it since, `CanUndo`).
   `/Tasks/Completed` lists the check-offs (one row per time), the task page shows its history, `/Teams/Putzplan?id=` shows a team's week person by person.
 - **Sub-tasks**: a project (and the inbox) shows them as a tree under their task (`TaskService.Tree`, `data-depth`/`data-parent`, fold in tasks.js); with a tool in effect the list is flat. Complete, delete and moving to another project take the sub-tasks along to any depth (`DescendantsAsync`).
 - **Shell**: the menu switcher sits at the foot of the menu (`mat-nav__switch--foot`): *tasks*, *settings* (`/Account/*`), *admin* (`/Admin/*`, admins only); `MenuService.AreaOf` picks the panel by the address. New settings pages go into the settings panel of `_Menu`, admin pages into the admin panel – no tabs for them.

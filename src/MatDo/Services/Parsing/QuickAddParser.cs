@@ -107,6 +107,9 @@ public static partial class QuickAddParser
         Priority,
         Deadline,
         Description,
+        Recurrence,
+        Until,
+        FromDone,
     }
 
     private sealed class Candidate
@@ -149,36 +152,55 @@ public static partial class QuickAddParser
         Labels(text, ctx, candidates);
         Priorities(text, ctx, candidates);
         Recurrences(text, ctx, candidates);
+        RecurrenceOptions(text, ctx, candidates);
         Dates(text, ctx, candidates);
         Times(text, ctx, candidates);
         Deadlines(text, ctx, candidates);
 
-        // left to right, the longer one first at the same place; a kind that is already taken does not take a second one
-        var accepted = new List<Candidate>();
-        var taken = new HashSet<Slot>();
-        foreach (var c in candidates.Where(c => !ctx.Disabled.Contains(c.Kind)).OrderBy(c => c.Start).ThenByDescending(c => c.Length))
+        // the end date and "after completion" belong to a repeat: without one they are not taken (the date is then the due date)
+        var accepted = Accept(candidates, ctx, _ => true);
+        if (!accepted.Any(a => a.Slots.Contains(Slot.Recurrence)) && accepted.Any(a => a.Slots.Contains(Slot.Until) || a.Slots.Contains(Slot.FromDone)))
         {
-            if (accepted.Any(a => c.Start < a.End && a.Start < c.End) || c.Slots.Any(taken.Contains))
-            {
-                continue;
-            }
-
-            if (c.Kind == TokenKind.Label && accepted.Any(a => a.Kind == TokenKind.Label && string.Equals(a.Name, c.Name, StringComparison.OrdinalIgnoreCase)))
-            {
-                continue;
-            }
-
-            accepted.Add(c);
-            taken.UnionWith(c.Slots);
+            accepted = Accept(candidates, ctx, c => !c.Slots.Contains(Slot.Until) && !c.Slots.Contains(Slot.FromDone));
         }
 
         // the section is looked for in the project that was found (or the inbox)
         Sections(text, ctx, accepted.FirstOrDefault(a => a.Kind == TokenKind.Project)?.Name, accepted);
 
+        DateOnly? until = null;
+        var fromDone = false;
+        var ruleWords = new List<string>();
         foreach (var c in accepted.OrderBy(c => c.Start))
         {
-            Apply(result, c);
-            result.Tokens.Add(new ParsedToken(c.Kind, c.Start, c.Length, text.Substring(c.Start, c.Length)));
+            var words = text.Substring(c.Start, c.Length);
+            if (c.Slots.Contains(Slot.Until))
+            {
+                until = c.Date;
+            }
+            else if (c.Slots.Contains(Slot.FromDone))
+            {
+                fromDone = true;
+            }
+            else
+            {
+                Apply(result, c);
+            }
+
+            if (c.Kind == TokenKind.Recurrence)
+            {
+                ruleWords.Add(words);
+            }
+
+            result.Tokens.Add(new ParsedToken(c.Kind, c.Start, c.Length, words));
+        }
+
+        // a repeat: with its end date and "after completion"; a date that was given too is where it starts (the first day of the rule on or after it)
+        if (accepted.FirstOrDefault(a => a.Slots.Contains(Slot.Recurrence)) is { } rec && Services.Recurrence.Parse(rec.Rule) is { } rule)
+        {
+            rule = rule with { FromDone = rule.FromDone || fromDone, Until = until };
+            result.Recurrence = rule.ToString();
+            result.RecurrenceText = string.Join(' ', ruleWords);
+            result.DueDate = result.DueDate is { } start ? Services.Recurrence.FirstOnOrAfter(result.Recurrence, start) : rec.Date;
         }
 
         // a time without a day: today, or tomorrow when the time has passed already
@@ -194,6 +216,31 @@ public static partial class QuickAddParser
 
         result.Title = Title(text, accepted);
         return result;
+    }
+
+    /// <summary>Left to right, the longer one first at the same place (the end date of a repeat before a plain date); a kind that is taken does not take a second one.</summary>
+    private static List<Candidate> Accept(List<Candidate> candidates, ParseContext ctx, Func<Candidate, bool> filter)
+    {
+        var accepted = new List<Candidate>();
+        var taken = new HashSet<Slot>();
+        foreach (var c in candidates.Where(c => !ctx.Disabled.Contains(c.Kind) && filter(c)).OrderBy(c => c.Start).ThenByDescending(c => c.Length)
+                     .ThenBy(c => c.Slots.Contains(Slot.Until) ? 0 : 1))
+        {
+            if (accepted.Any(a => c.Start < a.End && a.Start < c.End) || c.Slots.Any(taken.Contains))
+            {
+                continue;
+            }
+
+            if (c.Kind == TokenKind.Label && accepted.Any(a => a.Kind == TokenKind.Label && string.Equals(a.Name, c.Name, StringComparison.OrdinalIgnoreCase)))
+            {
+                continue;
+            }
+
+            accepted.Add(c);
+            taken.UnionWith(c.Slots);
+        }
+
+        return accepted;
     }
 
     private static void Apply(ParseResult r, Candidate c)
@@ -220,10 +267,7 @@ public static partial class QuickAddParser
                 r.Description = c.Name;
                 break;
             case TokenKind.Recurrence:
-                r.Recurrence = c.Rule;
-                r.RecurrenceText = c.Name;
-                r.DueDate = c.Date;
-                r.DueTime ??= c.Time;
+                // the rule and its first date are put together after all the parts are known (Parse)
                 break;
             default:
                 if (c.Date is not null)
@@ -534,83 +578,210 @@ public static partial class QuickAddParser
 
     // ---- recurrence: "jeden Tag", "jeden Montag", "alle 2 Wochen", "every weekday" -------------------------------------
 
+    // a weekday, also short ("Mo", "Do.", "thu"), and a list of them ("Montag und Donnerstag", "Mo, Mi, Fr", "mon & thu")
+    private const string DayShort = "mo|di|mi|do|fr|sa|so|mon|tue|tues|wed|thu|thur|thurs|fri|sat|sun";
+    private const string Day = $"(?:(?:{Weekdays})|(?:{DayShort})\\.?)(?!\\p{{L}})";
+    private const string ListJoin = "(?:\\s*[,&+/]\\s*|\\s+(?:und|and)\\s+)";
+    private const string DayList = $"{Day}(?:{ListJoin}{Day})*";
+
+    // "montags und donnerstags", "mondays"
+    private const string Plurals = "montags|dienstags|mittwochs|donnerstags|freitags|samstags|sonnabends|sonntags|mondays|tuesdays|wednesdays|thursdays|fridays|saturdays|sundays";
+    private const string PluralList = $"(?:{Plurals})(?:{ListJoin}(?:{Plurals}))*";
+
+    private const string Ordinals = "ersten|zweiten|dritten|vierten|letzten|first|second|third|fourth|last";
+    private const string InTheMonth = "\\s+(?:im\\s+monat|des\\s+monats|eines\\s+monats|jeden\\s+monats|of\\s+(?:the|each|every)\\s+month|in\\s+the\\s+month)";
+
+    // the day in a month: "am 15.", "on the 15th", "am letzten Tag", "am ersten Montag"
+    private const string MonthDetail = $"\\s+(?:am|an|on\\s+the|on)\\s+(?:(?<mday>\\d{{1,2}})(?:\\.|st|nd|rd|th)?|(?<mlast>letzten\\s+tag|last\\s+day)|(?<mord>{Ordinals})\\s+(?<modow>{Weekdays}))";
+
+    // "jeden" / "every" with "!" counts from the check-off (as in Todoist: "every! 3 months")
     private static readonly Regex RecurrenceRegex = new(
         $"{B}(?:(?<daily>täglich|taeglich|daily|jeden\\s+tag|every\\s+day)"
         + "|(?<weekdays>werktags|jeden\\s+werktag|every\\s+weekday|every\\s+workday)"
-        + "|(?<weekly>wöchentlich|woechentlich|weekly|jede\\s+woche|every\\s+week)"
-        + "|(?<monthly>monatlich|monthly|jeden\\s+monat|every\\s+month)"
+        + $"|(?<weekly>wöchentlich|woechentlich|weekly|jede\\s+woche|every\\s+week)(?:\\s+(?:(?:am|an|on)\\s+)?(?<wdows>{DayList}))?"
+        + $"|(?<monthly>monatlich|monthly|jeden\\s+monat|every\\s+month)(?:{MonthDetail})?"
         + "|(?<yearly>jährlich|jaehrlich|yearly|annually|jedes\\s+jahr|every\\s+year)"
-        + $"|(?:jeden|every)\\s+(?<dow>{Weekdays})"
-        + "|(?:jeden|every)\\s+(?<mday>\\d{1,2})(?:\\.|st|nd|rd|th)?(?:\\s+(?:des\\s+monats|of\\s+the\\s+month))?"
-        + $"|(?:alle|every)\\s+{Number}\\s+(?<unit>tage?n?|wochen?|monate?n?|jahre?n?|days?|weeks?|months?|years?))(?![\\p{{L}}\\p{{N}}_])",
+        + "|(?:jeden|jedes|every)(?<bang>!)?\\s+(?<mlast>monatsletzten|monatsende|letzten\\s+(?:tag\\s+)?(?:des|im)\\s+monats?|last\\s+day\\s+of\\s+(?:the|each|every)\\s+month|end\\s+of\\s+(?:the\\s+)?month)"
+        + $"|(?:jeden|jede|jedes|every)(?<bang>!)?\\s+(?<nth>zweite[ns]?|dritte[ns]?|vierte[ns]?|other|second|third|fourth)\\s+(?<nunit>tag|woche|monat|jahr|day|week|month|year)(?:\\s+(?:(?:am|an|on)\\s+)?(?<wdows>{DayList}))?"
+        + $"|(?:jeden|every)(?<bang>!)?\\s+(?<mord>{Ordinals})\\s+(?<modow>{Weekdays})(?<inmonth>{InTheMonth})?"
+        + $"|(?:jeden|jede|every)(?<bang>!)?\\s+(?:(?<other>anderen|other)\\s+)?(?<dows>{DayList})"
+        + $"|(?<pdows>{PluralList})"
+        + $"|(?:alle|every)(?<bang>!)?\\s+{Number}\\s+(?<unit>tage?n?|wochen?|monate?n?|jahre?n?|days?|weeks?|months?|years?)(?:\\s+(?:(?:am|an|on)\\s+)?(?<wdows>{DayList})|{MonthDetail})?"
+        + "|(?:jeden|every)(?<bang>!)?\\s+(?<mday>\\d{1,2})(?:\\.|st|nd|rd|th)?(?:\\s+(?:des\\s+monats|of\\s+the\\s+month))?"
+        + ")(?![\\p{L}\\p{N}_])",
         Opt);
 
     private static void Recurrences(string text, ParseContext ctx, List<Candidate> list)
     {
         foreach (Match m in RecurrenceRegex.Matches(text))
         {
-            string rule;
-            DateOnly first;
-            var today = ctx.Today;
-            if (m.Groups["daily"].Success)
+            var rule = RuleOf(m);
+            if (rule is null || !Services.Recurrence.IsValid(rule))
             {
-                rule = "d:1";
-                first = today;
-            }
-            else if (m.Groups["weekdays"].Success)
-            {
-                rule = "wd";
-                first = Services.Recurrence.Next("wd", today.AddDays(-1), today.AddDays(-1));
-            }
-            else if (m.Groups["weekly"].Success)
-            {
-                rule = "w:1";
-                first = today;
-            }
-            else if (m.Groups["monthly"].Success)
-            {
-                rule = "m:1";
-                first = today;
-            }
-            else if (m.Groups["yearly"].Success)
-            {
-                rule = "y:1";
-                first = today;
-            }
-            else if (m.Groups["dow"].Success)
-            {
-                var dow = Weekday(m.Groups["dow"].Value);
-                rule = $"w:1:{Iso(dow)}";
-                first = NextWeekday(today, dow, strictlyAfter: false);
-            }
-            else if (m.Groups["mday"].Success)
-            {
-                var day = int.Parse(m.Groups["mday"].Value, CultureInfo.InvariantCulture);
-                if (day is < 1 or > 31)
-                {
-                    continue;
-                }
-
-                rule = $"m:1:{day}";
-                first = Services.Recurrence.Next(rule, today.AddDays(-1), today.AddDays(-1));
-            }
-            else
-            {
-                var n = NumberValue(m.Groups["n"].Value);
-                if (n is null or < 1 or > 365)
-                {
-                    continue;
-                }
-
-                var unit = m.Groups["unit"].Value.ToLowerInvariant();
-                var letter = unit.StartsWith('t') || unit.StartsWith('d') ? 'd' : unit.StartsWith('w') ? 'w' : unit.StartsWith('m') ? 'm' : 'y';
-                rule = $"{letter}:{n}";
-                first = today;
+                continue;
             }
 
-            var c = new Candidate { Kind = TokenKind.Recurrence, Start = m.Index, Length = m.Length, Rule = rule, Date = first, Name = m.Value };
-            c.Slots.Add(Slot.Date);
+            if (m.Groups["bang"].Success)
+            {
+                rule += ";c";
+            }
+
+            var c = new Candidate { Kind = TokenKind.Recurrence, Start = m.Index, Length = m.Length, Rule = rule, Date = Services.Recurrence.FirstOnOrAfter(rule, ctx.Today), Name = m.Value };
+            c.Slots.Add(Slot.Recurrence);
             list.Add(c);
+        }
+    }
+
+    private static string? RuleOf(Match m)
+    {
+        if (m.Groups["daily"].Success)
+        {
+            return "d:1";
+        }
+
+        if (m.Groups["weekdays"].Success)
+        {
+            return "wd";
+        }
+
+        if (m.Groups["weekly"].Success)
+        {
+            return m.Groups["wdows"].Success ? $"w:1:{DaysOf(m.Groups["wdows"].Value)}" : "w:1";
+        }
+
+        if (m.Groups["monthly"].Success)
+        {
+            return "m:1" + MonthPart(m);
+        }
+
+        if (m.Groups["yearly"].Success)
+        {
+            return "y:1";
+        }
+
+        if (m.Groups["unit"].Success)
+        {
+            var n = NumberValue(m.Groups["n"].Value);
+            if (n is null or < 1 or > 365)
+            {
+                return null;
+            }
+
+            var unit = m.Groups["unit"].Value.ToLowerInvariant();
+            var letter = unit.StartsWith('t') || unit.StartsWith('d') ? 'd' : unit.StartsWith('w') ? 'w' : unit.StartsWith('m') ? 'm' : 'y';
+            return letter switch
+            {
+                'w' when m.Groups["wdows"].Success => $"w:{n}:{DaysOf(m.Groups["wdows"].Value)}",
+                'm' => $"m:{n}{MonthPart(m)}",
+                _ when m.Groups["wdows"].Success || m.Groups["mday"].Success || m.Groups["mlast"].Success || m.Groups["mord"].Success => null,
+                _ => $"{letter}:{n}",
+            };
+        }
+
+        if (m.Groups["nunit"].Success)
+        {
+            // "jeden zweiten Tag", "jede dritte Woche am Montag", "every other month"
+            var w = m.Groups["nth"].Value.ToLowerInvariant();
+            var n = w.StartsWith("zw", StringComparison.Ordinal) || w is "other" or "second" ? 2 : w.StartsWith("dr", StringComparison.Ordinal) || w == "third" ? 3 : 4;
+            var unit = m.Groups["nunit"].Value.ToLowerInvariant();
+            var letter = unit[0] is 't' or 'd' ? 'd' : unit[0] == 'w' ? 'w' : unit[0] == 'm' ? 'm' : 'y';
+            return letter == 'w' && m.Groups["wdows"].Success ? $"w:{n}:{DaysOf(m.Groups["wdows"].Value)}"
+                : m.Groups["wdows"].Success ? null
+                : $"{letter}:{n}";
+        }
+
+        if (m.Groups["mlast"].Success)
+        {
+            return "m:1:L";
+        }
+
+        if (m.Groups["mord"].Success)
+        {
+            var dow = Iso(Weekday(m.Groups["modow"].Value));
+            var ord = Ordinal(m.Groups["mord"].Value);
+            // "jeden zweiten Montag" is every other week; "jeden zweiten Montag im Monat" the second one of the month
+            return ord == "2" && !m.Groups["inmonth"].Success ? $"w:2:{dow}" : $"m:1:{ord}x{dow}";
+        }
+
+        if (m.Groups["dows"].Success)
+        {
+            return $"w:{(m.Groups["other"].Success ? 2 : 1)}:{DaysOf(m.Groups["dows"].Value)}";
+        }
+
+        if (m.Groups["pdows"].Success)
+        {
+            return $"w:1:{DaysOf(m.Groups["pdows"].Value)}";
+        }
+
+        if (m.Groups["mday"].Success)
+        {
+            return $"m:1:{m.Groups["mday"].Value}";
+        }
+
+        return null;
+    }
+
+    // the part of a monthly rule after the interval: ":15", ":L", ":1x1", or nothing
+    private static string MonthPart(Match m)
+    {
+        if (m.Groups["mday"].Success)
+        {
+            return ":" + int.Parse(m.Groups["mday"].Value, CultureInfo.InvariantCulture);
+        }
+
+        if (m.Groups["mlast"].Success)
+        {
+            return ":L";
+        }
+
+        return m.Groups["mord"].Success ? $":{Ordinal(m.Groups["mord"].Value)}x{Iso(Weekday(m.Groups["modow"].Value))}" : string.Empty;
+    }
+
+    private static string Ordinal(string word) => word.ToLowerInvariant() switch
+    {
+        "ersten" or "first" => "1",
+        "zweiten" or "second" => "2",
+        "dritten" or "third" => "3",
+        "vierten" or "fourth" => "4",
+        _ => "L",
+    };
+
+    [GeneratedRegex(@"\s*[,&+/]\s*|\s+(?:und|and)\s+", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant)]
+    private static partial Regex ListSplit();
+
+    // "Mo, Do und Sa" -> "1,4,6"
+    private static string DaysOf(string list)
+        => string.Join(',', ListSplit().Split(list).Where(w => w.Trim().Length > 0).Select(w => Iso(Weekday(w.Trim()))).Distinct().Order());
+
+    // ---- options of a repeat: the end ("bis 31.12.", "until friday") and "ab Erledigung" / "after completion" ----------------
+
+    private static readonly Regex UntilLead = new($"{B}(?:bis(?:\\s+(?:zum|zur|einschließlich|einschliesslich))?|until|till|through|thru|endet\\s+am|ends?\\s+on|ending\\s+on)\\s+", Opt);
+
+    private static readonly Regex FromDoneRegex = new(
+        $"{B}(?:(?:ab|nach|seit)\\s+(?:der\\s+)?(?:erledigung|abschluss|fertigstellung)|after\\s+(?:completion|completing(?:\\s+it)?|it\\s+is\\s+done|done)|from\\s+(?:the\\s+)?completion){E}", Opt);
+
+    private static void RecurrenceOptions(string text, ParseContext ctx, List<Candidate> list)
+    {
+        if (!list.Any(c => c.Slots.Contains(Slot.Recurrence)))
+        {
+            return;
+        }
+
+        foreach (Match m in UntilLead.Matches(text))
+        {
+            var at = m.Index + m.Length;
+            var found = new List<Candidate>();
+            Dates(text[at..], ctx, found);
+            var date = found.Where(c => c.Start == 0 && c.Date is not null && c.Time is null).OrderByDescending(c => c.Length).FirstOrDefault();
+            if (date is not null)
+            {
+                Add(list, TokenKind.Recurrence, m.Index, m.Length + date.Length, Slot.Until, date: date.Date);
+            }
+        }
+
+        foreach (Match m in FromDoneRegex.Matches(text))
+        {
+            Add(list, TokenKind.Recurrence, m.Index, m.Length, Slot.FromDone);
         }
     }
 
@@ -1069,16 +1240,21 @@ public static partial class QuickAddParser
     /// <summary>The Monday of the week a day is in (a week starts on Monday, ISO 8601).</summary>
     private static DateOnly MondayOf(DateOnly day) => day.AddDays(-(((int)day.DayOfWeek + 6) % 7));
 
-    private static DayOfWeek Weekday(string word) => word.ToLowerInvariant() switch
+    // a weekday by its first letters: full ("Montag", "monday"), short ("Mo.", "thu") or plural ("montags", "mondays")
+    private static DayOfWeek Weekday(string word)
     {
-        "montag" or "monday" => DayOfWeek.Monday,
-        "dienstag" or "tuesday" => DayOfWeek.Tuesday,
-        "mittwoch" or "wednesday" => DayOfWeek.Wednesday,
-        "donnerstag" or "thursday" => DayOfWeek.Thursday,
-        "freitag" or "friday" => DayOfWeek.Friday,
-        "samstag" or "sonnabend" or "saturday" => DayOfWeek.Saturday,
-        _ => DayOfWeek.Sunday,
-    };
+        var w = word.Trim().TrimEnd('.').ToLowerInvariant();
+        return w switch
+        {
+            _ when w.StartsWith("mo", StringComparison.Ordinal) => DayOfWeek.Monday,
+            _ when w.StartsWith("di", StringComparison.Ordinal) || w.StartsWith("tu", StringComparison.Ordinal) => DayOfWeek.Tuesday,
+            _ when w.StartsWith("mi", StringComparison.Ordinal) || w.StartsWith("we", StringComparison.Ordinal) => DayOfWeek.Wednesday,
+            _ when w.StartsWith("do", StringComparison.Ordinal) || w.StartsWith("th", StringComparison.Ordinal) => DayOfWeek.Thursday,
+            _ when w.StartsWith("fr", StringComparison.Ordinal) => DayOfWeek.Friday,
+            _ when w.StartsWith("sa", StringComparison.Ordinal) || w.StartsWith("sonna", StringComparison.Ordinal) => DayOfWeek.Saturday,
+            _ => DayOfWeek.Sunday,
+        };
+    }
 
     private static int Month(string word)
     {

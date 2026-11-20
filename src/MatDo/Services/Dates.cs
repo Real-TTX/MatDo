@@ -69,6 +69,9 @@ public static class Dates
 
     private static string DayMonth(DateOnly date) => De ? $"{date.Day}. {MonthsShort[date.Month - 1]}" : $"{date.Day} {MonthsShort[date.Month - 1]}";
 
+    /// <summary>"24 Dec 2026" / "24. Dez. 2026".</summary>
+    public static string WithYear(DateOnly date) => $"{DayMonth(date)} {date.Year}";
+
     public static string Time(TimeOnly time) => time.ToString("HH:mm", CultureInfo.InvariantCulture);
 
     /// <summary>"Monday, 20 October" / "Montag, 20. Oktober" (the head of a day).</summary>

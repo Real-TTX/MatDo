@@ -194,11 +194,18 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         }
 
         var now = DateTime.UtcNow;
-        if (Recurrence.IsValid(task.Recurrence))
+        // a repeating task moves on (from its date, or from today when it counts from the check-off); after its end date it is completed like any other
+        if (Recurrence.IsValid(task.Recurrence) && Recurrence.NextDue(task.Recurrence!, task.DueDate, today) is { } next)
         {
             var done = new TaskCompletion { TaskId = task.Id, UserId = userId, AssigneeId = task.AssigneeId, CompletedAt = now, DueDate = task.DueDate };
-            task.DueDate = Recurrence.Next(task.Recurrence!, task.DueDate ?? today, today);
-            done.NextDue = task.DueDate;
+            if (task.DeadlineDate is { } deadline && task.DueDate is { } old)
+            {
+                // the deadline keeps its distance to the date
+                task.DeadlineDate = deadline.AddDays(next.DayNumber - old.DayNumber);
+            }
+
+            task.DueDate = next;
+            done.NextDue = next;
             await AdvanceRotationAsync(task);
             foreach (var c in (await DescendantsAsync(id)).Where(c => c.IsCompleted))
             {
@@ -297,7 +304,8 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
             var pool = t.Rotations.OrderBy(r => r.SortOrder).ThenBy(r => r.Id).Select(r => r.UserId).ToList();
             var date = start;
             long? who = t.AssigneeId;
-            for (var k = 0; k < 120 && date <= weekEnd; k++)
+            var until = Recurrence.Until(t.Recurrence) ?? DateOnly.MaxValue;
+            for (var k = 0; k < 120 && date <= weekEnd && (k == 0 || date <= until); k++)
             {
                 if (date >= weekStart)
                 {
@@ -398,6 +406,11 @@ public sealed class TaskService(AppDbContext db, ProjectService projects)
         if (last is null || !CanUndo(false, task.DueDate, last.NextDue))
         {
             return false;
+        }
+
+        if (task.DeadlineDate is { } deadline && last.DueDate is { } before && last.NextDue is { } after)
+        {
+            task.DeadlineDate = deadline.AddDays(before.DayNumber - after.DayNumber);
         }
 
         task.DueDate = last.DueDate;
