@@ -150,7 +150,9 @@
 .md-chip__new { font-size: var(--mat-fs-xs); color: var(--mat-text-muted); }
 
 .md-qa__tools { display: flex; flex-wrap: wrap; align-items: center; gap: var(--mat-space-2); }
-.md-qa__tool { position: relative; }
+.md-qa__tool { position: relative; min-width: 0; max-width: 100%; }
+.md-qa__tool .mat-btn { max-width: 100%; }
+.md-qa__tool .mat-btn > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .md-qa__tool .mat-btn.is-set { border-color: var(--mat-accent); color: var(--mat-accent-text); }
 .md-qa__project { width: auto; max-width: 220px; }
 .md-qa__project .mat-picker__trigger { min-height: var(--mat-control-h-sm); height: var(--mat-control-h-sm); font-size: var(--mat-fs-sm); }
@@ -178,6 +180,33 @@
 .md-qa__words .mat-input { width: 100%; }
 .md-qa__repeat { display: flex; flex-direction: column; gap: 2px; padding: var(--mat-space-2) 0; border-bottom: 1px solid var(--mat-border); }
 .md-qa__repeat > .mat-label { display: inline-flex; align-items: center; gap: var(--mat-space-1); margin: 0 var(--mat-space-1) var(--mat-space-1); }
+/* the row of the repeat shows the rule in force and opens its view; while the view is open the rest of the panel steps aside */
+.md-qa__repeat .md-qa__opt { width: 100%; }
+.md-qa__repeat-now { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.md-qa__repeat .md-qa__opt > .mat-icon:last-child:not(:first-child), .md-qa__rep-custom > summary > .mat-icon:last-child:not(:first-child) { flex: none; margin-left: auto; visibility: visible; color: var(--mat-text-muted); }
+.md-qa__pop--date.is-repeat > :not(.md-qa__rep) { display: none !important; }
+.md-qa__pop--date.is-repeat:popover-open { display: flex; width: 340px; max-height: min(640px, calc(100vh - 16px)); overflow-y: auto; }
+.md-qa__rep { display: flex; flex-direction: column; gap: var(--mat-space-2); }
+.md-qa__rep[hidden] { display: none; }
+.md-qa__rep-head { display: flex; align-items: center; gap: var(--mat-space-1); }
+.md-qa__rep-presets { display: flex; flex-direction: column; gap: 2px; padding-bottom: var(--mat-space-2); border-bottom: 1px solid var(--mat-border); }
+.md-qa__rep-body { display: flex; flex-direction: column; gap: var(--mat-space-2); padding: var(--mat-space-2) var(--mat-space-1) var(--mat-space-1); }
+.md-qa__rep-custom > summary { list-style: none; }
+.md-qa__rep-custom > summary::-webkit-details-marker { display: none; }
+.md-qa__rep-custom[open] > summary > .mat-icon:last-child { transform: rotate(180deg); }
+
+.md-qa__rep-every { display: flex; align-items: center; gap: var(--mat-space-2); flex-wrap: wrap; }
+.md-qa__rep-every .mat-input.md-qa__rep-n { width: 4.5rem; flex: none; }
+.md-qa__rep-every .mat-seg__btn { min-width: 0; padding-inline: var(--mat-space-2); }
+.md-qa__rep-days { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.md-qa__rep-days[hidden], .md-qa__rep-month[hidden] { display: none; }
+.md-qa__rep-day { min-height: 36px; border: 1px solid var(--mat-border); border-radius: var(--mat-radius); background: transparent; color: var(--mat-text); font: inherit; font-size: var(--mat-fs-sm); cursor: pointer; }
+.md-qa__rep-day:hover { background: var(--mat-surface-3); }
+.md-qa__rep-day[aria-pressed="true"] { background: var(--mat-accent); border-color: var(--mat-accent); color: var(--mat-on-accent, #fff); font-weight: 600; }
+.md-qa__rep-month { display: flex; flex-direction: column; gap: 2px; }
+.md-qa__pop--date .md-qa__rep .md-qa__time { border: 0; padding: 0; }
+.md-qa__rep-preview { margin: 0; min-height: 1.4em; color: var(--mat-text-muted); font-size: var(--mat-fs-sm); }
+.md-qa__rep-body > .mat-btn { align-self: flex-start; }
 .md-qa__opt > .mat-icon:last-child:not(:first-child) { margin-left: auto; visibility: hidden; color: var(--mat-accent-text); }
 .md-qa__opt[aria-pressed="true"] { background: var(--mat-accent-soft); font-weight: 600; }
 .md-qa__opt[aria-pressed="true"] > .mat-icon:last-child:not(:first-child) { visibility: visible; }

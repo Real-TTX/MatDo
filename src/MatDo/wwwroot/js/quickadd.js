@@ -30,6 +30,8 @@
     var due = $('[data-qa-due]', root);
     var time = $('[data-qa-time]', root);
     var noDate = $('[data-qa-nodate]', root);
+    var repeat = $('[data-qa-repeat]', root);
+    var repeatName = '';
     var prio = $('[data-qa-priority]', root);
     var labels = $('[data-qa-labels]', root);
     var touched = $('[data-qa-touched]', root);
@@ -66,7 +68,8 @@
       var html = '';
       // the chips are what the text says; a date or a priority picked by hand shows on its button only (like Todoist)
       if (noDate.value !== 'true' && !due.value && p.dueText) {
-        html += chip('date', p.recurrence ? 'repeat' : 'calendar', p.dueText + (p.recurrence ? ' · ' + p.recurrence : ''));
+        var textRepeat = p.recurrence && !repeat.value;
+        html += chip('date', textRepeat ? 'repeat' : 'calendar', p.dueText + (textRepeat ? ' · ' + p.recurrence : ''));
       }
       if (p.project && touched.value !== 'true') { html += chip('project', 'hash', p.project.name, p.project.isNew ? '<span class="md-chip__new">' + esc(t('Js.New')) + '</span>' : ''); }
       if (p.section) { html += chip('section', 'list', p.section); }
@@ -79,9 +82,12 @@
       var dateLabel = $('[data-qa-date-label]', root), prioLabel = $('[data-qa-priority-label]', root);
       var fallback = defaultDue && defaultDue.value && !p.dueText ? label(defaultDue.value) : '';
       dateLabel.textContent = noDate.value === 'true' ? t('Js.NoDate') : due.value ? label(due.value, time.value) : fallback || t('Js.Kind.date');
+      if (repeat.value && noDate.value !== 'true') { dateLabel.textContent = (due.value || fallback ? dateLabel.textContent + ' · ' : '') + repeatName; }
       prioLabel.textContent = prio.value ? 'P' + prio.value : t('Js.Kind.priority');
       // a button with a value picked by hand shows it, also on a phone (where the others show their icon only)
-      dateLabel.parentNode.classList.toggle('is-set', noDate.value === 'true' || !!due.value || !!fallback);
+      dateLabel.parentNode.classList.toggle('is-set', noDate.value === 'true' || !!due.value || !!fallback || !!repeat.value);
+      var dateIcon = dateLabel.parentNode.querySelector('.mat-icon use');
+      if (dateIcon) { dateIcon.setAttribute('href', '#mat-i-' + (repeat.value && noDate.value !== 'true' ? 'repeat' : 'calendar')); }
       prioLabel.parentNode.classList.toggle('is-set', !!prio.value);
     }
 
@@ -114,7 +120,7 @@
 
     function reset() {
       form.reset();
-      due.value = time.value = prio.value = off.value = '';
+      due.value = time.value = prio.value = off.value = repeat.value = repeatName = '';
       labels.value = labels.defaultValue;
       noDate.value = 'false';
       touched.value = 'false';
@@ -175,13 +181,18 @@
       due.value = date || '';
       time.value = date ? (t || '') : '';
       noDate.value = date ? 'false' : 'true';
+      if (!date) { repeat.value = repeatName = ''; }
       setOff('date', true);
       parse(); input.focus();
     }
     var datePop = $('[data-pick-pop="date"]', root);
     MatDoPick.due(datePop, {
-      get: function () { return { date: due.value, time: time.value }; },
+      get: function () {
+        return { date: due.value, time: time.value, repeat: repeat.value, repeatName: repeatName, base: (parsed && parsed.due) || (defaultDue && defaultDue.value) || '' };
+      },
       pick: function (s) { pickDate(s.date, s.time); },
+      // a repeat picked by hand wins over the one of the text; it starts on the date of the editor (the server moves it to the first fitting day)
+      repeat: function (value, name) { repeat.value = value; repeatName = value ? name : ''; if (value) { noDate.value = 'false'; } renderChips(); input.focus(); },
       // a time without a day: today (like the text "at 3pm"); with a day: that day at this time
       time: function (value) {
         if (!value) { time.value = ''; renderChips(); return; }
@@ -220,7 +231,7 @@
       e.preventDefault();
       var fields = new FormData(form);
       var body = {};
-      ['Text', 'Description', 'DefaultProjectId', 'DefaultSectionId', 'DefaultDueDate', 'ParentId', 'Off', 'DueDate', 'DueTime', 'Priority', 'Labels'].forEach(function (k) {
+      ['Text', 'Description', 'DefaultProjectId', 'DefaultSectionId', 'DefaultDueDate', 'ParentId', 'Off', 'DueDate', 'DueTime', 'Recurrence', 'Priority', 'Labels'].forEach(function (k) {
         var v = fields.get(k);
         body[k.charAt(0).toLowerCase() + k.slice(1)] = v === null || v === '' ? null : String(v);
       });

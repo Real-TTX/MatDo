@@ -37,7 +37,7 @@
   }
   if (duePop && dueOut) {
     MatDoPick.due(duePop, {
-      get: function () { return { date: date.value, time: time.value, repeat: repeat.value }; },
+      get: function () { return { date: date.value, time: time.value, repeat: repeat.value, repeatName: repeatName }; },
       pick: function (s) {
         date.value = s.date; time.value = s.date ? s.time : '';
         if (!s.date) { repeat.value = ''; repeatName = ''; }
@@ -50,9 +50,9 @@
         if (words) { words.value = ''; }
         showDue();
       },
-      repeat: function (value, name) {
+      repeat: function (value, name, first) {
         repeat.value = value; repeatName = value ? name : '';
-        if (value && !date.value) { date.value = today(); }
+        if (value) { date.value = first || date.value || today(); }
         if (words) { words.value = ''; }
         showDue();
       },

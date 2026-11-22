@@ -38,6 +38,7 @@ public static class AppApi
         string? Off,
         string? DueDate,
         string? DueTime,
+        string? Recurrence,
         bool NoDate,
         string? Priority,
         string? Labels,
@@ -78,6 +79,23 @@ public static class AppApi
                 deadline = p.Deadline is { } dl ? Dates.Iso(dl) : null,
                 deadlineText = p.Deadline is { } dlt ? Dates.Relative(dlt, today) : null,
                 description = p.Description,
+            });
+        });
+
+        // the repeat of the date panel (pick.js): the presets and the days of a month for a date, and a rule read back (its words and its first day on or after the date)
+        group.MapGet("/repeat", async (string? due, string? rule, CurrentUser me, AppDbContext db) =>
+        {
+            var zone = await db.Users.Where(u => u.Id == me.RequiredId).Select(u => u.TimeZone).FirstAsync();
+            var date = Dates.ParseIso(due) ?? Dates.Today(zone);
+            var r = Recurrence.Parse(rule);
+            var text = r?.ToString();
+            return Results.Json(new
+            {
+                presets = Recurrence.Presets(date).Select(p => new { value = p.Value, label = p.Label }),
+                month = Recurrence.MonthParts(date).Select(p => new { part = p.Part, label = p.Label }),
+                rule = text,
+                label = text is null ? null : Recurrence.Describe(text),
+                first = text is null ? null : Dates.Iso(Recurrence.FirstOnOrAfter(text, date)),
             });
         });
 
@@ -143,6 +161,7 @@ public static class AppApi
                 ParentId = body.ParentId,
                 DueDate = Dates.ParseIso(body.DueDate),
                 DueTime = Dates.ParseTime(body.DueTime),
+                Recurrence = body.Recurrence,
                 NoDate = body.NoDate,
                 Priority = int.TryParse(body.Priority, out var p) ? p : null,
                 Labels = (body.Labels ?? string.Empty).Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),

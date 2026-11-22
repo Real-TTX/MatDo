@@ -24,6 +24,7 @@
         <input type="hidden" name="Off" value="" data-qa-off />
         <input type="hidden" name="DueDate" value="" data-qa-due />
         <input type="hidden" name="DueTime" value="" data-qa-time />
+        <input type="hidden" name="Recurrence" value="" data-qa-repeat />
         <input type="hidden" name="NoDate" value="false" data-qa-nodate />
         <input type="hidden" name="Priority" value="" data-qa-priority />
         <input type="hidden" name="Labels" value="@string.Join(",", Model.DefaultLabels)" data-qa-labels />
@@ -42,7 +43,7 @@
         <div class="md-qa__tools">
             <div class="md-qa__tool">
                 <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" data-pick-open data-qa-open="date" aria-expanded="false" aria-controls="@id-pop-date" aria-label="@L["QuickAdd.ChooseDate"]" data-tip="@L["QuickAdd.ChooseDate"]">@Ui.Icon("calendar")<span data-qa-date-label>@L["QuickAdd.Date"]</span></button>
-                <partial name="_DuePop" model="@(new DuePopModel(id + "-pop-date", L["QuickAdd.ChooseDate"].Value, L["QuickAdd.NoDate"].Value))" />
+                <partial name="_DuePop" model="@(new DuePopModel(id + "-pop-date", L["QuickAdd.ChooseDate"].Value, L["QuickAdd.NoDate"].Value, true, true))" />
             </div>
             <div class="md-qa__tool">
                 <button type="button" class="mat-btn mat-btn--secondary mat-btn--sm md-btn-collapse" data-pick-open data-qa-open="priority" aria-expanded="false" aria-controls="@id-pop-priority" aria-label="@L["QuickAdd.ChoosePriority"]" data-tip="@L["QuickAdd.ChoosePriority"]">@Ui.Icon("flag")<span data-qa-priority-label>@L["QuickAdd.Priority"]</span></button>

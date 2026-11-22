@@ -57,8 +57,6 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
 
     public List<Choice> SectionChoices { get; private set; } = [];
 
-    public List<Choice> RecurrenceChoices { get; private set; } = [];
-
     public List<Choice> LabelChoices { get; private set; } = [];
 
     public List<Choice> AssigneeChoices { get; private set; } = [];
@@ -143,14 +141,17 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
             }
         }
 
-        if (rule is not null && !Services.Recurrence.IsValid(rule))
-        {
-            rule = null;
-        }
+        rule = Services.Recurrence.Parse(rule)?.ToString();
 
         if (rule is not null && due is null)
         {
             due = Today;
+        }
+
+        // a repeat chosen in the panel starts on its first day on or after the date ("every Mon and Thu" from a Saturday: Monday)
+        if (rule is not null && rule != Item.Recurrence && string.IsNullOrWhiteSpace(DueText))
+        {
+            due = Services.Recurrence.FirstOnOrAfter(rule, due!.Value);
         }
 
         if (!ModelState.IsValid)
@@ -344,14 +345,6 @@ public sealed class EditModel(AppDbContext db, ProjectService projects, TaskServ
         ProjectChoices = all.Select(p => new Choice(p.Id.ToString(CultureInfo.InvariantCulture), p.IsInbox ? Text.T("Project.Inbox") : p.TeamName is null ? p.Name : $"{p.Name} ({p.TeamName})", null, p.IsInbox ? null : p.Color)).ToList();
         SectionChoices = [new Choice(string.Empty, Text.T("Tasks.NoSection"))];
         SectionChoices.AddRange(await db.Sections.Where(s => s.ProjectId == Item.ProjectId).OrderBy(s => s.SortOrder).Select(s => new Choice(s.Id.ToString(), s.Name, null, null)).ToListAsync());
-
-        var due = Item.DueDate ?? Today;
-        RecurrenceChoices = [new Choice(string.Empty, Text.T("Tasks.NoRecurrence"))];
-        RecurrenceChoices.AddRange(Services.Recurrence.Presets(due).Select(p => new Choice(p.Value, p.Label)));
-        if (Item.Recurrence is { } r && RecurrenceChoices.All(c => c.Value != r))
-        {
-            RecurrenceChoices.Add(new Choice(r, Services.Recurrence.Describe(r)));
-        }
 
         LabelChoices = (await tasks.LabelChipsAsync(UserId)).Select(l => new Choice(l.Id.ToString(CultureInfo.InvariantCulture), l.Name, null, l.Color)).ToList();
         var project = Item.Project ?? await db.Projects.FirstAsync(p => p.Id == Item.ProjectId);

@@ -3,7 +3,7 @@
     The panel of a date, like Todoist's: the quick choices, then the time and the month that is always shown (a click on a day takes it); on the page of a task also
     the date in words and the repeat. pick.js (MatDoPick.due) makes it work; the owner keeps the values (hidden fields) and is told what was chosen.
 *@
-<div class="md-qa__pop md-qa__pop--date @(Model.Repeats is { Count: > 0 } ? "md-qa__pop--repeat" : "")" id="@Model.Id" role="dialog" aria-label="@Model.Label" popover="manual" data-pick-pop="date">
+<div class="md-qa__pop md-qa__pop--date @(Model.Repeat ? "md-qa__pop--repeat" : "")" id="@Model.Id" role="dialog" aria-label="@Model.Label" popover="manual" data-pick-pop="date">
     @if (Model.TextName is not null)
     {
         <div class="md-qa__words">
@@ -25,14 +25,48 @@
             <div class="mat-picker md-qa__timepicker" data-picker="time" data-step="15" data-clearable data-placeholder="--:--"><input class="mat-picker__input" id="@Model.Id-time" data-due-time /></div>
         </div>
     }
-    @if (Model.Repeats is { Count: > 0 } repeats)
+    @if (Model.Repeat)
     {
-        <div class="md-qa__repeat" role="group" aria-label="@L["Tasks.Recurrence"]">
-            <span class="mat-label">@Ui.Icon("repeat")@L["Tasks.Recurrence"]</span>
-            @foreach (var r in repeats)
-            {
-                <button type="button" class="md-qa__opt" data-due-repeat="@r.Value" aria-pressed="false"><span>@r.Label</span>@Ui.Icon("check")</button>
-            }
+        @* the repeat: a row that shows the rule and opens its view (the presets for the date and a rule of one's own); pick.js fills it from /api/app/repeat *@
+        <div class="md-qa__repeat">
+            <button type="button" class="md-qa__opt" data-due-repeat-open aria-expanded="false" data-tip="@L["Tasks.Recurrence"]">@Ui.Icon("repeat")<span class="mat-sr-only">@L["Tasks.Recurrence"]: </span><span class="md-qa__repeat-now" data-due-repeat-now data-empty="@L["Tasks.NoRecurrence"]">@L["Tasks.NoRecurrence"]</span>@Ui.Icon("chevron-right")</button>
+        </div>
+        <div class="md-qa__rep" data-due-repeat-view hidden>
+            <div class="md-qa__rep-head">
+                <button type="button" class="mat-btn mat-btn--ghost mat-btn--sm mat-btn--icon" data-rep-back aria-label="@L["Common.Back"]" data-tip="@L["Common.Back"]">@Ui.Icon("chevron-left")</button>
+                <strong>@L["Tasks.Recurrence"]</strong>
+            </div>
+            <div class="md-qa__rep-presets" role="group" aria-label="@L["Tasks.Recurrence"]" data-rep-presets></div>
+            <details class="md-qa__rep-custom" data-rep-custom>
+                <summary class="md-qa__opt">@Ui.Icon("sliders")<span>@L["Repeat.Custom"]</span>@Ui.Icon("chevron-down")</summary>
+                <div class="md-qa__rep-body">
+                <div class="md-qa__rep-every">
+                    <label for="@Model.Id-rep-n">@L["Repeat.Every"]</label>
+                    <input class="mat-input md-qa__rep-n" id="@Model.Id-rep-n" type="number" inputmode="numeric" min="1" max="99" value="1" data-rep-n />
+                    <div class="mat-seg" role="group" aria-label="@L["Repeat.Unit"]">
+                        @foreach (var u in new[] { "d", "w", "m", "y" })
+                        {
+                            <button type="button" class="mat-seg__btn" data-rep-unit="@u" aria-pressed="false">@L["Js.Repeat." + u]</button>
+                        }
+                    </div>
+                </div>
+                <div class="md-qa__rep-days" role="group" aria-label="@L["Repeat.Days"]" data-rep-week>
+                    @for (var d = 1; d <= 7; d++)
+                    {
+                        var name = Dates.WeekdayName(d);
+                        <button type="button" class="md-qa__rep-day" data-rep-day="@d" aria-pressed="false" aria-label="@name" data-tip="@name">@name[..2]</button>
+                    }
+                </div>
+                <div class="md-qa__rep-month" role="group" aria-label="@L["Repeat.InMonth"]" data-rep-month hidden></div>
+                <label class="mat-check"><input type="checkbox" data-rep-done /><span class="mat-check__text">@L["Repeat.FromDone"]</span></label>
+                <div class="md-qa__time">
+                    <label class="mat-label" for="@Model.Id-rep-until">@L["Repeat.Ends"]</label>
+                    <div class="mat-picker md-qa__timepicker" data-picker="date" data-clearable data-placeholder="–"><input class="mat-picker__input" id="@Model.Id-rep-until" data-rep-until /></div>
+                </div>
+                <p class="md-qa__rep-preview" aria-live="polite" data-rep-preview></p>
+                <button type="button" class="mat-btn mat-btn--primary mat-btn--sm" data-rep-apply>@L["Repeat.Apply"]</button>
+                </div>
+            </details>
         </div>
     }
     <div class="mat-calendar md-qa__calendar" data-calendar>

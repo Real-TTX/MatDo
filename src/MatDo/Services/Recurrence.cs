@@ -368,4 +368,27 @@ public static class Recurrence
             ("y:1", Describe("y:1")),
         ];
     }
+
+    /// <summary>
+    /// The days of a month a monthly rule can take from a date (the part after <c>m:n:</c>): the same day, the last day, the same weekday of the week of the
+    /// month (1st..4th) and the last such weekday when the date is in the last week of its month.
+    /// </summary>
+    public static IReadOnlyList<(string Part, string Label)> MonthParts(DateOnly due)
+    {
+        var dow = Iso(due);
+        var last = due.Day + 7 > DateTime.DaysInMonth(due.Year, due.Month);
+        var parts = new List<string> { due.Day.ToString(CultureInfo.InvariantCulture) };
+        if (due.Day <= 28)
+        {
+            parts.Add($"{(due.Day - 1) / 7 + 1}x{dow}");
+        }
+
+        if (last)
+        {
+            parts.Add($"Lx{dow}");
+        }
+
+        parts.Add("L");
+        return parts.Select(p => (p, Describe("m:1:" + p))).ToList();
+    }
 }

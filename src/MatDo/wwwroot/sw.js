@@ -3,7 +3,7 @@
    - Pages always come from the network; without one the offline page (offline.html), where new tasks can be noted (offline.js sends them later).
    - Notifications (Web Push): shown here, with the number on the app icon and the actions Done and Tomorrow.
    - POST requests and the APIs are never cached. */
-const VERSION = 'matdo-v8';
+const VERSION = 'matdo-v9';
 const SHELL = ['/offline.html', '/js/offline.js', '/matui/matui.css', '/css/app.css', '/favicon.svg', '/img/icon-192.png', '/img/icon-512.png', '/img/badge-96.png', '/img/logo/matdo-logo.svg', '/img/logo/matdo-logo-dark.svg', '/manifest.webmanifest'];
 
 self.addEventListener('install', event => {

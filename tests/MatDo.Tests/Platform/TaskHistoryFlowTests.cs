@@ -125,6 +125,27 @@ public sealed class TaskHistoryFlowTests(MatDoFactory site) : IClassFixture<MatD
         Assert.Equal(2, await WithAsync(s => s.GetRequiredService<AppDbContext>().TaskCompletions.CountAsync(c => c.TaskId == task)));
     }
 
+    [DbFact]
+    public async Task A_repeat_chosen_in_the_quick_add_wins_over_the_text_and_starts_on_its_first_day()
+    {
+        var (anna, _, project) = await TeamAsync();
+        var saturday = new DateOnly(2026, 11, 28);
+        var task = await WithAsync(async s =>
+        {
+            var user = await s.GetRequiredService<AppDbContext>().Users.SingleAsync(u => u.Id == anna);
+            var (t, error) = await s.GetRequiredService<QuickAddService>().CreateAsync(user, new QuickAddInput
+            {
+                Text = "Müll raus jeden Tag", DefaultProjectId = project, DueDate = saturday, Recurrence = "w:1:4,1;u=2027-03-31",
+            });
+            Assert.True(t is not null, error);
+            return t!.Id;
+        });
+
+        var item = await TaskAsync(task);
+        Assert.Equal("w:1:1,4;u=2027-03-31", item.Recurrence);
+        Assert.Equal(new DateOnly(2026, 11, 30), item.DueDate);
+    }
+
     /// <summary>Two people (Anna, Kim) in a team with one project.</summary>
     private async Task<(long Anna, long Kim, long Project)> TeamAsync()
     {

@@ -13,7 +13,7 @@
     crumbs.Add((t.Content, null));
     ViewData["Crumbs"] = crumbs;
     var due = Dates.ParseIso(Model.DueDate);
-    var repeatName = Model.Recurrence.Length > 0 ? Model.RecurrenceChoices.FirstOrDefault(c => c.Value == Model.Recurrence)?.Label ?? string.Empty : string.Empty;
+    var repeatName = Model.Recurrence.Length > 0 ? MatDo.Services.Recurrence.Describe(Model.Recurrence) : string.Empty;
     var dueText = string.Join(" · ", new[] { due is { } dd ? Dates.Relative(dd, Dates.ParseTime(Model.DueTime), Model.Today) : string.Empty, repeatName }.Where(x => x.Length > 0));
     var deadlineText = Dates.ParseIso(Model.Deadline) is { } dl ? Dates.Relative(dl, Model.Today) : string.Empty;
 }
@@ -62,7 +62,7 @@
                             <button type="button" class="mat-input md-pick__btn" data-pick-open aria-controls="task-due" aria-expanded="false" aria-labelledby="due-label due-value">
                                 @Ui.Icon(Model.Recurrence.Length > 0 ? "repeat" : "calendar")<span class="md-pick__value @(dueText.Length == 0 ? "is-placeholder" : "")" id="due-value" data-due-value data-empty="@L["QuickAdd.ChooseDate"]" data-repeat-name="@repeatName">@(dueText.Length > 0 ? dueText : L["QuickAdd.ChooseDate"].Value)</span>
                             </button>
-                            <partial name="_DuePop" model="@(new DuePopModel("task-due", L["QuickAdd.ChooseDate"].Value, L["QuickAdd.NoDate"].Value, true, Model.RecurrenceChoices, "DueText"))" />
+                            <partial name="_DuePop" model="@(new DuePopModel("task-due", L["QuickAdd.ChooseDate"].Value, L["QuickAdd.NoDate"].Value, true, true, "DueText"))" />
                         </div>
                         <input type="hidden" name="DueDate" value="@Model.DueDate" />
                         <input type="hidden" name="DueTime" value="@Model.DueTime" />

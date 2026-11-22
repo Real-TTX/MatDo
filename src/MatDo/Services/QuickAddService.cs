@@ -29,6 +29,9 @@ public sealed class QuickAddInput
 
     public TimeOnly? DueTime { get; init; }
 
+    /// <summary>A repeat chosen by hand (a rule, see <see cref="Services.Recurrence"/>): wins over the one of the text, starts on the date (today without one).</summary>
+    public string? Recurrence { get; init; }
+
     /// <summary>The date was removed by hand: no date, whatever the text says.</summary>
     public bool NoDate { get; init; }
 
@@ -181,6 +184,13 @@ public sealed class QuickAddService(AppDbContext db, ProjectService projects, Ta
         {
             task.DueDate = parse.DueDate ?? input.DefaultDueDate;
             task.DueTime = parse.DueTime ?? input.DueTime;
+        }
+
+        if (!input.NoDate && Services.Recurrence.Parse(input.Recurrence) is { } manual)
+        {
+            task.Recurrence = manual.ToString();
+            task.RecurrenceText = null;
+            task.DueDate = Services.Recurrence.FirstOnOrAfter(task.Recurrence, task.DueDate ?? Dates.Today(user.TimeZone));
         }
 
         if (input.AssigneeId is { } assignee && project.TeamId is not null

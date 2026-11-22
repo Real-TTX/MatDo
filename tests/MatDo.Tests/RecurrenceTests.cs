@@ -75,4 +75,11 @@ public sealed class RecurrenceTests
         Assert.Equal("Jeden Monat am letzten Tag", De("m:1:L"));
         Assert.Equal("Alle 3 Monate ab Erledigung bis 31. Dez. 2026", De("m:3;c;u=2026-12-31"));
     }
+
+    [Theory]
+    [InlineData("2026-11-27", "27,4x5,Lx5,L")] // the last Friday of November, the fourth one too
+    [InlineData("2026-11-03", "3,1x2,L")]
+    [InlineData("2026-10-31", "31,Lx6,L")] // past the 28th no n-th weekday
+    public void MonthParts(string due, string expected)
+        => Assert.Equal(expected, string.Join(',', Recurrence.MonthParts(DateOnly.Parse(due)).Select(p => p.Part)));
 }

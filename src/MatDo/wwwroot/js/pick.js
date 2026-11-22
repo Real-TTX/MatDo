@@ -2,7 +2,8 @@
    - A button with data-pick-open and aria-controls opens its panel (data-pick-pop, popover="manual" so a dialog never clips it); a click outside, Escape or
      another panel closes it. Before it opens, the panel gets "md:pick-open" (its owner fills in the current values).
    - MatDoPick.due(panel, owner): the panel of a date (partial _DuePop): quick choices, time, repeat, the date in words, the month. owner.get() gives
-     { date: '2026-10-20', time: '15:00', repeat: 'd:1' }; owner.pick({ date, time }) a day (or none) was chosen, owner.time(value), owner.repeat(value).
+     { date: '2026-10-20', time: '15:00', repeat: 'd:1', repeatName: 'Every day' }; owner.pick({ date, time }) a day (or none) was chosen, owner.time(value),
+     owner.repeat(rule, name, first) a repeat ('' = none; first = its first day on or after the date, asked from /api/app/repeat).
    - MatDoPick.priority(panel, pick): the panel of the priorities (partial _PriorityPop).
    - MatDoPick.label(date, time): "Today 15:00", "Tomorrow", "Mon 26 Oct" in the language of the page. */
 window.MatDoPick = (function () {
@@ -85,6 +86,7 @@ window.MatDoPick = (function () {
     var calendar = $('[data-due-calendar]', panel);
     var timeField = $('[data-due-time]', panel);
     var text = $('[data-due-text]', panel);
+    var repNow = $('[data-due-repeat-now]', panel);
     var syncing = false;
 
     function setCalendar(value) {
@@ -105,7 +107,7 @@ window.MatDoPick = (function () {
       var s = owner.get();
       setCalendar(s.date || '');
       setTime(s.time || '');
-      $$('[data-due-repeat]', panel).forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-due-repeat') === (s.repeat || '') ? 'true' : 'false'); });
+      if (repNow) { repNow.textContent = s.repeat && s.repeatName ? s.repeatName : repNow.getAttribute('data-empty'); }
     }
     function pick(date, keepOpen) {
       owner.pick({ date: date ? iso(date) : '', time: date && timeField ? timeField.value : '' });
@@ -139,12 +141,134 @@ window.MatDoPick = (function () {
         if (timeField.value && !owner.get().date) { setCalendar(iso(new Date())); }
       });
     }
-    $$('[data-due-repeat]', panel).forEach(function (b) {
-      b.addEventListener('click', function () { if (owner.repeat) { owner.repeat(b.getAttribute('data-due-repeat'), b.textContent.trim()); } sync(); close(panel, true); });
-    });
     if (text) {
       text.addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); if (owner.words) { owner.words(text.value.trim()); } close(panel, true); } });
       text.addEventListener('change', function () { if (owner.words) { owner.words(text.value.trim()); } });
+    }
+
+    // ---- the repeat: a row with the rule in force; its view has the presets for the date and a rule of one's own (the server reads and names it) ----
+    var repOpen = $('[data-due-repeat-open]', panel);
+    var repView = $('[data-due-repeat-view]', panel);
+    var st = null, previewTimer = 0, previewSeq = 0;
+    function api(date, rule) {
+      return fetch('/api/app/repeat?due=' + encodeURIComponent(date || '') + '&rule=' + encodeURIComponent(rule || ''), { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+        .then(function (r) { return r.ok ? r.json() : null; }).catch(function () { return null; });
+    }
+    function dateOf(s) { var p = (s || iso(new Date())).split('-'); return new Date(+p[0], +p[1] - 1, +p[2]); }
+    function isoDow(d) { return d.getDay() || 7; }
+    // the day the repeat starts from: the date of the owner, else the one its text says (the quick add), else today
+    function base() { var s = owner.get(); return s.date || s.base || iso(new Date()); }
+    // a rule as the parts of the form: "w:2:1,4;c;u=2027-01-31" = every 2 weeks on Mon and Thu, from the check-off, until 31 Jan
+    function read(rule, d) {
+      var s = { unit: 'w', n: 1, days: [isoDow(d)], month: String(d.getDate()), done: false, until: '' };
+      if (!rule) { return s; }
+      var parts = rule.split(';'), m = parts[0].split(':');
+      if (m[0] === 'wd') { s.days = [1, 2, 3, 4, 5]; }
+      else if (/^[dwmy]$/.test(m[0])) {
+        s.unit = m[0]; s.n = Math.max(1, +m[1] || 1);
+        if (s.unit === 'w' && m[2]) { s.days = m[2].split(',').map(Number); }
+        if (s.unit === 'm' && m[2]) { s.month = m[2]; }
+      }
+      parts.slice(1).forEach(function (o) { if (o === 'c') { s.done = true; } if (o.indexOf('u=') === 0) { s.until = o.slice(2); } });
+      return s;
+    }
+    function build(s) {
+      var r = s.unit + ':' + s.n;
+      if (s.unit === 'w' && s.days.length) { r += ':' + s.days.slice().sort().join(','); }
+      if (s.unit === 'm' && s.month) { r += ':' + s.month; }
+      return r + (s.done ? ';c' : '') + (s.until ? ';u=' + s.until : '');
+    }
+    function render() {
+      var n = $('[data-rep-n]', panel);
+      if (document.activeElement !== n) { n.value = st.n; }
+      $$('[data-rep-unit]', panel).forEach(function (b) {
+        var u = b.getAttribute('data-rep-unit');
+        b.setAttribute('aria-pressed', u === st.unit ? 'true' : 'false');
+        b.textContent = t('Js.Repeat.' + u + (st.n > 1 ? '.n' : ''));
+      });
+      $('[data-rep-week]', panel).hidden = st.unit !== 'w';
+      $$('[data-rep-day]', panel).forEach(function (b) { b.setAttribute('aria-pressed', st.days.indexOf(+b.getAttribute('data-rep-day')) >= 0 ? 'true' : 'false'); });
+      $('[data-rep-month]', panel).hidden = st.unit !== 'm';
+      $$('[data-rep-part]', panel).forEach(function (b) { b.setAttribute('aria-pressed', b.getAttribute('data-rep-part') === st.month ? 'true' : 'false'); });
+      $('[data-rep-done]', panel).checked = st.done;
+      clearTimeout(previewTimer);
+      previewTimer = setTimeout(function () {
+        var id = ++previewSeq;
+        api(base(), build(st)).then(function (data) { if (id === previewSeq) { $('[data-rep-preview]', panel).textContent = data && data.label ? data.label : ''; } });
+      }, 120);
+    }
+    function option(value, label, pressed, attr) {
+      var b = document.createElement('button');
+      b.type = 'button'; b.className = 'md-qa__opt'; b.setAttribute(attr, value); b.setAttribute('aria-pressed', pressed ? 'true' : 'false');
+      b.innerHTML = '<span></span><svg class="mat-icon" aria-hidden="true" focusable="false"><use href="#mat-i-check"></use></svg>';
+      b.firstChild.textContent = label;
+      return b;
+    }
+    function choose(rule, name, first) {
+      if (owner.repeat) { owner.repeat(rule || '', rule ? name : '', first || ''); }
+      showRepeat(false); sync(); close(panel, true);
+    }
+    function showRepeat(on) {
+      if (!repView) { return; }
+      panel.classList.toggle('is-repeat', on);
+      repView.hidden = !on;
+      repOpen.setAttribute('aria-expanded', on ? 'true' : 'false');
+      if (!on) { if (isOpen(panel)) { place(panel, opener(panel) || repOpen); } return; }
+      var s = owner.get();
+      st = read(s.repeat, dateOf(base()));
+      var until = $('[data-rep-until]', panel);
+      syncing = true;
+      if (!(window.MatUi && MatUi.picker && MatUi.picker.set(until, st.until))) { until.value = st.until; }
+      syncing = false;
+      render();
+      place(panel, opener(panel) || repOpen);
+      api(base(), s.repeat).then(function (data) {
+        if (!data) { return; }
+        var presets = $('[data-rep-presets]', panel), month = $('[data-rep-month]', panel);
+        presets.innerHTML = ''; month.innerHTML = '';
+        presets.appendChild(option('', repNow.getAttribute('data-empty'), !data.rule, 'data-rep-preset'));
+        var known = !data.rule;
+        data.presets.forEach(function (p) { known = known || p.value === data.rule; presets.appendChild(option(p.value, p.label, p.value === data.rule, 'data-rep-preset')); });
+        if (!known) { presets.appendChild(option(data.rule, data.label, true, 'data-rep-preset')); }
+        // a rule of one's own opens its form, a preset or none keeps it folded
+        $('[data-rep-custom]', panel).open = !known;
+        data.month.forEach(function (p) { month.appendChild(option(p.part, p.label, p.part === st.month, 'data-rep-part')); });
+        render();
+        place(panel, opener(panel) || repOpen);
+        var on = $('[data-rep-preset][aria-pressed="true"]', presets);
+        if (on) { on.focus(); }
+      });
+    }
+    if (repOpen && repView) {
+      repOpen.addEventListener('click', function () { showRepeat(true); });
+      $('[data-rep-back]', panel).addEventListener('click', function () { showRepeat(false); repOpen.focus(); });
+      $('[data-rep-custom]', panel).addEventListener('toggle', function () { if (panel.classList.contains('is-repeat')) { place(panel, opener(panel) || repOpen); } });
+      repView.addEventListener('click', function (e) {
+        var preset = e.target.closest('[data-rep-preset]');
+        if (preset) {
+          var value = preset.getAttribute('data-rep-preset');
+          if (!value) { choose('', '', ''); return; }
+          api(base(), value).then(function (data) { if (data && data.rule) { choose(data.rule, data.label, data.first); } });
+          return;
+        }
+        var unit = e.target.closest('[data-rep-unit]');
+        if (unit) { st.unit = unit.getAttribute('data-rep-unit'); render(); return; }
+        var day = e.target.closest('[data-rep-day]');
+        if (day) {
+          var d = +day.getAttribute('data-rep-day'), at = st.days.indexOf(d);
+          if (at >= 0) { if (st.days.length > 1) { st.days.splice(at, 1); } } else { st.days.push(d); }
+          render(); return;
+        }
+        var part = e.target.closest('[data-rep-part]');
+        if (part) { st.month = part.getAttribute('data-rep-part'); render(); return; }
+        if (e.target.closest('[data-rep-apply]')) {
+          api(base(), build(st)).then(function (data) { if (data && data.rule) { choose(data.rule, data.label, data.first); } });
+        }
+      });
+      $('[data-rep-n]', panel).addEventListener('input', function (e) { var v = parseInt(e.target.value, 10); if (v >= 1 && v <= 99) { st.n = v; render(); } });
+      $('[data-rep-done]', panel).addEventListener('change', function (e) { st.done = e.target.checked; render(); });
+      $('[data-rep-until]', panel).addEventListener('change', function (e) { if (syncing) { return; } st.until = /^\d{4}-\d{2}-\d{2}$/.test(e.target.value) ? e.target.value : ''; render(); });
+      panel.addEventListener('md:pick-open', function () { showRepeat(false); });
     }
     return { sync: sync, setTime: setTime, setCalendar: setCalendar };
   }

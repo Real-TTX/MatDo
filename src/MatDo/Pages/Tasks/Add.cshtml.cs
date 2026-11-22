@@ -34,6 +34,8 @@ public sealed class AddModel(AppDbContext db, QuickAddService quick, TaskService
 
     [BindProperty] public string DueTime { get; set; } = string.Empty;
 
+    [BindProperty] public string Recurrence { get; set; } = string.Empty;
+
     [BindProperty] public bool NoDate { get; set; }
 
     [BindProperty] public string Priority { get; set; } = string.Empty;
@@ -58,6 +60,7 @@ public sealed class AddModel(AppDbContext db, QuickAddService quick, TaskService
             ParentId = ParentId,
             DueDate = Dates.ParseIso(DueDate),
             DueTime = Dates.ParseTime(DueTime),
+            Recurrence = Recurrence,
             NoDate = NoDate,
             Priority = int.TryParse(Priority, out var p) ? p : null,
             Labels = Labels.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries),

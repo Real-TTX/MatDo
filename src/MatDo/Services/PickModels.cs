@@ -10,9 +10,9 @@ namespace MatDo.Services;
 /// <param name="Label">The name of the panel for screen readers ("Choose a date").</param>
 /// <param name="NoneLabel">The choice that takes the date away ("No date", "No deadline").</param>
 /// <param name="Time">With the time (not for a deadline).</param>
-/// <param name="Repeats">The rules to repeat (empty = no repeat in this panel).</param>
+/// <param name="Repeat">With the repeat: the presets and a rule of ones own (pick.js asks /api/app/repeat).</param>
 /// <param name="TextName">The name of the field of the date in words ("every Monday 9am"), read by the server when it saves; null = none.</param>
-public sealed record DuePopModel(string Id, string Label, string NoneLabel, bool Time = true, IReadOnlyList<Choice>? Repeats = null, string? TextName = null);
+public sealed record DuePopModel(string Id, string Label, string NoneLabel, bool Time = true, bool Repeat = false, string? TextName = null);
 
 /// <summary>The panel of the priorities (partial _PriorityPop): p1 to p4 with their flags.</summary>
 public sealed record PriorityPopModel(string Id, string Label);
