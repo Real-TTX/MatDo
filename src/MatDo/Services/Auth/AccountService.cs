@@ -45,6 +45,9 @@ public sealed class AccountService(AppDbContext db, PasswordService passwords)
 
     public async Task<bool> AnyUserAsync() => await db.Users.IgnoreQueryFilters().AnyAsync();
 
+    /// <summary>Whether a person has an account: any user but the administrator a headless install seeds (<see cref="Database.SeedAdminAsync(WebApplication)"/>).</summary>
+    public async Task<bool> AnyPersonAsync() => await db.Users.IgnoreQueryFilters().AnyAsync(u => u.Email != Database.SeededAdminEmail);
+
     public async Task<SystemSetting> SettingsAsync()
     {
         var s = await db.SystemSettings.FirstOrDefaultAsync(x => x.Id == 1);

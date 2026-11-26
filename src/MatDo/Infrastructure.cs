@@ -35,6 +35,42 @@ public static partial class HealthCheck
 
 public static class Database
 {
+    /// <summary>The variable whose value seeds the first administrator (<see cref="SeedAdminAsync(WebApplication)"/>).</summary>
+    public const string AdminPasswordVariable = "MATDO_ADMIN_PASSWORD";
+
+    /// <summary>The address the seeded administrator signs in with (the local form, <c>/Account/Login?local=1</c>).</summary>
+    public const string SeededAdminEmail = "admin@matdo.local";
+
+    /// <summary>
+    /// A headless install (Mattiverse sets <c>MATDO_ADMIN_PASSWORD</c> to a generated value): while there is no user at all, the administrator
+    /// <see cref="SeededAdminEmail"/> is created with that password. Then nobody has to register first, and the registration is closed from the start
+    /// (it is open only while there is no user). Without the variable nothing changes; the password of an existing account is never changed from here.
+    /// </summary>
+    public static async Task SeedAdminAsync(WebApplication app)
+    {
+        using var scope = app.Services.CreateScope();
+        await SeedAdminAsync(scope.ServiceProvider.GetRequiredService<AccountService>(), app.Configuration[AdminPasswordVariable], app.Logger);
+    }
+
+    /// <summary>The work of <see cref="SeedAdminAsync(WebApplication)"/>; true when the administrator was created.</summary>
+    public static async Task<bool> SeedAdminAsync(AccountService accounts, string? password, ILogger logger)
+    {
+        if (string.IsNullOrWhiteSpace(password) || await accounts.AnyUserAsync())
+        {
+            return false;
+        }
+
+        var (user, error) = await accounts.RegisterAsync(SeededAdminEmail, "Administrator", password, role: UserRole.Admin);
+        if (user is null)
+        {
+            logger.LogError("The administrator of {Variable} was not created: {Error}", AdminPasswordVariable, error);
+            return false;
+        }
+
+        logger.LogInformation("Administrator {Email} created from {Variable}.", SeededAdminEmail, AdminPasswordVariable);
+        return true;
+    }
+
     /// <summary>Creates and updates the tables. The database container may still be starting: try again for a while before giving up.</summary>
     public static async Task MigrateWithRetryAsync(WebApplication app)
     {

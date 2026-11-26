@@ -133,7 +133,7 @@ public sealed class ExternalSignInService(AppDbContext db, AccountService accoun
 
     private async Task<User> CreateAsync(string subject, string? email, ExternalIdentity identity, CancellationToken ct)
     {
-        var first = !await accounts.AnyUserAsync();
+        var first = !await accounts.AnyPersonAsync();
         var address = email ?? PlaceholderEmail(subject);
         var name = FirstNonEmpty(identity.Name, identity.PreferredUserName, email?.Split('@')[0]) ?? "MatIdentity";
         var user = new User

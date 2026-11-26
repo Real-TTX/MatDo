@@ -156,6 +156,7 @@ builder.Services.Configure<ForwardedHeadersOptions>(o =>
 var app = builder.Build();
 
 await Database.MigrateWithRetryAsync(app);
+await Database.SeedAdminAsync(app);
 
 app.UseForwardedHeaders();
 if (app.Environment.IsDevelopment())

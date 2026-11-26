@@ -108,6 +108,7 @@ Keine davon ist nötig; ohne sie läuft MatDo allein mit eigenen Konten.
 |---|---|
 | `ConnectionStrings__Default` | Verbindung zu PostgreSQL (Standard im Image: `Host=db;Port=5432;Database=matdo;Username=matdo;Password=matdo`) |
 | `DataDirectory` | Ordner der Schlüssel für die Sitzungen und der Verbindungen (`matplatform/`; Standard `/data`, das Volume `web-data`) |
+| `MATDO_ADMIN_PASSWORD` | Installation ohne Einrichten: solange es keinen Benutzer gibt, wird beim Start der Administrator `admin@matdo.local` mit diesem Passwort angelegt (mindestens 10 Zeichen); damit ist die Registrierung von Anfang an geschlossen. Mattiverse setzt einen erzeugten Wert. Leer = wie bisher: das erste Konto, das sich registriert, ist Administrator |
 | `MAT_API_KEY` | Schlüssel für die Plattform-API `/api/*` (Header `X-Api-Key`); leer = nur mit einem Token von MatIdentity. Mattiverse setzt ihn |
 | `MAT_PUBLIC_URL` | öffentliche Adresse von MatDo (für die Webhook-Adressen); gesetzt = *Administration → System* zeigt sie nur an. Mattiverse setzt sie, sobald MatDo eine eigene Adresse hat |
 | `MAT_FRAME_ANCESTORS` | Adressen, die MatDo in einem Rahmen zeigen dürfen (das Fenster von Mattiverse); Mattiverse setzt sie |

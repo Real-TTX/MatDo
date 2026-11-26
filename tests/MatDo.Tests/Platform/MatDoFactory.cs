@@ -46,8 +46,12 @@ public class MatDoFactory : WebApplicationFactory<Program>
     {
     }
 
-    protected MatDoFactory(bool withKey, string? authority, bool reachable = true, string? publicUrl = null)
+    private readonly bool _headless;
+
+    protected MatDoFactory(bool withKey, string? authority, bool reachable = true, string? publicUrl = null, string? adminPassword = null)
     {
+        _headless = adminPassword is not null;
+        Environment.SetEnvironmentVariable(Database.AdminPasswordVariable, adminPassword);
         _authority = authority;
         _reachable = reachable;
         Directory.CreateDirectory(_data);
@@ -107,6 +111,12 @@ public class MatDoFactory : WebApplicationFactory<Program>
     protected override IHost CreateHost(IHostBuilder builder)
     {
         var host = base.CreateHost(builder);
+        if (_headless)
+        {
+            // The app seeded its administrator itself.
+            return host;
+        }
+
         using var scope = host.Services.CreateScope();
         var (user, error) = scope.ServiceProvider.GetRequiredService<AccountService>()
             .RegisterAsync(AdminEmail, "Administrator", AdminPassword).GetAwaiter().GetResult();
@@ -160,6 +170,12 @@ public sealed class NoKeyFactory() : MatDoFactory(withKey: false, authority: nul
 public sealed class PublicUrlFactory() : MatDoFactory(withKey: true, authority: null, publicUrl: PublicUrl + "/")
 {
     public const string PublicUrl = "https://todo.example.com";
+}
+
+/// <summary>A headless install as Mattiverse does it: <c>MATDO_ADMIN_PASSWORD</c> and MatIdentity are set, nobody registered.</summary>
+public sealed class HeadlessFactory() : MatDoFactory(withKey: true, authority: IdentityFactory.Authority, adminPassword: Password)
+{
+    public const string Password = "Generated-0123456789";
 }
 
 /// <summary>With <c>MATIDENTITY_AUTHORITY</c> (a MatIdentity that does not need to run).</summary>
